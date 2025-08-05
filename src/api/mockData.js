@@ -1,0 +1,78 @@
+// src/api/mockData.js
+
+// Đây là một mảng các đối tượng nhà, mô phỏng dữ liệu bạn sẽ nhận được từ backend.
+// Mỗi đối tượng có cấu trúc giống với HouseDTO của bạn.
+export const mockHouses = [
+  {
+    id: 1,
+    name: "Căn hộ cao cấp The Gold View, view sông Sài Gòn",
+    address: "346 Bến Vân Đồn, Phường 1, Quận 4, TP.HCM",
+    price: 15000000,
+    imageUrl: "https://picsum.photos/400/300?random=1",
+    numberOfBedrooms: 2,
+    numberOfBathrooms: 2,
+  },
+  {
+    id: 2,
+    name: "Nhà nguyên căn hẻm xe hơi, nội thất đầy đủ",
+    address: "288 Nam Kỳ Khởi Nghĩa, Phường 8, Quận 3, TP.HCM",
+    price: 22000000,
+    imageUrl: "https://picsum.photos/400/300?random=2",
+    numberOfBedrooms: 4,
+    numberOfBathrooms: 3,
+  },
+  {
+    id: 3,
+    name: "Studio tiện nghi gần Sân bay Tân Sơn Nhất",
+    address: "123 Hồng Hà, Phường 2, Quận Tân Bình, TP.HCM",
+    price: 8500000,
+    imageUrl: "https://picsum.photos/400/300?random=3",
+    numberOfBedrooms: 1,
+    numberOfBathrooms: 1,
+  },
+  {
+    id: 4,
+    name: "Villa sân vườn có hồ bơi tại Thảo Điền",
+    address: "99 Nguyễn Văn Hưởng, Thảo Điền, Quận 2, TP.HCM",
+    price: 80000000,
+    imageUrl: "https://picsum.photos/400/300?random=4",
+    numberOfBedrooms: 5,
+    numberOfBathrooms: 6,
+  },
+  {
+    id: 5,
+    name: "Căn hộ dịch vụ tiện nghi, trung tâm Quận 1",
+    address: "15 Lê Thánh Tôn, Bến Nghé, Quận 1, TP.HCM",
+    price: 18000000,
+    imageUrl: "https://picsum.photos/400/300?random=5",
+    numberOfBedrooms: 1,
+    numberOfBathrooms: 1,
+  },
+  {
+    id: 6,
+    name: "Penthouse Vincom Center, tầm nhìn panorama",
+    address: "72 Lê Thánh Tôn, Bến Nghé, Quận 1, TP.HCM",
+    price: 120000000,
+    imageUrl: "https://picsum.photos/400/300?random=6",
+    numberOfBedrooms: 3,
+    numberOfBathrooms: 4,
+  },
+  {
+    id: 7,
+    name: "Nhà phố mặt tiền kinh doanh sầm uất",
+    address: "553 Sư Vạn Hạnh, Phường 13, Quận 10, TP.HCM",
+    price: 45000000,
+    imageUrl: "https://picsum.photos/400/300?random=7",
+    numberOfBedrooms: 6,
+    numberOfBathrooms: 5,
+  },
+  {
+    id: 8,
+    name: "Chung cư mini giá rẻ cho sinh viên gần Làng Đại học",
+    address: "Đường Vành đai, Dĩ An, Bình Dương",
+    price: 3500000,
+    imageUrl: "https://picsum.photos/400/300?random=8",
+    numberOfBedrooms: 1,
+    numberOfBathrooms: 1,
+  },
+];
