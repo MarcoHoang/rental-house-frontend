@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { Link } from "react-router-dom";
 
 // HeaderWrapper với flexbox để căn chỉnh các phần tử
 const HeaderWrapper = styled.header`
@@ -48,7 +49,7 @@ const Nav = styled.nav`
   }
 `;
 
-const NavLink = styled.a`
+const NavLink = styled(Link)`
   text-decoration: none;
   color: #555;
   font-weight: 500;
@@ -73,7 +74,7 @@ const AuthButtons = styled.div`
   }
 `;
 
-const Button = styled.button`
+const Button = styled(Link)`
   padding: 0.6rem 1.2rem;
   border: none;
   border-radius: 5px;
@@ -81,6 +82,8 @@ const Button = styled.button`
   font-weight: bold;
   transition: all 0.2s;
   white-space: nowrap;
+  text-decoration: none;
+  text-align: center;
 
   &:hover {
     transform: translateY(-1px);
@@ -118,8 +121,8 @@ const Header = () => {
           <NavLink href="/blog">Blog</NavLink>
         </Nav>
         <AuthButtons>
-          <Button className="login">Đăng nhập</Button>
-          <Button className="signup">Đăng ký</Button>
+          <Link to="/login" className="login">Đăng nhập</Link>
+          <Link to="/register" className="signup">Đăng ký</Link>
         </AuthButtons>
       </HeaderContainer>
     </HeaderWrapper>
