@@ -1,223 +1,216 @@
-import styled from "styled-components";
-import { Link } from "react-router-dom";
-// import { useLocation } from "react-router-dom";
-import { useState } from "react";
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import styled from 'styled-components';
 
-// HeaderWrapper với flexbox để căn chỉnh các phần tử
 const HeaderWrapper = styled.header`
-  background-color: #fff;
-  border-bottom: 1px solid #eaeaea;
-  padding: 1rem 0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 1000;
 `;
 
-// Container để giới hạn chiều rộng và căn giữa nội dung
 const HeaderContainer = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 2rem;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 1rem;
-  }
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 `;
 
-const Logo = styled.a`
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #333;
-  text-decoration: none;
-  flex-shrink: 0;
-
-  &:hover {
-    color: #007bff;
-  }
+const Logo = styled(Link)`
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #4f46e5;
+    text-decoration: none;
+    &:hover {
+        color: #4338ca;
+    }
 `;
 
 const Nav = styled.nav`
-  display: flex;
-  gap: 1rem;
-  flex: 1;
-  justify-content: center;
-
-  @media (max-width: 768px) {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
+    display: flex;
+    gap: 2rem;
+    margin-left: 2rem;
 `;
 
 const NavLink = styled(Link)`
-  text-decoration: none;
-  color: #555;
-  font-weight: 500;
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
-  transition: background-color 0.2s, color 0.2s;
-  white-space: nowrap;
-
-  &:hover {
-    background-color: #f0f0f0;
-    color: #007bff;
-  }
+    color: #4b5563;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+    &:hover {
+        color: #4f46e5;
+    }
 `;
 
 const AuthButtons = styled.div`
-  display: flex;
-  gap: 1rem;
-  flex-shrink: 0;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
 
-  @media (max-width: 768px) {
-    justify-content: center;
-  }
+    .login {
+        color: #4f46e5;
+        text-decoration: none;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        transition: background-color 0.2s;
+
+        &:hover {
+            background-color: #eef2ff;
+        }
+    }
+
+    .signup {
+        background-color: #4f46e5;
+        color: white;
+        text-decoration: none;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        transition: background-color 0.2s;
+
+        &:hover {
+            background-color: #4338ca;
+        }
+    }
 `;
 
-const Button = styled(Link)`
-  padding: 0.6rem 1.2rem;
-  border: none;
-  border-radius: 5px;
+const UserMenu = styled.div`
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+`;
+
+const UserAvatar = styled.div`
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #e0e7ff;
+  color: #4f46e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
   cursor: pointer;
-  font-weight: bold;
-  transition: all 0.2s;
-  white-space: nowrap;
+  text-transform: uppercase;
+`;
+
+const DropdownMenu = styled.div`
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  min-width: 200px;
+  z-index: 50;
+  margin-top: 0.5rem;
+  display: ${({ isOpen }) => (isOpen ? 'block' : 'none')};
+`;
+
+const DropdownItem = styled(Link)`
+  display: block;
+  padding: 0.75rem 1rem;
+  color: #4b5563;
   text-decoration: none;
-  text-align: center;
+  transition: background-color 0.2s;
 
   &:hover {
-    transform: translateY(-1px);
-  }
-
-  &.login {
-    background-color: transparent;
-    border: 1px solid #007bff;
-    color: #007bff;
-
-    &:hover {
-      background-color: #007bff;
-      color: white;
-    }
-  }
-
-  &.signup {
-    background-color: #007bff;
-    color: white;
-
-    &:hover {
-      background-color: #0056b3;
-    }
+    background-color: #f9fafb;
+    color: #4f46e5;
   }
 `;
 
+const LogoutButton = styled.button`
+  width: 100%;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background-color 0.2s;
 
-
+  &:hover {
+    background-color: #fef2f2;
+  }
+`;
 
 const Header = () => {
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [username, setUsername] = useState('');
+    const navigate = useNavigate();
 
-  // 1. Thêm state để quản lý hiển thị dialog xác nhận
-// eslint-disable-next-line no-undef,react-hooks/rules-of-hooks
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        const storedUsername = localStorage.getItem('username');
+        if (token && storedUsername) {
+            setIsLoggedIn(true);
+            setUsername(storedUsername);
+        }
+    }, []);
 
-// 2. Thêm hàm xử lý đăng xuất
-  const handleLogout = () => {
-    // Xóa token hoặc thông tin đăng nhập trong localStorage
-    localStorage.removeItem('token');
-    // Chuyển hướng về trang chủ
-    window.location.href = '/';
-  };
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('username');
+        setIsLoggedIn(false);
+        setShowDropdown(false);
+        navigate('/');
+    };
 
-  return (
+    const getInitials = (name) => {
+        return name ? name.charAt(0).toUpperCase() : 'U';
+    };
 
+    return (
+        <HeaderWrapper>
+            <HeaderContainer>
+                <Logo to="/">RentalHouse</Logo>
+                <Nav>
+                    <NavLink to="/cho-thue-can-ho">Căn hộ</NavLink>
+                    <NavLink to="/cho-thue-nha-pho">Nhà phố</NavLink>
+                    <NavLink to="/blog">Blog</NavLink>
+                </Nav>
 
-  <HeaderWrapper>
-      <HeaderContainer>
-        <Logo href="/">RentalHouse</Logo>
-        <Nav>
-          <NavLink href="/cho-thue-can-ho">Căn hộ</NavLink>
-          <NavLink href="/cho-thue-nha-pho">Nhà phố</NavLink>
-          <NavLink href="/blog">Blog</NavLink>
-        </Nav>
-        <AuthButtons>
-          <Link to="/login" className="login">Đăng nhập</Link>
-          <Link to="/register" className="signup">Đăng ký</Link>
-
-          <button
-              onClick={() => setShowLogoutConfirm(true)}
-              style={{
-                padding: '0.6rem 1.2rem',
-                backgroundColor: '#dc3545',
-                color: 'white',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer',
-                fontWeight: 'bold'
-              }}
-          >
-            Đăng xuất
-          </button>
-
-        </AuthButtons>
-        {/*3. Thêm dialog xác nhận*/}
-        {showLogoutConfirm && (
-            <div style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0,0,0,0.5)',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              zIndex: 1000
-            }}>
-              <div style={{
-                backgroundColor: 'white',
-                padding: '20px',
-                borderRadius: '8px',
-                textAlign: 'center'
-              }}>
-                <p>Bạn có chắc chắn muốn đăng xuất?</p>
-                <div style={{ marginTop: '20px' }}>
-                  <button
-                      onClick={handleLogout}
-                      style={{
-                        padding: '8px 16px',
-                        margin: '0 10px',
-                        backgroundColor: '#007bff',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                      }}
-                  >
-                    Có
-                  </button>
-                  <button
-                      onClick={() => setShowLogoutConfirm(false)}
-                      style={{
-                        padding: '8px 16px',
-                        margin: '0 10px',
-                        backgroundColor: '#dc3545',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                      }}
-                  >
-                    Hủy
-                  </button>
-                </div>
-              </div>
-            </div>
-        )}
-
-      </HeaderContainer>
-    </HeaderWrapper>
-  );
+                {isLoggedIn ? (
+                    <UserMenu>
+                        <UserAvatar onClick={() => setShowDropdown(!showDropdown)}>
+                            {getInitials(username)}
+                        </UserAvatar>
+                        <DropdownMenu isOpen={showDropdown}>
+                            <DropdownItem to="/profile" onClick={() => setShowDropdown(false)}>
+                                Thông tin cá nhân
+                            </DropdownItem>
+                            <DropdownItem to="/my-properties" onClick={() => setShowDropdown(false)}>
+                                Tin đăng của tôi
+                            </DropdownItem>
+                            <DropdownItem to="/saved" onClick={() => setShowDropdown(false)}>
+                                Đã lưu
+                            </DropdownItem>
+                            <div style={{ borderTop: '1px solid #e5e7eb' }}></div>
+                            <LogoutButton onClick={handleLogout}>Đăng xuất</LogoutButton>
+                        </DropdownMenu>
+                    </UserMenu>
+                ) : (
+                    <AuthButtons>
+                        <Link to="/login" className="login">
+                            Đăng nhập
+                        </Link>
+                        <Link to="/register" className="signup">
+                            Đăng ký
+                        </Link>
+                    </AuthButtons>
+                )}
+            </HeaderContainer>
+        </HeaderWrapper>
+    );
 };
 
 export default Header;
