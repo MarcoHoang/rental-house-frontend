@@ -5,7 +5,7 @@ import { authService } from '../../api/authService';
 
 function Login() {
     const [formData, setFormData] = useState({
-        username: '',
+        email: '',
         password: ''
     });
     const [message, setMessage] = useState('');
@@ -21,27 +21,39 @@ function Login() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setMessage('');
+        setMessage('Đang xử lý...');
         setIsError(false);
 
         try {
             const response = await authService.login(
-                formData.username,
+                formData.email,
                 formData.password
             );
 
-            // Lưu token vào localStorage
-            localStorage.setItem('token', response.data);
-            setMessage('Đăng nhập thành công!');
-            setIsError(false);
+            // Lưu token và thông tin người dùng vào localStorage
+            if (response.token) {
+                localStorage.setItem('token', response.token);
+                if (response.user) {
+                    localStorage.setItem('user', JSON.stringify(response.user));
+                }
+                
+                setMessage('Đăng nhập thành công!');
+                setIsError(false);
 
-            // Chuyển hướng về trang chủ sau 1 giây
-            setTimeout(() => {
-                navigate('/');
-            }, 1000);
+                // Kích hoạt sự kiện để cập nhật giao diện
+                window.dispatchEvent(new Event('storage'));
 
+                // Chuyển hướng về trang chủ sau 1 giây
+                setTimeout(() => {
+                    navigate('/');
+                    window.location.reload(); // Tải lại trang để đảm bảo cập nhật giao diện
+                }, 1000);
+            } else {
+                throw new Error('Không nhận được thông tin đăng nhập từ máy chủ');
+            }
         } catch (error) {
-            setMessage(error.message || 'Đăng nhập thất bại');
+            console.error('Lỗi đăng nhập:', error);
+            setMessage(error.response?.data?.message || error.message || 'Đăng nhập thất bại');
             setIsError(true);
         }
     };
@@ -57,17 +69,17 @@ function Login() {
                 <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
                     <div className="rounded-md shadow-sm -space-y-px">
                         <div>
-                            <label htmlFor="username" className="sr-only">
-                                Tên đăng nhập
+                            <label htmlFor="email" className="sr-only">
+                                Email
                             </label>
                             <input
-                                id="username"
-                                name="username"
-                                type="text"
+                                id="email"
+                                name="email"
+                                type="email"
                                 required
                                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                                placeholder="Tên đăng nhập"
-                                value={formData.username}
+                                placeholder="Địa chỉ email"
+                                value={formData.email}
                                 onChange={handleChange}
                             />
                         </div>
