@@ -4,10 +4,10 @@ import axios from 'axios';
 const API_URL = 'http://localhost:8080/api/auth';
 
 export const authService = {
-    login: async (username, password) => {
+    login: async (email, password) => {
         try {
             const response = await axios.post(`${API_URL}/login`, {
-                username,
+                email,
                 password
             });
             return response.data;
