@@ -1,4 +1,7 @@
 import styled from "styled-components";
+import { Link } from "react-router-dom";
+// import { useLocation } from "react-router-dom";
+import { useState } from "react";
 
 // HeaderWrapper với flexbox để căn chỉnh các phần tử
 const HeaderWrapper = styled.header`
@@ -48,7 +51,7 @@ const Nav = styled.nav`
   }
 `;
 
-const NavLink = styled.a`
+const NavLink = styled(Link)`
   text-decoration: none;
   color: #555;
   font-weight: 500;
@@ -73,7 +76,7 @@ const AuthButtons = styled.div`
   }
 `;
 
-const Button = styled.button`
+const Button = styled(Link)`
   padding: 0.6rem 1.2rem;
   border: none;
   border-radius: 5px;
@@ -81,6 +84,8 @@ const Button = styled.button`
   font-weight: bold;
   transition: all 0.2s;
   white-space: nowrap;
+  text-decoration: none;
+  text-align: center;
 
   &:hover {
     transform: translateY(-1px);
@@ -107,9 +112,27 @@ const Button = styled.button`
   }
 `;
 
+
+
+
 const Header = () => {
+
+  // 1. Thêm state để quản lý hiển thị dialog xác nhận
+// eslint-disable-next-line no-undef,react-hooks/rules-of-hooks
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+// 2. Thêm hàm xử lý đăng xuất
+  const handleLogout = () => {
+    // Xóa token hoặc thông tin đăng nhập trong localStorage
+    localStorage.removeItem('token');
+    // Chuyển hướng về trang chủ
+    window.location.href = '/';
+  };
+
   return (
-    <HeaderWrapper>
+
+
+  <HeaderWrapper>
       <HeaderContainer>
         <Logo href="/">RentalHouse</Logo>
         <Nav>
@@ -118,9 +141,80 @@ const Header = () => {
           <NavLink href="/blog">Blog</NavLink>
         </Nav>
         <AuthButtons>
-          <Button className="login">Đăng nhập</Button>
-          <Button className="signup">Đăng ký</Button>
+          <Link to="/login" className="login">Đăng nhập</Link>
+          <Link to="/register" className="signup">Đăng ký</Link>
+
+          <button
+              onClick={() => setShowLogoutConfirm(true)}
+              style={{
+                padding: '0.6rem 1.2rem',
+                backgroundColor: '#dc3545',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+          >
+            Đăng xuất
+          </button>
+
         </AuthButtons>
+        {/*3. Thêm dialog xác nhận*/}
+        {showLogoutConfirm && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 1000
+            }}>
+              <div style={{
+                backgroundColor: 'white',
+                padding: '20px',
+                borderRadius: '8px',
+                textAlign: 'center'
+              }}>
+                <p>Bạn có chắc chắn muốn đăng xuất?</p>
+                <div style={{ marginTop: '20px' }}>
+                  <button
+                      onClick={handleLogout}
+                      style={{
+                        padding: '8px 16px',
+                        margin: '0 10px',
+                        backgroundColor: '#007bff',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                      }}
+                  >
+                    Có
+                  </button>
+                  <button
+                      onClick={() => setShowLogoutConfirm(false)}
+                      style={{
+                        padding: '8px 16px',
+                        margin: '0 10px',
+                        backgroundColor: '#dc3545',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                      }}
+                  >
+                    Hủy
+                  </button>
+                </div>
+              </div>
+            </div>
+        )}
+
       </HeaderContainer>
     </HeaderWrapper>
   );
