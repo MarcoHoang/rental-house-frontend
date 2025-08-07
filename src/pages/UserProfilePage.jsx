@@ -224,13 +224,20 @@ const UserProfilePage = () => {
         return;
       }
 
-      const response = await authService.updateProfile({
+      // Tạo đối tượng dữ liệu cập nhật
+      const updateData = {
         fullName: profile.fullName,
         phone: profile.phone,
-        address: profile.address,
-        dateOfBirth: profile.dateOfBirth,
-        avatar: profile.avatar
-      });
+        address: profile.address || '',
+        dateOfBirth: profile.dateOfBirth || null
+      };
+
+      // Thêm avatar vào dữ liệu nếu có
+      if (profile.avatar) {
+        updateData.avatar = profile.avatar;
+      }
+
+      const response = await authService.updateProfile(updateData);
 
       // Cập nhật thông tin user trong localStorage
       const updatedUser = {
@@ -238,7 +245,8 @@ const UserProfilePage = () => {
         fullName: profile.fullName,
         phone: profile.phone,
         address: profile.address,
-        avatar: response.avatar || user.avatar
+        dateOfBirth: profile.dateOfBirth,
+        avatar: response.data?.avatar || user.avatar
       };
       
       localStorage.setItem('user', JSON.stringify(updatedUser));
@@ -248,13 +256,13 @@ const UserProfilePage = () => {
       window.dispatchEvent(new Event('storage'));
 
       setMessage({
-        text: 'Cập nhật thông tin thành công!',
+        text: response.message || 'Cập nhật thông tin thành công!',
         type: 'success'
       });
     } catch (error) {
       console.error('Error updating profile:', error);
       setMessage({
-        text: error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật thông tin',
+        text: error.response?.data?.message || error.message || 'Có lỗi xảy ra khi cập nhật thông tin',
         type: 'error'
       });
     } finally {

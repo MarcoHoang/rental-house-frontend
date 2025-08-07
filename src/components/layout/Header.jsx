@@ -4,6 +4,22 @@ import { ChevronDownIcon, UserIcon, ArrowRightOnRectangleIcon } from '@heroicons
 import  authService  from '../../api/authService';
 import styled from 'styled-components';
 
+// Hàm tạo màu ngẫu nhiên dựa trên tên
+const stringToColor = (string) => {
+  let hash = 0;
+  for (let i = 0; i < string.length; i++) {
+    hash = string.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  
+  let color = '#';
+  for (let i = 0; i < 3; i++) {
+    const value = (hash >> (i * 8)) & 0xff;
+    color += `00${value.toString(16)}`.slice(-2);
+  }
+  
+  return color;
+};
+
 // Hàm lấy ký tự đầu tiên của tên
 const getInitials = (name) => {
     if (!name) return 'U';
@@ -95,29 +111,41 @@ const UserMenu = styled.div`
 const UserMenuButton = styled.button`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
   background: none;
   border: none;
-  padding: 0.5rem;
+  padding: 0.25rem 0.5rem 0.25rem 0.25rem;
   border-radius: 9999px;
   cursor: pointer;
-  transition: background-color 0.2s;
-
+  transition: all 0.2s;
+  
   &:hover {
     background-color: #f3f4f6;
+  }
+  
+  .user-name {
+    font-weight: 500;
+    color: #1f2937;
+    font-size: 0.9375rem;
+    max-width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 `;
 
 const UserAvatar = styled.div`
-  width: 2rem;
-  height: 2rem;
+  width: 2.5rem;
+  height: 2.5rem;
   border-radius: 9999px;
-  background-color: #e5e7eb;
+  background-color: ${props => props.$bgColor || '#e5e7eb'};
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 500;
-  color: #4b5563;
+  font-weight: 600;
+  color: white;
+  font-size: 0.875rem;
+  flex-shrink: 0;
 `;
 
 const UserMenuDropdown = styled.div`
@@ -315,24 +343,22 @@ const Header = () => {
                                 aria-haspopup="true"
                                 aria-expanded={showDropdown}
                             >
-                                {userData.avatar ? (
-                                    <img
-                                        src={userData.avatar}
-                                        alt={userData.fullName || 'User'}
-                                        className="w-8 h-8 rounded-full object-cover border border-gray-200"
-                                        onError={(e) => {
-                                            e.target.onerror = null;
-                                            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.fullName || userData.username || 'U')}&background=random`;
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-medium">
-                                        {getInitials(userData.fullName || userData.username || 'U')}
-                                    </div>
-                                )}
-                                <span className="text-gray-700 font-medium hidden md:inline">
-                                    {userData.fullName || userData.username}
-                                </span>
+                                <UserAvatar 
+                                    $bgColor={stringToColor(userData.fullName || userData.username || 'User')}
+                                >
+                                    {userData.avatar ? (
+                                        <img 
+                                            src={userData.avatar} 
+                                            alt={userData.fullName || userData.username} 
+                                            style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} 
+                                        />
+                                    ) : (
+                                        getInitials(userData.fullName || userData.username)
+                                    )}
+                                </UserAvatar>
+                                <div className="user-name">
+                                    {userData?.fullName || userData?.username || 'Người dùng'}
+                                </div>
                                 <ChevronDownIcon className="w-4 h-4 text-gray-500 hidden md:block" />
                             </button>
 
