@@ -1,5 +1,3 @@
-// src/api/adminApi.jsx
-
 import axios from "axios";
 
 // --- CẤU HÌNH TRUNG TÂM ---
@@ -29,10 +27,6 @@ apiClient.interceptors.request.use(
   }
 );
 
-// 3. Đảm bảo MỌI HÀM đều dùng apiClient và có API_PREFIX
-//    để tạo ra URL chính xác (ví dụ: /api/v1/admin/login)
-
-// Admin Authentication
 export const adminAuth = {
   login: (credentials) =>
     apiClient.post(`${API_PREFIX}/admin/login`, credentials),
