@@ -1,577 +1,282 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import {
-  UserPlus,
-  User,
-  Phone,
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  Home,
-} from "lucide-react";
+import { UserPlus, User, Phone, Mail, Lock, Eye, EyeOff, MapPin } from "lucide-react";
 import axios from "axios";
 
 const Register = () => {
-  const [formData, setFormData] = useState({
-    username: "",
-    phone: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
-  const [message, setMessage] = useState("");
-  const [isError, setIsError] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const navigate = useNavigate();
+    const [formData, setFormData] = useState({
+        email: "",
+        phone: "",
+        password: "",
+        confirmPassword: "",
+        fullName: "",
+        address: "",
+    });
+    const [errors, setErrors] = useState({});
+    const [message, setMessage] = useState("");
+    const [isError, setIsError] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    // Clear message when user starts typing
-    if (message) {
-      setMessage("");
-      setIsError(false);
-    }
-  };
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+        if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
+        if (message) setMessage("");
+    };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage("");
-    setIsError(false);
+    const validateField = (name, value) => {
+        switch (name) {
+            case 'email':
+                if (!value) return 'Email là bắt buộc';
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Email không đúng định dạng';
+                return '';
+            case 'phone':
+                if (!value) return 'Số điện thoại là bắt buộc';
+                if (!/^0[0-9]{9,10}$/.test(value)) return 'Số điện thoại phải có 10-11 số và bắt đầu bằng số 0';
+                return '';
+            case 'password':
+                if (!value) return 'Mật khẩu là bắt buộc';
+                if (value.length < 6 || value.length > 32) return 'Mật khẩu phải từ 6 đến 32 ký tự';
+                return '';
+            case 'confirmPassword':
+                if (value !== formData.password) return 'Mật khẩu xác nhận không khớp';
+                return '';
+            default:
+                return '';
+        }
+    };
 
-    // Validation phía client
-    if (
-      !formData.username ||
-      !formData.phone ||
-      !formData.password ||
-      !formData.confirmPassword
-    ) {
-      setMessage("Vui lòng điền đầy đủ các trường");
-      setIsError(true);
-      setLoading(false);
-      return;
-    }
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setMessage("");
+        setIsError(false);
 
-    if (!/^0\d{9}$/.test(formData.phone)) {
-      setMessage("Số điện thoại không hợp lệ");
-      setIsError(true);
-      setLoading(false);
-      return;
-    }
+        // Validate all fields
+        const newErrors = {};
+        ['email', 'phone', 'password', 'confirmPassword'].forEach(field => {
+            const error = validateField(field, formData[field]);
+            if (error) newErrors[field] = error;
+        });
 
-    if (
-      formData.email &&
-      !/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(formData.email)
-    ) {
-      setMessage("Email không hợp lệ");
-      setIsError(true);
-      setLoading(false);
-      return;
-    }
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            setLoading(false);
+            return;
+        }
 
-    if (formData.password.length < 6 || formData.password.length > 32) {
-      setMessage("Mật khẩu phải từ 6 đến 32 ký tự");
-      setIsError(true);
-      setLoading(false);
-      return;
-    }
+        try {
+            const userData = {
+                email: formData.email,
+                phone: formData.phone,
+                password: formData.password,
+                fullName: formData.fullName || null,
+                address: formData.address || null
+            };
 
-    if (formData.password !== formData.confirmPassword) {
-      setMessage("Mật khẩu xác nhận không khớp");
-      setIsError(true);
-      setLoading(false);
-      return;
-    }
+            const response = await axios.post(
+                "http://localhost:8080/api/auth/register",
+                userData
+            );
 
-    try {
-      const response = await axios.post(
-        "http://localhost:8080/api/auth/register",
-        formData
-      );
-      setMessage(response.data.message || "Đăng ký thành công");
-      setIsError(false);
+            setMessage(response.data.message || "Đăng ký thành công!");
+            setIsError(false);
 
-      setTimeout(() => {
-        navigate(`/login?username=${encodeURIComponent(formData.username)}`);
-      }, 1000);
-    } catch (error) {
-      setMessage(error.response?.data?.message || "Lỗi kết nối server");
-      setIsError(true);
-    } finally {
-      setLoading(false);
-    }
-  };
+            setTimeout(() => {
+                navigate(`/login?email=${encodeURIComponent(formData.email)}`);
+            }, 1500);
+        } catch (error) {
+            setMessage(error.response?.data?.message || "Lỗi kết nối server");
+            setIsError(true);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  const inputStyle = {
-    width: "100%",
-    padding: "0.875rem 1rem 0.875rem 2.75rem",
-    border: "2px solid #e2e8f0",
-    borderRadius: "0.5rem",
-    fontSize: "1rem",
-    transition: "all 0.2s",
-    background: "#f7fafc",
-    boxSizing: "border-box",
-  };
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600 p-4">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+                <div className="h-1 bg-gradient-to-r from-blue-600 to-indigo-500"></div>
 
-  const iconStyle = {
-    position: "absolute",
-    left: "0.875rem",
-    top: "50%",
-    transform: "translateY(-50%)",
-    color: "#a0aec0",
-    width: "1.25rem",
-    height: "1.25rem",
-  };
+                <div className="p-8">
+                    <div className="text-center mb-6">
+                        <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-500 rounded-full flex items-center justify-center mb-4">
+                            <UserPlus className="text-white w-8 h-8" />
+                        </div>
+                        <h1 className="text-2xl font-bold text-gray-900 mb-2">Đăng ký tài khoản</h1>
+                        <p className="text-gray-500 text-sm">Tạo tài khoản mới để bắt đầu</p>
+                    </div>
 
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-        padding: "1rem",
-      }}
-    >
-      <div
-        style={{
-          background: "white",
-          padding: "2.5rem",
-          borderRadius: "1rem",
-          boxShadow:
-            "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-          width: "100%",
-          maxWidth: "480px",
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
-        {/* Top border gradient */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: "4px",
-            background: "linear-gradient(90deg, #3182ce, #667eea)",
-          }}
-        />
+                    {message && (
+                        <div className={`mb-6 p-3 rounded-md text-sm ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                            {message}
+                        </div>
+                    )}
 
-        {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "4rem",
-              height: "4rem",
-              background: "linear-gradient(135deg, #3182ce, #667eea)",
-              borderRadius: "50%",
-              marginBottom: "1rem",
-            }}
-          >
-            <UserPlus color="white" size={32} />
-          </div>
-          <h1
-            style={{
-              color: "#1a202c",
-              fontSize: "1.75rem",
-              fontWeight: "bold",
-              margin: "0 0 0.5rem 0",
-            }}
-          >
-            Đăng ký tài khoản
-          </h1>
-          <p
-            style={{
-              color: "#718096",
-              fontSize: "0.875rem",
-              margin: 0,
-            }}
-          >
-            Tạo tài khoản mới để bắt đầu
-          </p>
+                    <form onSubmit={handleSubmit}>
+                        <div className="space-y-4">
+                            {/* Email */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Email<span className="text-red-500 ml-1">*</span>
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        className={`w-full pl-10 pr-3 py-2 border rounded-lg ${errors.email ? 'border-red-500' : 'border-gray-200'}`}
+                                        placeholder="Nhập email"
+                                    />
+                                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                                </div>
+                                {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+                            </div>
+
+                            {/* Phone */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Số điện thoại<span className="text-red-500 ml-1">*</span>
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type="tel"
+                                        name="phone"
+                                        value={formData.phone}
+                                        onChange={handleChange}
+                                        className={`w-full pl-10 pr-3 py-2 border rounded-lg ${errors.phone ? 'border-red-500' : 'border-gray-200'}`}
+                                        placeholder="Nhập số điện thoại"
+                                    />
+                                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                                </div>
+                                {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone}</p>}
+                            </div>
+
+                            {/* Full Name */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Họ và tên (tùy chọn)
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        name="fullName"
+                                        value={formData.fullName}
+                                        onChange={handleChange}
+                                        className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg"
+                                        placeholder="Nhập họ và tên"
+                                    />
+                                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                                </div>
+                            </div>
+
+                            {/* Address */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Địa chỉ (tùy chọn)
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        name="address"
+                                        value={formData.address}
+                                        onChange={handleChange}
+                                        className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg"
+                                        placeholder="Nhập địa chỉ"
+                                    />
+                                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                                </div>
+                            </div>
+
+                            {/* Password */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Mật khẩu<span className="text-red-500 ml-1">*</span>
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        name="password"
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                        className={`w-full pl-10 pr-10 py-2 border rounded-lg ${errors.password ? 'border-red-500' : 'border-gray-200'}`}
+                                        placeholder="Nhập mật khẩu (6-32 ký tự)"
+                                    />
+                                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    >
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
+                                </div>
+                                {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
+                            </div>
+
+                            {/* Confirm Password */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Xác nhận mật khẩu<span className="text-red-500 ml-1">*</span>
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type={showConfirmPassword ? "text" : "password"}
+                                        name="confirmPassword"
+                                        value={formData.confirmPassword}
+                                        onChange={handleChange}
+                                        className={`w-full pl-10 pr-10 py-2 border rounded-lg ${errors.confirmPassword ? 'border-red-500' : 'border-gray-200'}`}
+                                        placeholder="Nhập lại mật khẩu"
+                                    />
+                                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    >
+                                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
+                                </div>
+                                {errors.confirmPassword && <p className="mt-1 text-sm text-red-500">{errors.confirmPassword}</p>}
+                            </div>
+
+                            {/* Submit Button */}
+                            <div className="pt-2">
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
+                                >
+                                    {loading ? (
+                                        <>
+                                            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Đang xử lý...
+                                        </>
+                                    ) : 'Đăng ký'}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div className="mt-6 text-center text-sm">
+                        <p className="text-gray-600">
+                            Đã có tài khoản?{' '}
+                            <Link to="/login" className="text-indigo-600 hover:text-indigo-800 font-medium">
+                                Đăng nhập ngay
+                            </Link>
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        {/* Form */}
-        <form
-          onSubmit={handleSubmit}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "1.25rem",
-          }}
-        >
-          {/* Message */}
-          {message && (
-            <div
-              style={{
-                background: isError ? "#fed7d7" : "#c6f6d5",
-                color: isError ? "#742a2a" : "#22543d",
-                padding: "0.875rem 1rem",
-                borderRadius: "0.5rem",
-                fontSize: "0.875rem",
-                textAlign: "center",
-                borderLeft: `4px solid ${isError ? "#e53e3e" : "#38a169"}`,
-              }}
-            >
-              {message}
-            </div>
-          )}
-
-          {/* Username Field */}
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "0.5rem",
-                fontWeight: "500",
-                color: "#4a5568",
-                fontSize: "0.875rem",
-              }}
-            >
-              Tên đăng nhập <span style={{ color: "#e53e3e" }}>*</span>
-            </label>
-            <div style={{ position: "relative" }}>
-              <User style={iconStyle} />
-              <input
-                type="text"
-                name="username"
-                placeholder="Nhập tên đăng nhập"
-                value={formData.username}
-                onChange={handleChange}
-                required
-                style={{
-                  ...inputStyle,
-                  onFocus: (e) => {
-                    e.target.style.outline = "none";
-                    e.target.style.borderColor = "#3182ce";
-                    e.target.style.background = "white";
-                    e.target.style.boxShadow =
-                      "0 0 0 3px rgba(49, 130, 206, 0.1)";
-                  },
-                  onBlur: (e) => {
-                    e.target.style.borderColor = "#e2e8f0";
-                    e.target.style.background = "#f7fafc";
-                    e.target.style.boxShadow = "none";
-                  },
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Phone Field */}
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "0.5rem",
-                fontWeight: "500",
-                color: "#4a5568",
-                fontSize: "0.875rem",
-              }}
-            >
-              Số điện thoại <span style={{ color: "#e53e3e" }}>*</span>
-            </label>
-            <div style={{ position: "relative" }}>
-              <Phone style={iconStyle} />
-              <input
-                type="text"
-                name="phone"
-                placeholder="Nhập số điện thoại"
-                value={formData.phone}
-                onChange={handleChange}
-                required
-                style={{
-                  ...inputStyle,
-                  onFocus: (e) => {
-                    e.target.style.outline = "none";
-                    e.target.style.borderColor = "#3182ce";
-                    e.target.style.background = "white";
-                    e.target.style.boxShadow =
-                      "0 0 0 3px rgba(49, 130, 206, 0.1)";
-                  },
-                  onBlur: (e) => {
-                    e.target.style.borderColor = "#e2e8f0";
-                    e.target.style.background = "#f7fafc";
-                    e.target.style.boxShadow = "none";
-                  },
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Email Field */}
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "0.5rem",
-                fontWeight: "500",
-                color: "#4a5568",
-                fontSize: "0.875rem",
-              }}
-            >
-              Email
-            </label>
-            <div style={{ position: "relative" }}>
-              <Mail style={iconStyle} />
-              <input
-                type="email"
-                name="email"
-                placeholder="Nhập email (tùy chọn)"
-                value={formData.email}
-                onChange={handleChange}
-                style={{
-                  ...inputStyle,
-                  onFocus: (e) => {
-                    e.target.style.outline = "none";
-                    e.target.style.borderColor = "#3182ce";
-                    e.target.style.background = "white";
-                    e.target.style.boxShadow =
-                      "0 0 0 3px rgba(49, 130, 206, 0.1)";
-                  },
-                  onBlur: (e) => {
-                    e.target.style.borderColor = "#e2e8f0";
-                    e.target.style.background = "#f7fafc";
-                    e.target.style.boxShadow = "none";
-                  },
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Password Field */}
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "0.5rem",
-                fontWeight: "500",
-                color: "#4a5568",
-                fontSize: "0.875rem",
-              }}
-            >
-              Mật khẩu <span style={{ color: "#e53e3e" }}>*</span>
-            </label>
-            <div style={{ position: "relative" }}>
-              <Lock style={iconStyle} />
-              <input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                placeholder="Nhập mật khẩu (6-32 ký tự)"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                style={{
-                  ...inputStyle,
-                  paddingRight: "2.75rem",
-                  onFocus: (e) => {
-                    e.target.style.outline = "none";
-                    e.target.style.borderColor = "#3182ce";
-                    e.target.style.background = "white";
-                    e.target.style.boxShadow =
-                      "0 0 0 3px rgba(49, 130, 206, 0.1)";
-                  },
-                  onBlur: (e) => {
-                    e.target.style.borderColor = "#e2e8f0";
-                    e.target.style.background = "#f7fafc";
-                    e.target.style.boxShadow = "none";
-                  },
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: "absolute",
-                  right: "0.875rem",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "#a0aec0",
-                  transition: "color 0.2s",
-                }}
-                onMouseEnter={(e) => (e.target.style.color = "#4a5568")}
-                onMouseLeave={(e) => (e.target.style.color = "#a0aec0")}
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
-          </div>
-
-          {/* Confirm Password Field */}
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "0.5rem",
-                fontWeight: "500",
-                color: "#4a5568",
-                fontSize: "0.875rem",
-              }}
-            >
-              Xác nhận mật khẩu <span style={{ color: "#e53e3e" }}>*</span>
-            </label>
-            <div style={{ position: "relative" }}>
-              <Lock style={iconStyle} />
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                name="confirmPassword"
-                placeholder="Nhập lại mật khẩu"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                required
-                style={{
-                  ...inputStyle,
-                  paddingRight: "2.75rem",
-                  onFocus: (e) => {
-                    e.target.style.outline = "none";
-                    e.target.style.borderColor = "#3182ce";
-                    e.target.style.background = "white";
-                    e.target.style.boxShadow =
-                      "0 0 0 3px rgba(49, 130, 206, 0.1)";
-                  },
-                  onBlur: (e) => {
-                    e.target.style.borderColor = "#e2e8f0";
-                    e.target.style.background = "#f7fafc";
-                    e.target.style.boxShadow = "none";
-                  },
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                style={{
-                  position: "absolute",
-                  right: "0.875rem",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "#a0aec0",
-                  transition: "color 0.2s",
-                }}
-                onMouseEnter={(e) => (e.target.style.color = "#4a5568")}
-                onMouseLeave={(e) => (e.target.style.color = "#a0aec0")}
-              >
-                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
-          </div>
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              background: loading
-                ? "#a0aec0"
-                : "linear-gradient(135deg, #3182ce, #667eea)",
-              color: "white",
-              padding: "0.875rem 1rem",
-              border: "none",
-              borderRadius: "0.5rem",
-              fontSize: "1rem",
-              fontWeight: "600",
-              cursor: loading ? "not-allowed" : "pointer",
-              transition: "all 0.2s",
-              minHeight: "3rem",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              marginTop: "0.5rem",
-            }}
-            onMouseEnter={(e) => {
-              if (!loading) {
-                e.target.style.transform = "translateY(-1px)";
-                e.target.style.boxShadow =
-                  "0 10px 15px -3px rgba(0, 0, 0, 0.1)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.transform = "translateY(0)";
-              e.target.style.boxShadow = "none";
-            }}
-          >
-            {loading ? "Đang đăng ký..." : "Đăng ký tài khoản"}
-          </button>
-        </form>
-
-        {/* Footer Links */}
-        <div
-          style={{
-            textAlign: "center",
-            marginTop: "2rem",
-            paddingTop: "1.5rem",
-            borderTop: "1px solid #e2e8f0",
-          }}
-        >
-          <p
-            style={{
-              margin: "0 0 1rem 0",
-              color: "#718096",
-              fontSize: "0.875rem",
-            }}
-          >
-            Đã có tài khoản?{" "}
-            <Link
-              to="/login"
-              style={{
-                color: "#3182ce",
-                textDecoration: "none",
-                fontWeight: "500",
-                transition: "color 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.color = "#2c5aa0";
-                e.target.style.textDecoration = "underline";
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.color = "#3182ce";
-                e.target.style.textDecoration = "none";
-              }}
-            >
-              Đăng nhập ngay
-            </Link>
-          </p>
-          <Link
-            to="/"
-            style={{
-              color: "#3182ce",
-              textDecoration: "none",
-              fontSize: "0.875rem",
-              fontWeight: "500",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              transition: "color 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.color = "#2c5aa0";
-              e.target.style.textDecoration = "underline";
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.color = "#3182ce";
-              e.target.style.textDecoration = "none";
-            }}
-          >
-            <Home size={16} />
-            Quay về trang chủ
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default Register;

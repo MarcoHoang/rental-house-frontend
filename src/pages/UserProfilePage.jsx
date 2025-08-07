@@ -209,7 +209,7 @@ const UserProfilePage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -224,13 +224,21 @@ const UserProfilePage = () => {
         return;
       }
 
-      const response = await authService.updateProfile({
-        fullName: profile.fullName,
-        phone: profile.phone,
-        address: profile.address,
-        dateOfBirth: profile.dateOfBirth,
-        avatar: profile.avatar
-      });
+      // Tạo đối tượng FormData
+      const formData = new FormData();
+
+      // Thêm các trường dữ liệu
+      formData.append('fullName', profile.fullName);
+      formData.append('phone', profile.phone);
+      if (profile.address) formData.append('address', profile.address);
+      if (profile.dateOfBirth) formData.append('dateOfBirth', profile.dateOfBirth);
+
+      // Thêm avatar nếu có
+      if (profile.avatar) {
+        formData.append('avatar', profile.avatar);
+      }
+
+      const response = await authService.updateProfile(formData);
 
       // Cập nhật thông tin user trong localStorage
       const updatedUser = {
@@ -238,23 +246,24 @@ const UserProfilePage = () => {
         fullName: profile.fullName,
         phone: profile.phone,
         address: profile.address,
-        avatar: response.avatar || user.avatar
+        dateOfBirth: profile.dateOfBirth,
+        avatar: response.data?.avatar || user.avatar
       };
-      
+
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
-      
+
       // Kích hoạt sự kiện để cập nhật header
       window.dispatchEvent(new Event('storage'));
 
       setMessage({
-        text: 'Cập nhật thông tin thành công!',
+        text: response.message || 'Cập nhật thông tin thành công!',
         type: 'success'
       });
     } catch (error) {
       console.error('Error updating profile:', error);
       setMessage({
-        text: error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật thông tin',
+        text: error.response?.data?.message || error.message || 'Có lỗi xảy ra khi cập nhật thông tin',
         type: 'error'
       });
     } finally {

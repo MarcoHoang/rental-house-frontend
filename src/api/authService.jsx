@@ -25,31 +25,34 @@ api.interceptors.request.use(
     }
 );
 
+// Xử lý lỗi 401 (Unauthorized)
+api.interceptors.response.use(
+    response => response,
+    error => {
+        if (error.response?.status === 401) {
+            // Xóa thông tin đăng nhập
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            // Chuyển hướng về trang đăng nhập
+            window.location.href = '/login';
+        }
+        return Promise.reject(error);
+    }
+);
+
 const authService = {
     // Cập nhật thông tin người dùng
-    updateProfile: async (profileData) => {
+    updateProfile: async (formData) => {
         try {
-            const formData = new FormData();
-
-            // Thêm các trường dữ liệu vào formData
-            if (profileData.fullName) formData.append('fullName', profileData.fullName);
-            if (profileData.phone) formData.append('phone', profileData.phone);
-            if (profileData.address) formData.append('address', profileData.address);
-            if (profileData.dateOfBirth) formData.append('dateOfBirth', profileData.dateOfBirth);
-            if (profileData.avatar) formData.append('avatar', profileData.avatar);
-
-            const response = await api.put('users/profile', formData, {
+            const response = await api.put('/users/profile', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
             });
-
-            return response.data.data;
+            return response.data;
         } catch (error) {
             console.error('Lỗi khi cập nhật thông tin:', error);
-            throw error.response?.data || {
-                message: error.message || 'Có lỗi xảy ra khi cập nhật thông tin'
-            };
+            throw error;
         }
     },
 
