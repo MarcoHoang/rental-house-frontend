@@ -13,6 +13,7 @@ import {
   Filter,
   MoreHorizontal,
 } from "lucide-react";
+import UserManagement from "./UserManagement";
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -63,10 +64,10 @@ const NavItem = styled.button`
   border: none;
   cursor: pointer;
   transition: all 0.2s;
-  color: ${(props) => (props.active ? "#3182ce" : "#4a5568")};
-  background-color: ${(props) => (props.active ? "#ebf8ff" : "transparent")};
-  border-right: ${(props) => (props.active ? "3px solid #3182ce" : "none")};
-  font-weight: ${(props) => (props.active ? "600" : "500")};
+  color: ${(props) => (props.$active ? "#3182ce" : "#4a5568")};
+  background-color: ${(props) => (props.$active ? "#ebf8ff" : "transparent")};
+  border-right: ${(props) => (props.$active ? "3px solid #3182ce" : "none")};
+  font-weight: ${(props) => (props.$active ? "600" : "500")};
 
   &:hover {
     background-color: #f7fafc;
@@ -394,10 +395,10 @@ const Button = styled.button`
   display: inline-flex;
   align-items: center;
   padding: 0.625rem 1.25rem;
-  border: 2px solid ${(props) => (props.primary ? "#3182ce" : "#e2e8f0")};
+  border: 2px solid ${(props) => (props.$primary ? "#3182ce" : "#e2e8f0")};
   border-radius: 0.5rem;
-  background: ${(props) => (props.primary ? "#3182ce" : "white")};
-  color: ${(props) => (props.primary ? "white" : "#4a5568")};
+  background: ${(props) => (props.$primary ? "#3182ce" : "white")};
+  color: ${(props) => (props.$primary ? "white" : "#4a5568")};
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
@@ -568,6 +569,7 @@ const AdminDashboard = () => {
 
   const sidebarItems = [
     { id: "dashboard", label: "Tổng quan", icon: Home },
+    { id: "users", label: "Quản lý User", icon: Users },
     { id: "houses", label: "Quản lý nhà", icon: Home },
     { id: "tenants", label: "Khách thuê", icon: Users },
     { id: "contracts", label: "Hợp đồng", icon: FileText },
@@ -589,7 +591,7 @@ const AdminDashboard = () => {
             return (
               <NavItem
                 key={item.id}
-                active={activeTab === item.id}
+                $active={activeTab === item.id}
                 onClick={() => setActiveTab(item.id)}
               >
                 <Icon />
@@ -627,7 +629,7 @@ const AdminDashboard = () => {
                 <Filter />
                 Lọc
               </Button>
-              <Button primary>
+              <Button $primary>
                 <Plus />
                 Thêm mới
               </Button>
@@ -716,6 +718,8 @@ const AdminDashboard = () => {
               </Card>
             </div>
           )}
+
+          {activeTab === "users" && <UserManagement />}
 
           {activeTab === "houses" && (
             <div>

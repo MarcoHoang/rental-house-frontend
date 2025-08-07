@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { Shield, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import LoadingSpinner from "../common/LoadingSpinner";
+import { adminAuth } from "../../api/adminApi";
 
 const LoginContainer = styled.div`
   min-height: 100vh;
@@ -231,33 +232,42 @@ const AdminLogin = () => {
     setError("");
 
     try {
-      // Simulate API call - replace with actual API
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Gọi API đăng nhập thật sự
+      const response = await adminAuth.login(formData);
 
-      // Mock validation - replace with actual API call
-      if (
-        formData.email === "admin@renthouse.com" &&
-        formData.password === "admin123"
-      ) {
-        const mockAdminData = {
-          id: 1,
-          name: "Admin User",
-          email: formData.email,
-          role: "admin",
-          avatar: null,
+      // Kiểm tra cấu trúc response từ backend
+      // Dựa trên ApiResponse của bạn, dữ liệu nằm trong response.data.data
+      const responseData = response.data?.data;
+      const token = responseData?.token;
+
+      if (token && responseData?.role === "ADMIN") {
+        // Tạo đối tượng người dùng để lưu
+        const adminUser = {
+          id: responseData.id,
+          name: responseData.fullName,
+          email: responseData.email,
+          role: responseData.role,
         };
 
-        // Save admin data to localStorage
-        localStorage.setItem("adminToken", "mock-admin-token-" + Date.now());
-        localStorage.setItem("adminUser", JSON.stringify(mockAdminData));
+        // LƯU TOKEN VÀ THÔNG TIN USER THẬT VÀO LOCALSTORAGE
+        localStorage.setItem("adminToken", token);
+        localStorage.setItem("adminUser", JSON.stringify(adminUser));
 
-        // Redirect to admin dashboard
+        // Điều hướng đến dashboard
         navigate("/admin/dashboard");
       } else {
-        throw new Error("Email hoặc mật khẩu không đúng");
+        // Nếu không có token hoặc role không phải admin
+        throw new Error(
+          "Thông tin đăng nhập không hợp lệ hoặc bạn không phải Admin."
+        );
       }
     } catch (err) {
-      setError(err.message || "Đăng nhập thất bại. Vui lòng thử lại.");
+      // Xử lý lỗi từ API
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "Đăng nhập thất bại. Vui lòng thử lại.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -276,7 +286,7 @@ const AdminLogin = () => {
 
         <Form onSubmit={handleSubmit}>
           {error && <ErrorMessage>{error}</ErrorMessage>}
-
+          {/* ... (Phần còn lại của JSX giữ nguyên không đổi) ... */}
           <FormGroup>
             <label htmlFor="email">Email Admin</label>
             <div className="input-wrapper">
@@ -327,7 +337,6 @@ const AdminLogin = () => {
             )}
           </SubmitButton>
         </Form>
-
         <BackToHome>
           <a href="/">← Quay về trang chủ</a>
         </BackToHome>

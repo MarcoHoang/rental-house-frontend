@@ -1,17 +1,22 @@
+// src/api/adminApi.jsx
+
 import axios from "axios";
 
-// Base URL - thay đổi theo backend của bạn
-const API_BASE_URL = "http://localhost:3001/api";
+// --- CẤU HÌNH TRUNG TÂM ---
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+const API_PREFIX = import.meta.env.VITE_API_PREFIX || "/api/v1";
 
-const adminApi = axios.create({
+// 1. Chỉ một instance duy nhất cho toàn bộ file
+const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Interceptor để thêm token vào header
-adminApi.interceptors.request.use(
+// 2. Gắn Interceptor vào instance duy nhất này
+//    Nó sẽ tự động thêm token vào MỌI request cần xác thực.
+apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("adminToken");
     if (token) {
@@ -24,52 +29,71 @@ adminApi.interceptors.request.use(
   }
 );
 
+// 3. Đảm bảo MỌI HÀM đều dùng apiClient và có API_PREFIX
+//    để tạo ra URL chính xác (ví dụ: /api/v1/admin/login)
+
 // Admin Authentication
 export const adminAuth = {
-  login: (credentials) => adminApi.post("/admin/login", credentials),
-  logout: () => adminApi.post("/admin/logout"),
-  getProfile: () => adminApi.get("/admin/profile"),
+  login: (credentials) =>
+    apiClient.post(`${API_PREFIX}/admin/login`, credentials),
+  logout: () => apiClient.post(`${API_PREFIX}/admin/logout`),
+  getProfile: () => apiClient.get(`${API_PREFIX}/admin/profile`),
   changePassword: (passwordData) =>
-    adminApi.put("/admin/change-password", passwordData),
+    apiClient.put(`${API_PREFIX}/admin/change-password`, passwordData),
+};
+
+// User Management
+export const usersApi = {
+  getAll: (params) => apiClient.get(`${API_PREFIX}/admin/users`, { params }),
+  updateStatus: (id, active) =>
+    apiClient.patch(`${API_PREFIX}/admin/users/${id}/status`, { active }),
 };
 
 // Houses Management
 export const housesApi = {
-  getAll: (params) => adminApi.get("/admin/houses", { params }),
-  getById: (id) => adminApi.get(`/admin/houses/${id}`),
-  create: (houseData) => adminApi.post("/admin/houses", houseData),
-  update: (id, houseData) => adminApi.put(`/admin/houses/${id}`, houseData),
-  delete: (id) => adminApi.delete(`/admin/houses/${id}`),
+  getAll: (params) => apiClient.get(`${API_PREFIX}/admin/houses`, { params }),
+  getById: (id) => apiClient.get(`${API_PREFIX}/admin/houses/${id}`),
+  create: (houseData) =>
+    apiClient.post(`${API_PREFIX}/admin/houses`, houseData),
+  update: (id, houseData) =>
+    apiClient.put(`${API_PREFIX}/admin/houses/${id}`, houseData),
+  delete: (id) => apiClient.delete(`${API_PREFIX}/admin/houses/${id}`),
   updateStatus: (id, status) =>
-    adminApi.patch(`/admin/houses/${id}/status`, { status }),
+    apiClient.patch(`${API_PREFIX}/admin/houses/${id}/status`, { status }),
 };
 
 // Tenants Management
 export const tenantsApi = {
-  getAll: (params) => adminApi.get("/admin/tenants", { params }),
-  getById: (id) => adminApi.get(`/admin/tenants/${id}`),
-  create: (tenantData) => adminApi.post("/admin/tenants", tenantData),
-  update: (id, tenantData) => adminApi.put(`/admin/tenants/${id}`, tenantData),
-  delete: (id) => adminApi.delete(`/admin/tenants/${id}`),
+  getAll: (params) => apiClient.get(`${API_PREFIX}/admin/tenants`, { params }),
+  getById: (id) => apiClient.get(`${API_PREFIX}/admin/tenants/${id}`),
+  create: (tenantData) =>
+    apiClient.post(`${API_PREFIX}/admin/tenants`, tenantData),
+  update: (id, tenantData) =>
+    apiClient.put(`${API_PREFIX}/admin/tenants/${id}`, tenantData),
+  delete: (id) => apiClient.delete(`${API_PREFIX}/admin/tenants/${id}`),
 };
 
 // Contracts Management
 export const contractsApi = {
-  getAll: (params) => adminApi.get("/admin/contracts", { params }),
-  getById: (id) => adminApi.get(`/admin/contracts/${id}`),
-  create: (contractData) => adminApi.post("/admin/contracts", contractData),
+  getAll: (params) =>
+    apiClient.get(`${API_PREFIX}/admin/contracts`, { params }),
+  getById: (id) => apiClient.get(`${API_PREFIX}/admin/contracts/${id}`),
+  create: (contractData) =>
+    apiClient.post(`${API_PREFIX}/admin/contracts`, contractData),
   update: (id, contractData) =>
-    adminApi.put(`/admin/contracts/${id}`, contractData),
-  delete: (id) => adminApi.delete(`/admin/contracts/${id}`),
-  terminate: (id) => adminApi.patch(`/admin/contracts/${id}/terminate`),
+    apiClient.put(`${API_PREFIX}/admin/contracts/${id}`, contractData),
+  delete: (id) => apiClient.delete(`${API_PREFIX}/admin/contracts/${id}`),
+  terminate: (id) =>
+    apiClient.patch(`${API_PREFIX}/admin/contracts/${id}/terminate`),
 };
 
 // Dashboard Statistics
 export const dashboardApi = {
-  getStats: () => adminApi.get("/admin/dashboard/stats"),
-  getRecentHouses: () => adminApi.get("/admin/dashboard/recent-houses"),
+  getStats: () => apiClient.get(`${API_PREFIX}/admin/dashboard/stats`),
+  getRecentHouses: () =>
+    apiClient.get(`${API_PREFIX}/admin/dashboard/recent-houses`),
   getRevenueChart: (period) =>
-    adminApi.get(`/admin/dashboard/revenue?period=${period}`),
+    apiClient.get(`${API_PREFIX}/admin/dashboard/revenue?period=${period}`),
 };
 
-export default adminApi;
+export default apiClient;
