@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronDownIcon, UserIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
-import  authService  from '../../api/authService';
+import { ChevronDownIcon, UserIcon, ArrowRightOnRectangleIcon, HomeIcon } from '@heroicons/react/24/outline';
+import authService from '../../api/authService';
 import styled from 'styled-components';
+import HostRegistrationForm from '../host/HostRegistrationForm';
 
 // Hàm tạo màu ngẫu nhiên dựa trên tên
 const stringToColor = (string) => {
@@ -104,8 +105,8 @@ const AuthButton = styled(Link)`
 const UserMenu = styled.div`
   position: relative;
   display: flex;
-    align-items: center;
-    gap: 1rem;
+  align-items: center;
+  gap: 1rem;
 `;
 
 const UserMenuButton = styled.button`
@@ -202,6 +203,9 @@ const LogoutButton = styled.button`
   cursor: pointer;
   font-size: 0.875rem;
   transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 
   &:hover {
     background-color: #fef2f2;
@@ -211,20 +215,22 @@ const LogoutButton = styled.button`
 const Header = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
+    const [showHostRegistration, setShowHostRegistration] = useState(false);
     const [userData, setUserData] = useState({
         username: '',
         fullName: '',
-        avatar: null
+        avatar: null,
+        email: '',
+        role: ''
     });
     const navigate = useNavigate();
-
 
     // Hàm xử lý đăng xuất
     const handleLogout = useCallback(() => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setIsLoggedIn(false);
-        setUserData({ username: '', fullName: '', avatar: null });
+        setUserData({ username: '', fullName: '', avatar: null, email: '', role: '' });
         setShowDropdown(false);
         // Kích hoạt sự kiện để cập nhật giao diện
         window.dispatchEvent(new Event('storage'));
@@ -249,7 +255,8 @@ const Header = () => {
                     username: userData.username || '',
                     fullName: userData.fullName || userData.username || '',
                     avatar: userData.avatar || null,
-                    email: userData.email || ''
+                    email: userData.email || '',
+                    role: userData.role || ''
                 });
                 setIsLoggedIn(true);
             }
@@ -261,7 +268,8 @@ const Header = () => {
                     username: profile.username || '',
                     fullName: profile.fullName || profile.username || '',
                     avatar: profile.avatar || null,
-                    email: profile.email || ''
+                    email: profile.email || '',
+                    role: profile.role || ''
                 };
                 setUserData(userData);
                 localStorage.setItem('user', JSON.stringify(userData));
@@ -289,7 +297,8 @@ const Header = () => {
                         username: userData.username || '',
                         fullName: userData.fullName || userData.username || '',
                         avatar: userData.avatar || null,
-                        email: userData.email || ''
+                        email: userData.email || '',
+                        role: userData.role || ''
                     });
                     setIsLoggedIn(true);
                 } catch (error) {
@@ -386,9 +395,24 @@ const Header = () => {
                                             <UserIcon className="w-4 h-4 mr-3 text-gray-400" />
                                             Thông tin cá nhân
                                         </Link>
+                                        
+                                        {userData.role !== 'HOST' && (
+                                            <button 
+                                                type="button"
+                                                onClick={() => {
+                                                    setShowDropdown(false);
+                                                    setShowHostRegistration(true);
+                                                }}
+                                                className="w-full text-left flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                                            >
+                                                <HomeIcon className="w-4 h-4 mr-3 text-gray-400" />
+                                                Xin xét duyệt trở thành chủ nhà
+                                            </button>
+                                        )}
+                                        
                                         <button 
                                             onClick={handleLogout}
-                                            className="w-full text-left flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                                            className="w-full text-left flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 border-t border-gray-100"
                                         >
                                             <ArrowRightOnRectangleIcon className="w-4 h-4 mr-3 text-gray-400" />
                                             Đăng xuất
@@ -416,6 +440,39 @@ const Header = () => {
                     )}
                 </div>
             </HeaderContainer>
+            
+            {/* Host Registration Modal */}
+            <HostRegistrationForm 
+                isOpen={showHostRegistration}
+                onClose={() => setShowHostRegistration(false)}
+                onSubmit={async (formData) => {
+                    try {
+                        const token = localStorage.getItem('token');
+                        if (!token) {
+                            navigate('/login');
+                            return;
+                        }
+                        
+                        const response = await fetch('http://localhost:8080/api/host-applications', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: formData
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error('Có lỗi xảy ra khi gửi đơn đăng ký');
+                        }
+                        
+                        const RESULT = await response.json();
+                        alert('Đã gửi đơn đăng ký trở thành chủ nhà thành công! Chúng tôi sẽ liên hệ với bạn sớm.');
+                    } catch (error) {
+                        console.error('Lỗi khi gửi đơn đăng ký:', error);
+                        alert(error.message || 'Có lỗi xảy ra khi gửi đơn đăng ký. Vui lòng thử lại sau.');
+                    }
+                }}
+            />
         </HeaderWrapper>
     );
 };

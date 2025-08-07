@@ -209,7 +209,7 @@ const UserProfilePage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -224,20 +224,21 @@ const UserProfilePage = () => {
         return;
       }
 
-      // Tạo đối tượng dữ liệu cập nhật
-      const updateData = {
-        fullName: profile.fullName,
-        phone: profile.phone,
-        address: profile.address || '',
-        dateOfBirth: profile.dateOfBirth || null
-      };
+      // Tạo đối tượng FormData
+      const formData = new FormData();
 
-      // Thêm avatar vào dữ liệu nếu có
+      // Thêm các trường dữ liệu
+      formData.append('fullName', profile.fullName);
+      formData.append('phone', profile.phone);
+      if (profile.address) formData.append('address', profile.address);
+      if (profile.dateOfBirth) formData.append('dateOfBirth', profile.dateOfBirth);
+
+      // Thêm avatar nếu có
       if (profile.avatar) {
-        updateData.avatar = profile.avatar;
+        formData.append('avatar', profile.avatar);
       }
 
-      const response = await authService.updateProfile(updateData);
+      const response = await authService.updateProfile(formData);
 
       // Cập nhật thông tin user trong localStorage
       const updatedUser = {
@@ -248,10 +249,10 @@ const UserProfilePage = () => {
         dateOfBirth: profile.dateOfBirth,
         avatar: response.data?.avatar || user.avatar
       };
-      
+
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
-      
+
       // Kích hoạt sự kiện để cập nhật header
       window.dispatchEvent(new Event('storage'));
 

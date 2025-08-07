@@ -42,24 +42,13 @@ api.interceptors.response.use(
 
 const authService = {
     // Cập nhật thông tin người dùng
-    updateProfile: async (profileData) => {
+    updateProfile: async (formData) => {
         try {
-            const formData = new FormData();
-            
-            // Thêm tất cả các trường dữ liệu vào formData
-            Object.keys(profileData).forEach(key => {
-                if (profileData[key] !== undefined && profileData[key] !== null) {
-                    formData.append(key, profileData[key]);
-                }
-            });
-
             const response = await api.put('/users/profile', formData, {
                 headers: {
-                    'Content-Type': 'multipart/form-data',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'Content-Type': 'multipart/form-data'
                 }
             });
-
             return response.data;
         } catch (error) {
             console.error('Lỗi khi cập nhật thông tin:', error);
