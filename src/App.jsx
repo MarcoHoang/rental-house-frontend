@@ -1,43 +1,39 @@
 // src/App.jsx
 import React from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import HomePage from "./pages/HomePage.jsx";
-import Register from "./components/login-register/Register";
-import Login from "./components/login-register/Login";
-import AdminPage from "./pages/AdminPage";
-import AdminLogin from "./components/admin/AdminLogin";
-import AdminRoute from "./components/admin/AdminRoute";
+
+import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
+import HomePage from "./pages/HomePage";
+import Register from './components/login-register/Register';
+import Login from './components/login-register/Login';
+import UserProfilePage from './pages/UserProfilePage.jsx';
+
+// Protected Route Component
+const ProtectedRoute = ({ children }) => {
+  const token = localStorage.getItem('token');
+  return token ? children : <Navigate to="/login" replace />;
+};
+
+
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Public Routes */}
+
         <Route path="/" element={<HomePage />} />
-        <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
-
-        {/* Admin Routes */}
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route
-          path="/admin/dashboard"
+        <Route path="/register" element={<Register />} />
+        
+        {/* Protected Routes */}
+        <Route 
+          path="/profile" 
           element={
-            <AdminRoute>
-              <AdminPage />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin"
-          element={
-            <AdminRoute>
-              <AdminPage />
-            </AdminRoute>
-          }
+            <ProtectedRoute>
+              <UserProfilePage />
+            </ProtectedRoute>
+          } 
         />
 
-        {/* Future Routes - uncomment when ready */}
-        {/* <Route path="/houses/:id" element={<HouseDetailPage />} /> */}
       </Routes>
     </Router>
   );
