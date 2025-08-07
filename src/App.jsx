@@ -7,6 +7,7 @@ import Register from './components/login-register/Register';
 import Login from './components/login-register/Login';
 import UserProfilePage from './pages/UserProfilePage.jsx';
 import ForgotPassword from './components/login-register/ForgotPassword';
+import AdminLogin from './components/admin/AdminLogin.jsx';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -35,7 +36,7 @@ function App() {
             </ProtectedRoute>
           } 
         />
-
+        <Route path="/admin/login" element={<AdminLogin />} />
       </Routes>
     </Router>
   );

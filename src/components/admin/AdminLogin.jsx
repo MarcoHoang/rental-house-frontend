@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { Shield, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import LoadingSpinner from "../common/LoadingSpinner";
 import { adminAuth } from "../../api/adminApi";
+import { jwtDecode } from "jwt-decode";
 
 const LoginContainer = styled.div`
   min-height: 100vh;
@@ -226,52 +227,49 @@ const AdminLogin = () => {
     if (error) setError("");
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError("");
 
-    try {
-      // Gọi API đăng nhập thật sự
-      const response = await adminAuth.login(formData);
+  try {
+    const response = await adminAuth.login(formData);
+    const responseData = response.data?.data;
+    const token = responseData?.token;
 
-      // Kiểm tra cấu trúc response từ backend
-      // Dựa trên ApiResponse của bạn, dữ liệu nằm trong response.data.data
-      const responseData = response.data?.data;
-      const token = responseData?.token;
-
-      if (token && responseData?.role === "ADMIN") {
-        // Tạo đối tượng người dùng để lưu
-        const adminUser = {
-          id: responseData.id,
-          name: responseData.fullName,
-          email: responseData.email,
-          role: responseData.role,
-        };
-
-        // LƯU TOKEN VÀ THÔNG TIN USER THẬT VÀO LOCALSTORAGE
-        localStorage.setItem("adminToken", token);
-        localStorage.setItem("adminUser", JSON.stringify(adminUser));
-
-        // Điều hướng đến dashboard
-        navigate("/admin/dashboard");
-      } else {
-        // Nếu không có token hoặc role không phải admin
-        throw new Error(
-          "Thông tin đăng nhập không hợp lệ hoặc bạn không phải Admin."
-        );
-      }
-    } catch (err) {
-      // Xử lý lỗi từ API
-      const errorMessage =
-        err.response?.data?.message ||
-        err.message ||
-        "Đăng nhập thất bại. Vui lòng thử lại.";
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
+    if (!token) {
+      throw new Error("Không nhận được token từ server.");
     }
-  };
+
+    const decoded = jwtDecode(token);
+
+    const roleFromToken =
+      decoded?.role?.replace("ROLE_", "") || ""; // lấy từ claim 'role' đã được backend thêm
+
+    if (roleFromToken !== "ADMIN") {
+      throw new Error("Bạn không có quyền truy cập Admin.");
+    }
+
+    const adminUser = {
+      id: decoded?.id || "",
+      email: decoded?.sub || "",
+      role: roleFromToken,
+    };
+
+    localStorage.setItem("adminToken", token);
+    localStorage.setItem("adminUser", JSON.stringify(adminUser));
+
+    navigate("/admin/dashboard");
+  } catch (err) {
+    const errorMessage =
+      err.response?.data?.message ||
+      err.message ||
+      "Đăng nhập thất bại. Vui lòng thử lại.";
+    setError(errorMessage);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <LoginContainer>
