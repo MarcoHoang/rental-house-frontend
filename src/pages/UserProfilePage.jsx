@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { authService } from '../api/authService';
+import  authService  from '../api/authService';
 
 const ProfileContainer = styled.div`
   max-width: 800px;

@@ -6,6 +6,7 @@ import HomePage from "./pages/HomePage";
 import Register from './components/login-register/Register';
 import Login from './components/login-register/Login';
 import UserProfilePage from './pages/UserProfilePage.jsx';
+import ForgotPassword from './components/login-register/ForgotPassword';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -23,8 +24,9 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        
-        {/* Protected Routes */}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+
+          {/* Protected Routes */}
         <Route 
           path="/profile" 
           element={
