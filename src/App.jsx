@@ -1,5 +1,6 @@
-// src/App.js
+// src/App.jsx
 import React from "react";
+
 import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import Register from './components/login-register/Register';
@@ -12,10 +13,13 @@ const ProtectedRoute = ({ children }) => {
   return token ? children : <Navigate to="/login" replace />;
 };
 
+
+
 function App() {
   return (
     <Router>
       <Routes>
+
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -29,6 +33,7 @@ function App() {
             </ProtectedRoute>
           } 
         />
+
       </Routes>
     </Router>
   );
