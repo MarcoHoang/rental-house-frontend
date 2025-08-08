@@ -1,3 +1,5 @@
+// src/components/login-register/Register.jsx
+
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
@@ -10,9 +12,10 @@ import {
   EyeOff,
   Home,
 } from "lucide-react";
-import axios from "axios";
+import axios from "axios"; // **KHÔI PHỤC LẠI AXIOS**
 
 const Register = () => {
+  // --- Toàn bộ state và hàm handleChange được giữ nguyên ---
   const [formData, setFormData] = useState({
     username: "",
     phone: "",
@@ -29,39 +32,37 @@ const Register = () => {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    // Clear message when user starts typing
     if (message) {
       setMessage("");
       setIsError(false);
     }
   };
 
+  // --- HÀM HANDLESUBMIT ĐÃ ĐƯỢC KHÔI PHỤC LẠI LOGIC GỐC CỦA BẠN ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
     setIsError(false);
 
-    // Validation phía client
+    // Giữ nguyên validation
     if (
       !formData.username ||
       !formData.phone ||
       !formData.password ||
       !formData.confirmPassword
     ) {
-      setMessage("Vui lòng điền đầy đủ các trường");
+      setMessage("Vui lòng điền đầy đủ các trường bắt buộc");
       setIsError(true);
       setLoading(false);
       return;
     }
-
     if (!/^0\d{9}$/.test(formData.phone)) {
-      setMessage("Số điện thoại không hợp lệ");
+      setMessage("Số điện thoại không hợp lệ (gồm 10 số, bắt đầu bằng 0)");
       setIsError(true);
       setLoading(false);
       return;
     }
-
     if (
       formData.email &&
       !/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(formData.email)
@@ -71,14 +72,12 @@ const Register = () => {
       setLoading(false);
       return;
     }
-
     if (formData.password.length < 6 || formData.password.length > 32) {
       setMessage("Mật khẩu phải từ 6 đến 32 ký tự");
       setIsError(true);
       setLoading(false);
       return;
     }
-
     if (formData.password !== formData.confirmPassword) {
       setMessage("Mật khẩu xác nhận không khớp");
       setIsError(true);
@@ -87,6 +86,7 @@ const Register = () => {
     }
 
     try {
+      // **KHÔI PHỤC LẠI LỆNH GỌI API GỐC BẰNG AXIOS**
       const response = await axios.post(
         "http://localhost:8080/api/auth/register",
         formData
@@ -94,152 +94,55 @@ const Register = () => {
       setMessage(response.data.message || "Đăng ký thành công");
       setIsError(false);
 
+      // **KHÔI PHỤC LẠI CÁCH CHUYỂN TRANG GỐC**
       setTimeout(() => {
         navigate(`/login?username=${encodeURIComponent(formData.username)}`);
       }, 1000);
     } catch (error) {
+      // Giữ nguyên cách xử lý lỗi
       setMessage(error.response?.data?.message || "Lỗi kết nối server");
       setIsError(true);
     } finally {
       setLoading(false);
     }
   };
+  // --- KẾT THÚC PHẦN LOGIC ĐÃ SỬA ---
 
-  const inputStyle = {
-    width: "100%",
-    padding: "0.875rem 1rem 0.875rem 2.75rem",
-    border: "2px solid #e2e8f0",
-    borderRadius: "0.5rem",
-    fontSize: "1rem",
-    transition: "all 0.2s",
-    background: "#f7fafc",
-    boxSizing: "border-box",
-  };
-
-  const iconStyle = {
-    position: "absolute",
-    left: "0.875rem",
-    top: "50%",
-    transform: "translateY(-50%)",
-    color: "#a0aec0",
-    width: "1.25rem",
-    height: "1.25rem",
-  };
-
+  // --- Giao diện Tailwind CSS vẫn được giữ nguyên ---
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-        padding: "1rem",
-      }}
-    >
-      <div
-        style={{
-          background: "white",
-          padding: "2.5rem",
-          borderRadius: "1rem",
-          boxShadow:
-            "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-          width: "100%",
-          maxWidth: "480px",
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
-        {/* Top border gradient */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: "4px",
-            background: "linear-gradient(90deg, #3182ce, #667eea)",
-          }}
-        />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-indigo-500 to-purple-600 p-4">
+      <div className="bg-white p-8 sm:p-10 rounded-xl shadow-2xl w-full max-w-md relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 to-indigo-500" />
 
-        {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "4rem",
-              height: "4rem",
-              background: "linear-gradient(135deg, #3182ce, #667eea)",
-              borderRadius: "50%",
-              marginBottom: "1rem",
-            }}
-          >
-            <UserPlus color="white" size={32} />
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-500 rounded-full mb-4">
+            <UserPlus className="text-white" size={32} />
           </div>
-          <h1
-            style={{
-              color: "#1a202c",
-              fontSize: "1.75rem",
-              fontWeight: "bold",
-              margin: "0 0 0.5rem 0",
-            }}
-          >
+          <h1 className="text-gray-800 text-2xl sm:text-3xl font-bold mb-1">
             Đăng ký tài khoản
           </h1>
-          <p
-            style={{
-              color: "#718096",
-              fontSize: "0.875rem",
-              margin: 0,
-            }}
-          >
-            Tạo tài khoản mới để bắt đầu
-          </p>
+          <p className="text-gray-500 text-sm">Tạo tài khoản mới để bắt đầu</p>
         </div>
 
-        {/* Form */}
-        <form
-          onSubmit={handleSubmit}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "1.25rem",
-          }}
-        >
-          {/* Message */}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           {message && (
             <div
-              style={{
-                background: isError ? "#fed7d7" : "#c6f6d5",
-                color: isError ? "#742a2a" : "#22543d",
-                padding: "0.875rem 1rem",
-                borderRadius: "0.5rem",
-                fontSize: "0.875rem",
-                textAlign: "center",
-                borderLeft: `4px solid ${isError ? "#e53e3e" : "#38a169"}`,
-              }}
+              className={`p-3.5 rounded-lg text-sm text-center border-l-4 ${
+                isError
+                  ? "bg-red-100 text-red-800 border-red-500"
+                  : "bg-green-100 text-green-800 border-green-500"
+              }`}
             >
               {message}
             </div>
           )}
 
-          {/* Username Field */}
           <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "0.5rem",
-                fontWeight: "500",
-                color: "#4a5568",
-                fontSize: "0.875rem",
-              }}
-            >
-              Tên đăng nhập <span style={{ color: "#e53e3e" }}>*</span>
+            <label className="block mb-2 font-medium text-gray-700 text-sm">
+              Tên đăng nhập <span className="text-red-500">*</span>
             </label>
-            <div style={{ position: "relative" }}>
-              <User style={iconStyle} />
+            <div className="relative">
+              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
                 name="username"
@@ -247,40 +150,17 @@ const Register = () => {
                 value={formData.username}
                 onChange={handleChange}
                 required
-                style={{
-                  ...inputStyle,
-                  onFocus: (e) => {
-                    e.target.style.outline = "none";
-                    e.target.style.borderColor = "#3182ce";
-                    e.target.style.background = "white";
-                    e.target.style.boxShadow =
-                      "0 0 0 3px rgba(49, 130, 206, 0.1)";
-                  },
-                  onBlur: (e) => {
-                    e.target.style.borderColor = "#e2e8f0";
-                    e.target.style.background = "#f7fafc";
-                    e.target.style.boxShadow = "none";
-                  },
-                }}
+                className="w-full py-3 px-4 pl-11 border-2 border-gray-200 rounded-lg text-base transition-all bg-gray-50 focus:outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
               />
             </div>
           </div>
 
-          {/* Phone Field */}
           <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "0.5rem",
-                fontWeight: "500",
-                color: "#4a5568",
-                fontSize: "0.875rem",
-              }}
-            >
-              Số điện thoại <span style={{ color: "#e53e3e" }}>*</span>
+            <label className="block mb-2 font-medium text-gray-700 text-sm">
+              Số điện thoại <span className="text-red-500">*</span>
             </label>
-            <div style={{ position: "relative" }}>
-              <Phone style={iconStyle} />
+            <div className="relative">
+              <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
                 name="phone"
@@ -288,80 +168,34 @@ const Register = () => {
                 value={formData.phone}
                 onChange={handleChange}
                 required
-                style={{
-                  ...inputStyle,
-                  onFocus: (e) => {
-                    e.target.style.outline = "none";
-                    e.target.style.borderColor = "#3182ce";
-                    e.target.style.background = "white";
-                    e.target.style.boxShadow =
-                      "0 0 0 3px rgba(49, 130, 206, 0.1)";
-                  },
-                  onBlur: (e) => {
-                    e.target.style.borderColor = "#e2e8f0";
-                    e.target.style.background = "#f7fafc";
-                    e.target.style.boxShadow = "none";
-                  },
-                }}
+                className="w-full py-3 px-4 pl-11 border-2 border-gray-200 rounded-lg text-base transition-all bg-gray-50 focus:outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
               />
             </div>
           </div>
 
-          {/* Email Field */}
           <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "0.5rem",
-                fontWeight: "500",
-                color: "#4a5568",
-                fontSize: "0.875rem",
-              }}
-            >
+            <label className="block mb-2 font-medium text-gray-700 text-sm">
               Email
             </label>
-            <div style={{ position: "relative" }}>
-              <Mail style={iconStyle} />
+            <div className="relative">
+              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="email"
                 name="email"
                 placeholder="Nhập email (tùy chọn)"
                 value={formData.email}
                 onChange={handleChange}
-                style={{
-                  ...inputStyle,
-                  onFocus: (e) => {
-                    e.target.style.outline = "none";
-                    e.target.style.borderColor = "#3182ce";
-                    e.target.style.background = "white";
-                    e.target.style.boxShadow =
-                      "0 0 0 3px rgba(49, 130, 206, 0.1)";
-                  },
-                  onBlur: (e) => {
-                    e.target.style.borderColor = "#e2e8f0";
-                    e.target.style.background = "#f7fafc";
-                    e.target.style.boxShadow = "none";
-                  },
-                }}
+                className="w-full py-3 px-4 pl-11 border-2 border-gray-200 rounded-lg text-base transition-all bg-gray-50 focus:outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
               />
             </div>
           </div>
 
-          {/* Password Field */}
           <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "0.5rem",
-                fontWeight: "500",
-                color: "#4a5568",
-                fontSize: "0.875rem",
-              }}
-            >
-              Mật khẩu <span style={{ color: "#e53e3e" }}>*</span>
+            <label className="block mb-2 font-medium text-gray-700 text-sm">
+              Mật khẩu <span className="text-red-500">*</span>
             </label>
-            <div style={{ position: "relative" }}>
-              <Lock style={iconStyle} />
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type={showPassword ? "text" : "password"}
                 name="password"
@@ -369,60 +203,24 @@ const Register = () => {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                style={{
-                  ...inputStyle,
-                  paddingRight: "2.75rem",
-                  onFocus: (e) => {
-                    e.target.style.outline = "none";
-                    e.target.style.borderColor = "#3182ce";
-                    e.target.style.background = "white";
-                    e.target.style.boxShadow =
-                      "0 0 0 3px rgba(49, 130, 206, 0.1)";
-                  },
-                  onBlur: (e) => {
-                    e.target.style.borderColor = "#e2e8f0";
-                    e.target.style.background = "#f7fafc";
-                    e.target.style.boxShadow = "none";
-                  },
-                }}
+                className="w-full py-3 px-4 pl-11 pr-11 border-2 border-gray-200 rounded-lg text-base transition-all bg-gray-50 focus:outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: "absolute",
-                  right: "0.875rem",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "#a0aec0",
-                  transition: "color 0.2s",
-                }}
-                onMouseEnter={(e) => (e.target.style.color = "#4a5568")}
-                onMouseLeave={(e) => (e.target.style.color = "#a0aec0")}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-gray-400 transition-colors hover:text-gray-700"
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
           </div>
 
-          {/* Confirm Password Field */}
           <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "0.5rem",
-                fontWeight: "500",
-                color: "#4a5568",
-                fontSize: "0.875rem",
-              }}
-            >
-              Xác nhận mật khẩu <span style={{ color: "#e53e3e" }}>*</span>
+            <label className="block mb-2 font-medium text-gray-700 text-sm">
+              Xác nhận mật khẩu <span className="text-red-500">*</span>
             </label>
-            <div style={{ position: "relative" }}>
-              <Lock style={iconStyle} />
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type={showConfirmPassword ? "text" : "password"}
                 name="confirmPassword"
@@ -430,140 +228,40 @@ const Register = () => {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 required
-                style={{
-                  ...inputStyle,
-                  paddingRight: "2.75rem",
-                  onFocus: (e) => {
-                    e.target.style.outline = "none";
-                    e.target.style.borderColor = "#3182ce";
-                    e.target.style.background = "white";
-                    e.target.style.boxShadow =
-                      "0 0 0 3px rgba(49, 130, 206, 0.1)";
-                  },
-                  onBlur: (e) => {
-                    e.target.style.borderColor = "#e2e8f0";
-                    e.target.style.background = "#f7fafc";
-                    e.target.style.boxShadow = "none";
-                  },
-                }}
+                className="w-full py-3 px-4 pl-11 pr-11 border-2 border-gray-200 rounded-lg text-base transition-all bg-gray-50 focus:outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                style={{
-                  position: "absolute",
-                  right: "0.875rem",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "#a0aec0",
-                  transition: "color 0.2s",
-                }}
-                onMouseEnter={(e) => (e.target.style.color = "#4a5568")}
-                onMouseLeave={(e) => (e.target.style.color = "#a0aec0")}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-gray-400 transition-colors hover:text-gray-700"
               >
                 {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}
-            style={{
-              background: loading
-                ? "#a0aec0"
-                : "linear-gradient(135deg, #3182ce, #667eea)",
-              color: "white",
-              padding: "0.875rem 1rem",
-              border: "none",
-              borderRadius: "0.5rem",
-              fontSize: "1rem",
-              fontWeight: "600",
-              cursor: loading ? "not-allowed" : "pointer",
-              transition: "all 0.2s",
-              minHeight: "3rem",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              marginTop: "0.5rem",
-            }}
-            onMouseEnter={(e) => {
-              if (!loading) {
-                e.target.style.transform = "translateY(-1px)";
-                e.target.style.boxShadow =
-                  "0 10px 15px -3px rgba(0, 0, 0, 0.1)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.transform = "translateY(0)";
-              e.target.style.boxShadow = "none";
-            }}
+            className="bg-gradient-to-r from-blue-600 to-indigo-500 text-white p-3.5 border-none rounded-lg text-base font-semibold cursor-pointer transition-all min-h-[48px] flex items-center justify-center mt-2 hover:-translate-y-0.5 hover:shadow-lg disabled:bg-gray-400 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
           >
-            {loading ? "Đang đăng ký..." : "Đăng ký tài khoản"}
+            {loading ? "Đang xử lý..." : "Đăng ký tài khoản"}
           </button>
         </form>
 
-        {/* Footer Links */}
-        <div
-          style={{
-            textAlign: "center",
-            marginTop: "2rem",
-            paddingTop: "1.5rem",
-            borderTop: "1px solid #e2e8f0",
-          }}
-        >
-          <p
-            style={{
-              margin: "0 0 1rem 0",
-              color: "#718096",
-              fontSize: "0.875rem",
-            }}
-          >
+        <div className="text-center mt-8 pt-6 border-t border-gray-200">
+          <p className="mb-4 text-gray-500 text-sm">
             Đã có tài khoản?{" "}
             <Link
               to="/login"
-              style={{
-                color: "#3182ce",
-                textDecoration: "none",
-                fontWeight: "500",
-                transition: "color 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.color = "#2c5aa0";
-                e.target.style.textDecoration = "underline";
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.color = "#3182ce";
-                e.target.style.textDecoration = "none";
-              }}
+              className="text-blue-600 no-underline font-medium transition-colors hover:text-blue-800 hover:underline"
             >
               Đăng nhập ngay
             </Link>
           </p>
           <Link
             to="/"
-            style={{
-              color: "#3182ce",
-              textDecoration: "none",
-              fontSize: "0.875rem",
-              fontWeight: "500",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              transition: "color 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.color = "#2c5aa0";
-              e.target.style.textDecoration = "underline";
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.color = "#3182ce";
-              e.target.style.textDecoration = "none";
-            }}
+            className="text-blue-600 no-underline text-sm font-medium inline-flex items-center gap-2 transition-colors hover:text-blue-800 hover:underline"
           >
             <Home size={16} />
             Quay về trang chủ
