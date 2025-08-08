@@ -56,6 +56,30 @@ const authService = {
         }
     },
 
+    getProfile: async () => {
+        try {
+            const response = await api.get('/users/profile');
+            const userData = response.data;
+            // Lưu thông tin người dùng vào localStorage
+            localStorage.setItem('user', JSON.stringify(userData));
+            
+            // Phát sự kiện để các component khác biết dữ liệu đã được cập nhật
+            window.dispatchEvent(new Event('userDataUpdated'));
+            
+            return userData;
+        } catch (error) {
+            console.error('Lỗi khi lấy thông tin người dùng:', error);
+            throw error;
+        }
+    },
+
+    checkAndRedirectHost: () => {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (user.role === 'HOST' && !window.location.pathname.startsWith('/host')) {
+            window.location.href = '/host';
+        }
+    },
+
     login: async (email, password) => {
         try {
             const response = await api.post('auth/login', {
