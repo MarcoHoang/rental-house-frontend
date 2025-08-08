@@ -165,19 +165,25 @@ const UserManagement = () => {
     setError(null);
     try {
       const response = await usersApi.getAll({ page: page, size: 10 });
-      const data = response.data.data;
-      setUsers(data.content);
+
+      const pageData = response.data.data;
+
+      const userList = pageData.content || [];
+      setUsers(userList);
+
       setPagination({
-        number: data.number,
-        totalPages: data.totalPages,
+        number: pageData.number || 0,
+        totalPages: pageData.totalPages || 1,
       });
     } catch (err) {
+      console.error("Lỗi khi fetch users:", err);
       setError("Không thể tải danh sách người dùng. Vui lòng thử lại.");
+
+      setUsers([]);
     } finally {
       setLoading(false);
     }
   }, []);
-
   useEffect(() => {
     fetchUsers(0);
   }, [fetchUsers]);

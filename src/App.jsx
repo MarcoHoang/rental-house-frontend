@@ -1,4 +1,3 @@
-// src/App.jsx
 import React from "react";
 import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import HomePage from "./pages/HomePage";
@@ -6,36 +5,37 @@ import HostHomePage from "./pages/HostHomePage";
 import PostPropertyPage from "./pages/host/PostPropertyPage";
 import Register from './components/login-register/Register';
 import Login from './components/login-register/Login';
-import UserProfilePage from './pages/UserProfilePage';
 import ForgotPassword from './components/login-register/ForgotPassword';
 import AdminLogin from './components/admin/AdminLogin';
 import HostLayout from './components/layout/HostLayout';
+import UserProfilePage from "./pages/UserProfilePage";
+import AdminPage from "./pages/AdminPage";
+import AdminRoute from "./components/admin/AdminRoute";
 
-// Protected Route Component - Tạm thời tắt xác thực
+// Protected Route Component (đã gộp)
 const ProtectedRoute = ({ children, requireHost = false }) => {
-  // Tắt xác thực tạm thời để kiểm thử giao diện
-  const ENABLE_AUTH = false;
-  
-  if (ENABLE_AUTH) {
-    const token = localStorage.getItem('token');
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    
-    if (!token) {
-      return <Navigate to="/login" replace />;
-    }
-    
-    if (requireHost && user.role !== 'HOST') {
-      return <Navigate to="/" replace />;
-    }
+  const ENABLE_AUTH = true; // đổi sang false để tắt xác thực khi test UI
+
+  if (!ENABLE_AUTH) {
+    return children;
   }
-  
+
+  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (requireHost && user.role !== 'HOST') {
+    return <Navigate to="/" replace />;
+  }
+
   return children;
 };
 
 // Component rỗng để giữ cấu trúc
-const RoleBasedRedirect = () => {
-  return null;
-};
+const RoleBasedRedirect = () => null;
 
 function App() {
   return (
@@ -56,7 +56,16 @@ function App() {
             <ProtectedRoute>
               <UserProfilePage />
             </ProtectedRoute>
-          } 
+          }
+        />
+
+        <Route
+          path="/admin/*"
+          element={
+            <AdminRoute>
+              <AdminPage />
+            </AdminRoute>
+          }
         />
 
         {/* Các route dành cho chủ nhà */}

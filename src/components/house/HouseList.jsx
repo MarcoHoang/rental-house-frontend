@@ -1,4 +1,3 @@
-// src/components/house/HouseList.jsx
 import React from "react";
 import HouseCard from "./HouseCard";
 import styled from "styled-components";

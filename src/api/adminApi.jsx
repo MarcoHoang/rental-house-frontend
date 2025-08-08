@@ -1,10 +1,8 @@
 import axios from "axios";
 
-// --- CẤU HÌNH TRUNG TÂM ---
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 const API_PREFIX = import.meta.env.VITE_API_PREFIX || "/api";
 
-// 1. Chỉ một instance duy nhất cho toàn bộ file
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -12,8 +10,7 @@ const apiClient = axios.create({
   },
 });
 
-// 2. Gắn Interceptor vào instance duy nhất này
-//    Nó sẽ tự động thêm token vào MỌI request cần xác thực.
+
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("adminToken");
@@ -38,7 +35,7 @@ export const adminAuth = {
 
 // User Management
 export const usersApi = {
-  getAll: (params) => apiClient.get(`${API_PREFIX}/admin/users`, { params }),
+  getAll: (params) => apiClient.get(`${API_PREFIX}/users`, { params }),
   updateStatus: (id, active) =>
     apiClient.patch(`${API_PREFIX}/admin/users/${id}/status`, { active }),
 };

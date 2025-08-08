@@ -19,7 +19,6 @@ const Login = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
-    // Xóa thông báo khi người dùng bắt đầu nhập
     if (message) {
       setMessage("");
       setIsError(false);
@@ -98,7 +97,7 @@ const Login = () => {
     transform: "translateY(-50%)",
     color: "#a0aec0",
     width: "1.25rem",
-    height: "1.25rem",
+height: "1.25rem",
   };
 
   return (
@@ -208,7 +207,7 @@ const Login = () => {
                 display: "block",
                 marginBottom: "0.5rem",
                 fontWeight: "500",
-                color: "#4a5568",
+color: "#4a5568",
                 fontSize: "0.875rem",
               }}
             >
@@ -294,7 +293,7 @@ const Login = () => {
             disabled={loading}
             style={{
               background: loading
-                ? "#a0aec0" // Màu xám khi đang loading
+? "#a0aec0" // Màu xám khi đang loading
                 : "linear-gradient(135deg, #3182ce, #667eea)", // Gradient khi không loading
               color: "white",
               padding: "0.875rem 1rem",
@@ -383,7 +382,7 @@ const Login = () => {
             }}
             onMouseLeave={(e) => {
               e.target.style.color = "#3182ce";
-              e.target.style.textDecoration = "none";
+e.target.style.textDecoration = "none";
             }}
           >
             Quên mật khẩu?

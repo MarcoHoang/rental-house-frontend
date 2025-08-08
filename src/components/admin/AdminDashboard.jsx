@@ -395,10 +395,10 @@ const Button = styled.button`
   display: inline-flex;
   align-items: center;
   padding: 0.625rem 1.25rem;
-  border: 2px solid ${(props) => (props.$primary ? "#3182ce" : "#e2e8f0")};
+  border: 2px solid ${(props) => (props.primary ? "#3182ce" : "#e2e8f0")};
   border-radius: 0.5rem;
-  background: ${(props) => (props.$primary ? "#3182ce" : "white")};
-  color: ${(props) => (props.$primary ? "white" : "#4a5568")};
+  background: ${(props) => (props.primary ? "#3182ce" : "white")};
+  color: ${(props) => (props.primary ? "white" : "#4a5568")};
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
