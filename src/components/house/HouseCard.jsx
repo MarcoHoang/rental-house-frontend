@@ -1,43 +1,26 @@
 import React from "react";
-import styled from "styled-components";
-
-const CardWrapper = styled.div`
-  border: 1px solid #eee;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s;
-  &:hover {
-    transform: translateY(-5px);
-  }
-`;
-
-const CardImage = styled.img`
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-`;
-
-const CardBody = styled.div`
-  padding: 1rem;
-`;
 
 const HouseCard = ({ house }) => {
-  // Giả sử DTO của bạn có các thuộc tính này
   const { name, address, price, imageUrl } = house;
 
   return (
-    <CardWrapper>
-      <CardImage
+    // Thay thế <CardWrapper> bằng <div> với các lớp Tailwind
+    <div className="border border-gray-200 rounded-lg overflow-hidden shadow-md transition-transform duration-200 hover:-translate-y-1">
+      {/* Thay thế <CardImage> bằng <img> */}
+      <img
+        className="w-full h-48 object-cover" // h-48 tương đương 200px nếu bạn cấu hình base là 4px
         src={imageUrl || "https://via.placeholder.com/300x200"}
         alt={name}
       />
-      <CardBody>
-        <h3>{name}</h3>
-        <p>{address}</p>
-        <h4>{price.toLocaleString("vi-VN")} VNĐ/tháng</h4>
-      </CardBody>
-    </CardWrapper>
+      {/* Thay thế <CardBody> bằng <div> */}
+      <div className="p-4">
+        <h3 className="text-lg font-bold text-gray-800 mb-2">{name}</h3>
+        <p className="text-gray-600 mb-4">{address}</p>
+        <h4 className="text-blue-600 font-semibold">
+          {price.toLocaleString("vi-VN")} VNĐ/tháng
+        </h4>
+      </div>
+    </div>
   );
 };
 

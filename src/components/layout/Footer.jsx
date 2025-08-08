@@ -1,96 +1,95 @@
 // src/components/layout/Footer.jsx
 import React from "react";
-import styled from "styled-components";
-
-const FooterWrapper = styled.footer`
-  background-color: #333;
-  color: white;
-  padding: 3rem 2rem; /* Thêm padding trái/phải trực tiếp */
-  margin-top: 4rem;
-`;
-
-const FooterContent = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 2rem;
-  max-width: 1280px; /* Vẫn giữ max-width để các cột không quá xa nhau trên màn hình lớn */
-  margin: 0 auto; /* Căn giữa grid này */
-`;
-
-const FooterSection = styled.div`
-  h4 {
-    margin-bottom: 1rem;
-    border-bottom: 1px solid #555;
-    padding-bottom: 0.5rem;
-  }
-
-  ul {
-    list-style: none;
-    padding: 0;
-  }
-
-  li {
-    margin-bottom: 0.5rem;
-  }
-
-  a {
-    color: #ccc;
-    text-decoration: none;
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-`;
-
-const Copyright = styled.div`
-  text-align: center;
-  margin-top: 3rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #555;
-  color: #aaa;
-`;
+import { Link } from "react-router-dom"; // Dùng Link để điều hướng tốt hơn
 
 const Footer = () => {
   return (
-    <FooterWrapper>
-      <FooterContent>
-        <FooterSection>
-          <h4>RentalHouse</h4>
-          <p>Nền tảng tìm kiếm và cho thuê nhà uy tín hàng đầu Việt Nam.</p>
-        </FooterSection>
-        <FooterSection>
-          <h4>Khám phá</h4>
-          <ul>
+    // Thay thế <FooterWrapper>
+    <footer className="bg-gray-800 text-white py-12 px-8 mt-16">
+      {/* Thay thế <FooterContent> */}
+      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        {/* Thay thế <FooterSection> */}
+        <div className="space-y-4">
+          <h4 className="text-xl font-semibold border-b border-gray-600 pb-2 mb-4">
+            RentalHouse
+          </h4>
+          <p className="text-gray-400">
+            Nền tảng tìm kiếm và cho thuê nhà uy tín hàng đầu Việt Nam.
+          </p>
+        </div>
+
+        {/* Thay thế <FooterSection> */}
+        <div className="space-y-2">
+          <h4 className="text-lg font-semibold border-b border-gray-600 pb-2 mb-4">
+            Khám phá
+          </h4>
+          <ul className="space-y-2">
             <li>
-              <a href="/">Trang chủ</a>
+              <Link
+                to="/"
+                className="text-gray-400 hover:text-white hover:underline"
+              >
+                Trang chủ
+              </Link>
             </li>
             <li>
-              <a href="/about">Về chúng tôi</a>
+              <Link
+                to="/about"
+                className="text-gray-400 hover:text-white hover:underline"
+              >
+                Về chúng tôi
+              </Link>
             </li>
             <li>
-              <a href="/contact">Liên hệ</a>
+              <Link
+                to="/contact"
+                className="text-gray-400 hover:text-white hover:underline"
+              >
+                Liên hệ
+              </Link>
             </li>
           </ul>
-        </FooterSection>
-        <FooterSection>
-          <h4>Hỗ trợ</h4>
-          <ul>
+        </div>
+
+        {/* Thay thế <FooterSection> */}
+        <div className="space-y-2">
+          <h4 className="text-lg font-semibold border-b border-gray-600 pb-2 mb-4">
+            Hỗ trợ
+          </h4>
+          <ul className="space-y-2">
             <li>
-              <a href="/faq">Câu hỏi thường gặp</a>
+              <Link
+                to="/faq"
+                className="text-gray-400 hover:text-white hover:underline"
+              >
+                Câu hỏi thường gặp
+              </Link>
             </li>
             <li>
-              <a href="/policy">Chính sách bảo mật</a>
+              <Link
+                to="/policy"
+                className="text-gray-400 hover:text-white hover:underline"
+              >
+                Chính sách bảo mật
+              </Link>
             </li>
             <li>
-              <a href="/terms">Điều khoản sử dụng</a>
+              <Link
+                to="/terms"
+                className="text-gray-400 hover:text-white hover:underline"
+              >
+                Điều khoản sử dụng
+              </Link>
             </li>
           </ul>
-        </FooterSection>
-      </FooterContent>
-      <Copyright>
+        </div>
+      </div>
+
+      {/* Thay thế <Copyright> */}
+      <div className="text-center mt-12 pt-8 border-t border-gray-700 text-gray-500">
         © {new Date().getFullYear()} RentalHouse. All rights reserved.
-      </Copyright>
-    </FooterWrapper>
+      </div>
+    </footer>
   );
 };
 
