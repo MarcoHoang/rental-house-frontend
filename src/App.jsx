@@ -11,7 +11,7 @@ import Register from "./components/login-register/Register";
 import Login from "./components/login-register/Login";
 import UserProfilePage from "./pages/UserProfilePage.jsx";
 import ForgotPassword from "./components/login-register/ForgotPassword";
-import AdminLogin from "./components/admin/AdminLogin.jsx";
+import AdminLogin from "./components/admin/AdminLogin";
 import AdminPage from "./pages/AdminPage";
 import AdminRoute from "./components/admin/AdminRoute";
 

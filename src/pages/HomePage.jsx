@@ -7,8 +7,6 @@ import Footer from "../components/layout/Footer";
 import SearchBar from "../components/house/SearchBar";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 
-// --- Styled Components ---
-// Các component được style riêng cho trang này để giữ code sạch sẽ.
 
 const MainContent = styled.main`
   /* Component chính bọc nội dung, đảm bảo không có style thừa */
