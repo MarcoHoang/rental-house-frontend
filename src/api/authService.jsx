@@ -25,31 +25,58 @@ api.interceptors.request.use(
     }
 );
 
+// Xử lý lỗi 401 (Unauthorized)
+api.interceptors.response.use(
+    response => response,
+    error => {
+        if (error.response?.status === 401) {
+            // Xóa thông tin đăng nhập
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            // Chuyển hướng về trang đăng nhập
+            window.location.href = '/login';
+        }
+        return Promise.reject(error);
+    }
+);
+
 const authService = {
     // Cập nhật thông tin người dùng
-    updateProfile: async (profileData) => {
+    updateProfile: async (formData) => {
         try {
-            const formData = new FormData();
-
-            // Thêm các trường dữ liệu vào formData
-            if (profileData.fullName) formData.append('fullName', profileData.fullName);
-            if (profileData.phone) formData.append('phone', profileData.phone);
-            if (profileData.address) formData.append('address', profileData.address);
-            if (profileData.dateOfBirth) formData.append('dateOfBirth', profileData.dateOfBirth);
-            if (profileData.avatar) formData.append('avatar', profileData.avatar);
-
-            const response = await api.put('users/profile', formData, {
+            const response = await api.put('/users/profile', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
             });
-
-            return response.data.data;
+            return response.data;
         } catch (error) {
             console.error('Lỗi khi cập nhật thông tin:', error);
-            throw error.response?.data || {
-                message: error.message || 'Có lỗi xảy ra khi cập nhật thông tin'
-            };
+            throw error;
+        }
+    },
+
+    getProfile: async () => {
+        try {
+            const response = await api.get('/users/profile');
+            const userData = response.data;
+            // Lưu thông tin người dùng vào localStorage
+            localStorage.setItem('user', JSON.stringify(userData));
+            
+            // Phát sự kiện để các component khác biết dữ liệu đã được cập nhật
+            window.dispatchEvent(new Event('userDataUpdated'));
+            
+            return userData;
+        } catch (error) {
+            console.error('Lỗi khi lấy thông tin người dùng:', error);
+            throw error;
+        }
+    },
+
+    checkAndRedirectHost: () => {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (user.role === 'HOST' && !window.location.pathname.startsWith('/host')) {
+            window.location.href = '/host';
         }
     },
 

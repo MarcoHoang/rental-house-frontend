@@ -12,9 +12,7 @@ const Login = () => {
     email: "",
     password: "",
   });
-  const [message, setMessage] = useState(
-    location.state?.message || "" // Hiển thị thông báo nếu có
-  );
+  const [message, setMessage] = useState(location.state?.message || "");
   const [isError, setIsError] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -62,7 +60,8 @@ const Login = () => {
 
         setTimeout(() => {
           navigate("/");
-          window.location.reload();
+          // Không cần reload cả trang, việc dispatch event đã đủ để Header cập nhật
+          // window.location.reload(); 
         }, 1000);
       } else {
         throw new Error("Không nhận được thông tin đăng nhập từ máy chủ");
@@ -79,7 +78,7 @@ const Login = () => {
   };
   // --- Kết thúc phần logic không thay đổi ---
 
-  // --- JSX đã được chuyển đổi sang Tailwind CSS ---
+  // --- JSX đã được hợp nhất, sử dụng Tailwind CSS ---
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-indigo-500 to-purple-600 p-4">
       <div className="bg-white p-8 sm:p-10 rounded-xl shadow-2xl w-full max-w-md relative overflow-hidden">
