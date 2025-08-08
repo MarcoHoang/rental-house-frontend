@@ -321,12 +321,6 @@ const HostHeader = () => {
                 <div className="flex items-center space-x-4">
                     {isLoggedIn ? (
                         <div className="flex items-center space-x-3">
-                            {/* Nút Đăng dành cho chủ nhà */}
-                            <PostButton to="/post">
-                                <PlusIcon className="w-4 h-4" />
-                                <span>Đăng</span>
-                            </PostButton>
-                            
                             <button
                                 onClick={() => setShowDropdown(!showDropdown)}
                                 className="flex items-center space-x-2 focus:outline-none hover:bg-gray-100 px-3 py-1 rounded-full transition-colors"

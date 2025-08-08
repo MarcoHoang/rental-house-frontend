@@ -232,7 +232,7 @@ const Header = () => {
         fullName: '',
         avatar: null,
         email: '',
-        role: ''
+        roleName: ''
     });
 
 
@@ -243,7 +243,7 @@ const Header = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setIsLoggedIn(false);
-        setUserData({ username: '', fullName: '', avatar: null, email: '', role: '' });
+        setUserData({ username: '', fullName: '', avatar: null, email: '', roleName: '' });
         setShowDropdown(false);
         // Kích hoạt sự kiện để cập nhật giao diện
         window.dispatchEvent(new Event('storage'));
@@ -269,7 +269,7 @@ const Header = () => {
                     fullName: userData.fullName || userData.username || '',
                     avatar: userData.avatar || null,
                     email: userData.email || '',
-                    role: userData.role || ''
+                    roleName: userData.roleName || ''
                 });
                 setIsLoggedIn(true);
             }
@@ -282,7 +282,7 @@ const Header = () => {
                     fullName: profile.fullName || profile.username || '',
                     avatar: profile.avatar || null,
                     email: profile.email || '',
-                    role: profile.role || ''
+                    roleName: profile.roleName || ''
                 };
                 setUserData(userData);
                 localStorage.setItem('user', JSON.stringify(userData));
@@ -312,9 +312,9 @@ const Header = () => {
                         fullName: userData.fullName || userData.username || '',
                         avatar: userData.avatar || null,
                         email: userData.email || '',
-                        role: userData.role || ''
+                        roleName: userData.roleName || ''
                     });
-                    console.log('User role set to:', userData.role); // Thêm dòng này để kiểm tra
+                    console.log('User role set to:', userData.roleName); // Thêm dòng này để kiểm tra
                     setIsLoggedIn(true);
                 } catch (error) {
                     console.error('Lỗi khi đọc dữ liệu người dùng:', error);
@@ -357,7 +357,8 @@ const Header = () => {
                           <HomeIcon className="h-5 w-5" />
                           Trang chủ
                         </NavLink>
-                        {userData?.role === 'HOST' && (
+                        {/* Chỉ hiển thị nút Quản lý chủ nhà nếu là HOST */}
+                        {userData?.roleName === 'HOST' && (
                           <NavLink to="/host" className="text-blue-600 font-medium">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                               <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
@@ -425,7 +426,8 @@ const Header = () => {
                                             Thông tin cá nhân
                                         </Link>
                                         
-                                        {userData.role !== 'HOST' && (
+                                        {/* Ẩn mục xin xét duyệt nếu đã là HOST */}
+                                        {userData.roleName !== 'HOST' && (
                                             <button 
                                                 type="button"
                                                 onClick={() => {

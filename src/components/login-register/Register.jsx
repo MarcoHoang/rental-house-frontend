@@ -1,15 +1,24 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { UserPlus, User, Phone, Mail, Lock, Eye, EyeOff, MapPin } from "lucide-react";
-import axios from "axios";
+import authService from "../../api/authService";
 
 const Register = () => {
+    // Debug: Log initial render
+    console.log('Initial render - formData:', {
+        email: "",
+        phone: "",
+        password: "",
+        confirmPassword: "",
+        username: "",
+        address: "",
+    });
     const [formData, setFormData] = useState({
         email: "",
         phone: "",
         password: "",
         confirmPassword: "",
-        fullName: "",
+        username: "",
         address: "",
     });
     const [errors, setErrors] = useState({});
@@ -19,10 +28,23 @@ const Register = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Debug: Log location and search params
+    useEffect(() => {
+        console.log('Location:', location);
+        const searchParams = new URLSearchParams(location.search);
+        console.log('URL Search Params:', Object.fromEntries(searchParams.entries()));
+    }, [location]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        console.log(`Field changed - ${name}:`, value);
+        setFormData(prev => {
+            const newData = { ...prev, [name]: value };
+            console.log('New form data:', newData);
+            return newData;
+        });
         if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
         if (message) setMessage("");
     };
@@ -35,7 +57,8 @@ const Register = () => {
                 return '';
             case 'phone':
                 if (!value) return 'Số điện thoại là bắt buộc';
-                if (!/^0[0-9]{9,10}$/.test(value)) return 'Số điện thoại phải có 10-11 số và bắt đầu bằng số 0';
+                if (!/^[0-9]+$/.test(value)) return 'Số điện thoại chỉ được chứa các chữ số từ 0-9';
+                if (value.length < 9 || value.length > 12) return 'Số điện thoại phải có từ 9 đến 12 số';
                 return '';
             case 'password':
                 if (!value) return 'Mật khẩu là bắt buộc';
@@ -43,6 +66,10 @@ const Register = () => {
                 return '';
             case 'confirmPassword':
                 if (value !== formData.password) return 'Mật khẩu xác nhận không khớp';
+                return '';
+            case 'username':
+                if (!value) return 'Tên người dùng là bắt buộc';
+                if (value.length > 100) return 'Tên người dùng không được vượt quá 100 ký tự';
                 return '';
             default:
                 return '';
@@ -57,7 +84,7 @@ const Register = () => {
 
         // Validate all fields
         const newErrors = {};
-        ['email', 'phone', 'password', 'confirmPassword'].forEach(field => {
+        ['email', 'phone', 'password', 'confirmPassword', 'username'].forEach(field => {
             const error = validateField(field, formData[field]);
             if (error) newErrors[field] = error;
         });
@@ -71,25 +98,58 @@ const Register = () => {
         try {
             const userData = {
                 email: formData.email,
-                phone: formData.phone,
                 password: formData.password,
-                fullName: formData.fullName || null,
-                address: formData.address || null
+                username: formData.username,
+                // Các trường không bắt buộc
+                phone: formData.phone || undefined,
+                address: formData.address || undefined
             };
 
-            const response = await axios.post(
-                "http://localhost:8080/api/auth/register",
-                userData
-            );
+            console.log('Dữ liệu gửi đi:', userData);
 
-            setMessage(response.data.message || "Đăng ký thành công!");
+            // Gọi API đăng ký
+            const response = await authService.register(userData);
+            console.log('Phản hồi từ server:', response);
+            
+            setMessage("Đăng ký thành công! Đang chuyển hướng...");
             setIsError(false);
 
+            // Chuyển hướng về trang đăng nhập sau 1.5 giây
             setTimeout(() => {
                 navigate(`/login?email=${encodeURIComponent(formData.email)}`);
             }, 1500);
         } catch (error) {
-            setMessage(error.response?.data?.message || "Lỗi kết nối server");
+            console.error('Lỗi đăng ký:', error);
+            let errorMessage = "Đăng ký thất bại";
+            
+            // Kiểm tra lỗi từ phản hồi API
+            if (error.response) {
+                console.error('Dữ liệu lỗi từ server:', error.response.data);
+                
+                // Lấy thông báo lỗi từ phản hồi
+                errorMessage = error.response.data?.message || 
+                              error.response.data?.error || 
+                              errorMessage;
+                
+                // Xử lý lỗi validation từ server
+                if (error.response.data?.errors) {
+                    const validationErrors = {};
+                    error.response.data.errors.forEach(err => {
+                        validationErrors[err.field] = err.message;
+                    });
+                    setErrors(validationErrors);
+                }
+            } else if (error.request) {
+                // Không nhận được phản hồi từ server
+                console.error('Không nhận được phản hồi từ server:', error.request);
+                errorMessage = "Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại sau.";
+            } else {
+                // Lỗi khác
+                console.error('Lỗi khi thiết lập yêu cầu:', error.message);
+                errorMessage = `Lỗi: ${error.message || 'Đã xảy ra lỗi không xác định'}`;
+            }
+            
+            setMessage(errorMessage);
             setIsError(true);
         } finally {
             setLoading(false);
@@ -149,29 +209,32 @@ const Register = () => {
                                         value={formData.phone}
                                         onChange={handleChange}
                                         className={`w-full pl-10 pr-3 py-2 border rounded-lg ${errors.phone ? 'border-red-500' : 'border-gray-200'}`}
-                                        placeholder="Nhập số điện thoại"
+                                        placeholder="Nhập số điện thoại (9-12 số)"
+                                        inputMode="numeric"
                                     />
                                     <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                                 </div>
                                 {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone}</p>}
                             </div>
 
-                            {/* Full Name */}
+                            {/* Username */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Họ và tên (tùy chọn)
+                                    Tên người dùng<span className="text-red-500 ml-1">*</span>
                                 </label>
                                 <div className="relative">
                                     <input
                                         type="text"
-                                        name="fullName"
-                                        value={formData.fullName}
+                                        name="username"
+                                        value={formData.username}
                                         onChange={handleChange}
-                                        className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg"
-                                        placeholder="Nhập họ và tên"
+                                        className={`w-full pl-10 pr-3 py-2 border rounded-lg ${errors.username ? 'border-red-500' : 'border-gray-200'}`}
+                                        placeholder="Nhập tên người dùng"
+                                        maxLength={100}
                                     />
                                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                                 </div>
+                                {errors.username && <p className="mt-1 text-sm text-red-500">{errors.username}</p>}
                             </div>
 
                             {/* Address */}

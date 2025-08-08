@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { useNavigate, Link, useLocation } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import authService from "../../api/authService"; // Giữ nguyên import authService
 import { LogIn, Mail, Lock, Home } from "lucide-react"; // Thêm các icon từ lucide-react
 
 const Login = () => {
-  const location = useLocation();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -27,7 +26,7 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true); // Bắt đầu loading
+    setLoading(true);
     setMessage("Đang xử lý...");
     setIsError(false);
 
@@ -40,41 +39,52 @@ const Login = () => {
     }
 
     try {
-      // Giữ nguyên cách gọi API qua authService
-      const response = await authService.login(
-        formData.email,
-        formData.password
-      );
-
-      // Lưu token và thông tin người dùng vào localStorage
-      if (response.token) {
-        localStorage.setItem("token", response.token);
-        if (response.user) {
-          localStorage.setItem("user", JSON.stringify(response.user));
-        }
-
-        setMessage("Đăng nhập thành công!");
-        setIsError(false);
-
-        // Kích hoạt sự kiện để cập nhật giao diện
-        window.dispatchEvent(new Event("storage"));
-
-        // Chuyển hướng về trang chủ sau 1 giây
-        setTimeout(() => {
-          navigate("/");
-          window.location.reload(); // Tải lại trang để đảm bảo cập nhật giao diện
-        }, 1000);
-      } else {
-        throw new Error("Không nhận được thông tin đăng nhập từ máy chủ");
+      // Gọi API đăng nhập
+      const response = await authService.login(formData.email, formData.password);
+      // Kiểm tra nếu có lỗi từ API
+      if (response.error) {
+        throw new Error(response.message || 'Đăng nhập thất bại');
       }
+
+      // Lưu thông tin đăng nhập thành công
+      setMessage("Đăng nhập thành công! Đang chuyển hướng...");
+      setIsError(false);
+
+        const user = await authService.getProfile();
+        if (user.roleName === 'HOST') {
+            navigate("/host");
+        } else if (user.role === "ADMIN") {
+            navigate("/admin");
+        } else if (user.roleName === 'USER') {
+            navigate("/");
+        }
     } catch (error) {
       console.error("Lỗi đăng nhập:", error);
-      setMessage(
-        error.response?.data?.message || error.message || "Đăng nhập thất bại"
-      );
+      
+      // Xử lý thông báo lỗi chi tiết hơn
+      let errorMessage = "Đăng nhập thất bại";
+      
+      if (error.response) {
+        // Lỗi từ phản hồi API
+        errorMessage = error.response.data?.message || errorMessage;
+      } else if (error.request) {
+        // Không nhận được phản hồi từ server
+        errorMessage = "Không thể kết nối đến máy chủ. Vui lòng thử lại sau.";
+      } else {
+        // Lỗi khác
+        errorMessage = error.message || errorMessage;
+      }
+      
+      setMessage(errorMessage);
       setIsError(true);
+      
+      // Xóa thông tin đăng nhập nếu có lỗi xác thực
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
     } finally {
-      setLoading(false); // Kết thúc loading
+      setLoading(false);
     }
   };
 
