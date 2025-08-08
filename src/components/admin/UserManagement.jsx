@@ -1,160 +1,17 @@
 // src/components/admin/UserManagement.jsx
+
 import React, { useState, useEffect, useCallback } from "react";
-import styled from "styled-components";
 import { usersApi } from "../../api/adminApi";
 import {
-  MoreHorizontal,
   ChevronLeft,
   ChevronRight,
   RefreshCw,
   AlertTriangle,
 } from "lucide-react";
-
-// Tái sử dụng các styled-components từ AdminDashboard.jsx
-const Card = styled.div`
-  background: white;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  border: 1px solid #e2e8f0;
-  overflow: hidden;
-`;
-
-const Table = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-  th,
-  td {
-    padding: 1rem 0.75rem;
-    text-align: left;
-    border-bottom: 1px solid #e2e8f0;
-  }
-  th {
-    background-color: #f7fafc;
-    font-weight: 600;
-    color: #4a5568;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-  }
-  td {
-    font-size: 0.875rem;
-  }
-  tbody tr:hover {
-    background-color: #f7fafc;
-  }
-`;
-
-const Badge = styled.span`
-  display: inline-flex;
-  align-items: center;
-  padding: 0.375rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-
-  &.active {
-    background-color: #c6f6d5;
-    color: #22543d;
-  }
-  &.locked {
-    background-color: #fed7d7;
-    color: #742a2a;
-  }
-`;
-
-const ActionButton = styled.button`
-  padding: 0.25rem 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  background: white;
-
-  &:hover {
-    background: #f7fafc;
-    border-color: #cbd5e0;
-  }
-
-  &.lock {
-    color: #c53030;
-    &:hover {
-      background: #fed7d7;
-    }
-  }
-  &.unlock {
-    color: #2f855a;
-    &:hover {
-      background: #c6f6d5;
-    }
-  }
-`;
-
-const PaginationContainer = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.5rem;
-  border-top: 1px solid #e2e8f0;
-  background: #f7fafc;
-  font-size: 0.875rem;
-`;
-
-const PaginationControls = styled.div`
-  display: flex;
-  gap: 0.5rem;
-`;
-
-const PageButton = styled.button`
-  padding: 0.5rem;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
-  &:hover:not(:disabled) {
-    background: #e2e8f0;
-  }
-`;
-
-const LoadingSpinner = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 4rem;
-  .spinner {
-    animation: spin 1s linear infinite;
-    width: 2rem;
-    height: 2rem;
-    color: #3182ce;
-  }
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
-  }
-`;
-
-const ErrorMessage = styled.div`
-  padding: 2rem;
-  text-align: center;
-  color: #c53030;
-  background: #fff5f5;
-  border: 1px solid #fed7d7;
-  border-radius: 0.5rem;
-  margin: 1rem;
-`;
+import styles from "./UserManagement.module.css"; // Import CSS Modules
 
 const UserManagement = () => {
+  // --- Toàn bộ logic, state và các hàm xử lý được giữ nguyên ---
   const [users, setUsers] = useState([]);
   const [pagination, setPagination] = useState({ number: 0, totalPages: 1 });
   const [loading, setLoading] = useState(true);
@@ -165,12 +22,8 @@ const UserManagement = () => {
     setError(null);
     try {
       const response = await usersApi.getAll({ page: page, size: 10 });
-
       const pageData = response.data.data;
-
-      const userList = pageData.content || [];
-      setUsers(userList);
-
+      setUsers(pageData.content || []);
       setPagination({
         number: pageData.number || 0,
         totalPages: pageData.totalPages || 1,
@@ -178,12 +31,12 @@ const UserManagement = () => {
     } catch (err) {
       console.error("Lỗi khi fetch users:", err);
       setError("Không thể tải danh sách người dùng. Vui lòng thử lại.");
-
       setUsers([]);
     } finally {
       setLoading(false);
     }
   }, []);
+
   useEffect(() => {
     fetchUsers(0);
   }, [fetchUsers]);
@@ -191,7 +44,6 @@ const UserManagement = () => {
   const handleToggleStatus = async (userId, currentStatus) => {
     try {
       await usersApi.updateStatus(userId, !currentStatus);
-      // Cập nhật lại trạng thái của user trong state để UI thay đổi ngay lập tức
       setUsers((currentUsers) =>
         currentUsers.map((user) =>
           user.id === userId ? { ...user, active: !currentStatus } : user
@@ -210,78 +62,95 @@ const UserManagement = () => {
 
   if (loading) {
     return (
-      <LoadingSpinner>
-        <RefreshCw className="spinner" />
-      </LoadingSpinner>
+      <div className="flex justify-center items-center p-16">
+        <RefreshCw className={styles.spinner} />
+      </div>
     );
   }
 
   if (error) {
     return (
-      <ErrorMessage>
-        <AlertTriangle style={{ marginRight: "0.5rem" }} /> {error}
-      </ErrorMessage>
+      <div className="m-4 p-8 text-center text-red-700 bg-red-50 border border-red-200 rounded-lg flex items-center justify-center gap-2">
+        <AlertTriangle /> {error}
+      </div>
     );
   }
 
   return (
-    <Card>
-      <Table>
-        <thead>
-          <tr>
-            <th>Họ và Tên</th>
-            <th>Email</th>
-            <th>Số điện thoại</th>
-            <th>Trạng thái</th>
-            <th>Hành động</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user) => (
-            <tr key={user.id}>
-              <td>{user.fullName || "Chưa cập nhật"}</td>
-              <td>{user.email}</td>
-              <td>{user.phone}</td>
-              <td>
-                {user.active ? (
-                  <Badge className="active">Đang hoạt động</Badge>
-                ) : (
-                  <Badge className="locked">Đã khóa</Badge>
-                )}
-              </td>
-              <td>
-                <ActionButton
-                  className={user.active ? "lock" : "unlock"}
-                  onClick={() => handleToggleStatus(user.id, user.active)}
-                >
-                  {user.active ? "Khóa" : "Mở khóa"}
-                </ActionButton>
-              </td>
+    <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
+            <tr>
+              <th className="px-6 py-3 text-left">Họ và Tên</th>
+              <th className="px-6 py-3 text-left">Email</th>
+              <th className="px-6 py-3 text-left">Số điện thoại</th>
+              <th className="px-6 py-3 text-left">Trạng thái</th>
+              <th className="px-6 py-3 text-left">Hành động</th>
             </tr>
-          ))}
-        </tbody>
-      </Table>
-      <PaginationContainer>
+          </thead>
+          <tbody className="text-gray-700">
+            {users.map((user) => (
+              <tr
+                key={user.id}
+                className="border-t border-gray-200 hover:bg-gray-50"
+              >
+                <td className="px-6 py-4 font-medium text-gray-900">
+                  {user.fullName || "Chưa cập nhật"}
+                </td>
+                <td className="px-6 py-4">{user.email}</td>
+                <td className="px-6 py-4">{user.phone}</td>
+                <td className="px-6 py-4">
+                  {user.active ? (
+                    <span className={`${styles.badge} ${styles.active}`}>
+                      Hoạt động
+                    </span>
+                  ) : (
+                    <span className={`${styles.badge} ${styles.locked}`}>
+                      Đã khóa
+                    </span>
+                  )}
+                </td>
+                <td className="px-6 py-4">
+                  <button
+                    className={`${styles.actionButton} ${
+                      user.active ? styles.lock : styles.unlock
+                    }`}
+                    onClick={() => handleToggleStatus(user.id, user.active)}
+                  >
+                    {user.active ? "Khóa" : "Mở khóa"}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex justify-between items-center px-6 py-3 border-t border-gray-200 bg-gray-50 text-sm text-gray-600">
         <span>
           Trang <strong>{pagination.number + 1}</strong> trên{" "}
           <strong>{pagination.totalPages}</strong>
         </span>
-        <PaginationControls>
-          <PageButton
+        <div className="flex gap-2">
+          <button
             onClick={() => handlePageChange(pagination.number - 1)}
             disabled={pagination.number === 0}
+            className="p-2 bg-white border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ChevronLeft size={16} />
-          </PageButton>
-          <PageButton
+          </button>
+          <button
             onClick={() => handlePageChange(pagination.number + 1)}
             disabled={pagination.number + 1 >= pagination.totalPages}
+            className="p-2 bg-white border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ChevronRight size={16} />
-          </PageButton>
-        </PaginationControls>
-      </PaginationContainer>
-    </Card>
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 

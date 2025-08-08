@@ -1,229 +1,23 @@
+// src/components/admin/AdminLogin.jsx
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import styled from "styled-components";
-import { Shield, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Shield, Mail, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import LoadingSpinner from "../common/LoadingSpinner";
 import { adminAuth } from "../../api/adminApi";
 import { jwtDecode } from "jwt-decode";
-
-const LoginContainer = styled.div`
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 1rem;
-`;
-
-const LoginCard = styled.div`
-  background: white;
-  padding: 2.5rem;
-  border-radius: 1rem;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  width: 100%;
-  max-width: 420px;
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #3182ce, #667eea);
-  }
-`;
-
-const LoginHeader = styled.div`
-  text-align: center;
-  margin-bottom: 2rem;
-
-  .icon-wrapper {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 4rem;
-    height: 4rem;
-    background: linear-gradient(135deg, #3182ce, #667eea);
-    border-radius: 50%;
-    margin-bottom: 1rem;
-
-    svg {
-      color: white;
-      width: 2rem;
-      height: 2rem;
-    }
-  }
-
-  h1 {
-    color: #1a202c;
-    font-size: 1.75rem;
-    font-weight: bold;
-    margin: 0 0 0.5rem 0;
-  }
-
-  p {
-    color: #718096;
-    font-size: 0.875rem;
-    margin: 0;
-  }
-`;
-
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-`;
-
-const FormGroup = styled.div`
-  position: relative;
-
-  label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-    color: #4a5568;
-    font-size: 0.875rem;
-  }
-
-  .input-wrapper {
-    position: relative;
-
-    input {
-      width: 100%;
-      padding: 0.875rem 1rem 0.875rem 2.75rem;
-      border: 2px solid #e2e8f0;
-      border-radius: 0.5rem;
-      font-size: 1rem;
-      transition: all 0.2s;
-      background: #f7fafc;
-
-      &:focus {
-        outline: none;
-        border-color: #3182ce;
-        background: white;
-        box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
-      }
-
-      &::placeholder {
-        color: #a0aec0;
-      }
-    }
-
-    .input-icon {
-      position: absolute;
-      left: 0.875rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #a0aec0;
-      width: 1.25rem;
-      height: 1.25rem;
-    }
-
-    .toggle-password {
-      position: absolute;
-      right: 0.875rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #a0aec0;
-      cursor: pointer;
-      width: 1.25rem;
-      height: 1.25rem;
-      transition: color 0.2s;
-      background: none;
-      border: none;
-      padding: 0;
-
-      &:hover {
-        color: #4a5568;
-      }
-    }
-  }
-`;
-
-const SubmitButton = styled.button`
-  background: linear-gradient(135deg, #3182ce, #667eea);
-  color: white;
-  padding: 0.875rem 1rem;
-  border: none;
-  border-radius: 0.5rem;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  min-height: 3rem;
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-
-  &:disabled {
-    background: #a0aec0;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-  }
-`;
-
-const ErrorMessage = styled.div`
-  background: #fed7d7;
-  color: #742a2a;
-  padding: 0.875rem 1rem;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  text-align: center;
-  border-left: 4px solid #e53e3e;
-  margin-bottom: 1rem;
-`;
-
-const BackToHome = styled.div`
-  text-align: center;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #e2e8f0;
-
-  a {
-    color: #3182ce;
-    text-decoration: none;
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: color 0.2s;
-
-    &:hover {
-      color: #2c5aa0;
-      text-decoration: underline;
-    }
-  }
-`;
+import styles from "./AdminLogin.module.css"; // Import CSS Modules
 
 const AdminLogin = () => {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+  // --- Toàn bộ logic và state được giữ nguyên ---
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-    // Clear error when user starts typing
+    setFormData({ ...formData, [e.target.name]: e.target.value });
     if (error) setError("");
   };
 
@@ -234,24 +28,19 @@ const AdminLogin = () => {
 
     try {
       const response = await adminAuth.login(formData);
-      const responseData = response.data?.data;
-      const token = responseData?.token;
+      const token = response.data?.data?.token;
 
-      if (!token) {
-        throw new Error("Không nhận được token từ server.");
-      }
+      if (!token) throw new Error("Không nhận được token từ server.");
 
       const decoded = jwtDecode(token);
+      const roleFromToken = decoded?.role?.replace("ROLE_", "");
 
-      const roleFromToken = decoded?.role?.replace("ROLE_", "") || ""; // lấy từ claim 'role' đã được backend thêm
-
-      if (roleFromToken !== "ADMIN") {
+      if (roleFromToken !== "ADMIN")
         throw new Error("Bạn không có quyền truy cập Admin.");
-      }
 
       const adminUser = {
-        id: decoded?.id || "",
-        email: decoded?.sub || "",
+        id: decoded?.id,
+        email: decoded?.sub,
         role: roleFromToken,
       };
 
@@ -261,9 +50,7 @@ const AdminLogin = () => {
       navigate("/admin/dashboard");
     } catch (err) {
       const errorMessage =
-        err.response?.data?.message ||
-        err.message ||
-        "Đăng nhập thất bại. Vui lòng thử lại.";
+        err.response?.data?.message || err.message || "Đăng nhập thất bại.";
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -271,23 +58,38 @@ const AdminLogin = () => {
   };
 
   return (
-    <LoginContainer>
-      <LoginCard>
-        <LoginHeader>
-          <div className="icon-wrapper">
-            <Shield />
+    <div
+      className={`min-h-screen flex items-center justify-center p-4 ${styles.loginContainer}`}
+    >
+      <div
+        className={`relative bg-white p-10 rounded-xl shadow-2xl w-full max-w-md overflow-hidden ${styles.gradientBorder}`}
+      >
+        <div className="text-center mb-8">
+          <div
+            className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 ${styles.iconWrapper}`}
+          >
+            <Shield color="white" size={32} />
           </div>
-          <h1>Admin Panel</h1>
-          <p>Đăng nhập để quản lý hệ thống</p>
-        </LoginHeader>
+          <h1 className="text-2xl font-bold text-gray-800 mb-1">Admin Panel</h1>
+          <p className="text-gray-500 text-sm">Đăng nhập để quản lý hệ thống</p>
+        </div>
 
-        <Form onSubmit={handleSubmit}>
-          {error && <ErrorMessage>{error}</ErrorMessage>}
-          {/* ... (Phần còn lại của JSX giữ nguyên không đổi) ... */}
-          <FormGroup>
-            <label htmlFor="email">Email Admin</label>
-            <div className="input-wrapper">
-              <Mail className="input-icon" />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded-md text-sm">
+              {error}
+            </div>
+          )}
+
+          <div>
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Email Admin
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="email"
                 id="email"
@@ -296,14 +98,20 @@ const AdminLogin = () => {
                 value={formData.email}
                 onChange={handleChange}
                 required
+                className={`w-full p-3 border-2 border-gray-200 rounded-lg ${styles.inputField}`}
               />
             </div>
-          </FormGroup>
+          </div>
 
-          <FormGroup>
-            <label htmlFor="password">Mật khẩu</label>
-            <div className="input-wrapper">
-              <Lock className="input-icon" />
+          <div>
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Mật khẩu
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type={showPassword ? "text" : "password"}
                 id="password"
@@ -312,33 +120,38 @@ const AdminLogin = () => {
                 value={formData.password}
                 onChange={handleChange}
                 required
+                className={`w-full p-3 pr-10 border-2 border-gray-200 rounded-lg ${styles.inputField}`}
               />
               <button
                 type="button"
-                className="toggle-password"
+                className={styles.togglePassword}
                 onClick={() => setShowPassword(!showPassword)}
               >
-                {showPassword ? <EyeOff /> : <Eye />}
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
-          </FormGroup>
+          </div>
 
-          <SubmitButton type="submit" disabled={loading}>
-            {loading ? (
-              <>
-                <LoadingSpinner />
-                Đang đăng nhập...
-              </>
-            ) : (
-              "Đăng nhập Admin"
-            )}
-          </SubmitButton>
-        </Form>
-        <BackToHome>
-          <a href="/">← Quay về trang chủ</a>
-        </BackToHome>
-      </LoginCard>
-    </LoginContainer>
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full text-white p-3 rounded-lg font-semibold flex items-center justify-center gap-2 ${styles.submitButton}`}
+          >
+            {loading ? <LoadingSpinner /> : "Đăng nhập Admin"}
+          </button>
+        </form>
+
+        <div className="text-center mt-8 pt-6 border-t border-gray-200">
+          <a
+            href="/"
+            className="text-sm font-medium text-indigo-600 hover:text-indigo-500 inline-flex items-center gap-2"
+          >
+            <ArrowLeft size={16} />
+            Quay về trang chủ
+          </a>
+        </div>
+      </div>
+    </div>
   );
 };
 

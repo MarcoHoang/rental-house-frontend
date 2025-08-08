@@ -1,17 +1,16 @@
+// src/components/layout/Layout.jsx
+
 import React from "react";
 import Header from "./Header";
 import Footer from "./Footer";
-import styled from "styled-components";
-
-const LayoutContainer = styled.div`
-  padding: 20px;
-`;
+// Không cần import CSS Modules nữa
 
 const Layout = ({ children }) => {
   return (
-    <div className="min-h-screen flex flex-col">
+    // Chỉ là một thẻ div bọc ngoài, không có style gì đặc biệt
+    <div>
       <Header />
-      <main className="flex-1 w-full">{children}</main>
+      <main>{children}</main>
       <Footer />
     </div>
   );

@@ -1,129 +1,78 @@
 import React, { useState, useEffect } from "react";
-import styled from "styled-components";
 import { getHouses } from "../api/houseApi";
 import HouseList from "../components/house/HouseList";
-import Header from "../components/layout/Header";
-import Footer from "../components/layout/Footer";
 import SearchBar from "../components/house/SearchBar";
 import LoadingSpinner from "../components/common/LoadingSpinner";
-
-
-const MainContent = styled.main`
-  /* Component chính bọc nội dung, đảm bảo không có style thừa */
-`;
-
-// Section cho phần banner chính, chiếm toàn bộ chiều rộng
-const HeroSection = styled.section`
-  background: linear-gradient(to right, #6a82fb, #fc5c7d);
-  color: white;
-  text-align: center;
-  padding: 5rem 2rem; /* Tăng padding để trông rộng rãi hơn */
-
-  h1 {
-    font-size: 3rem; /* Tăng kích thước chữ cho tiêu đề chính */
-    font-weight: 700;
-    margin-bottom: 1.5rem;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Thêm bóng đổ cho chữ để nổi bật */
-  }
-`;
-
-// Section cho danh sách nhà nổi bật
-const FeaturedSection = styled.section`
-  padding: 4rem 2rem; /* Khoảng đệm trên/dưới và hai bên */
-  background-color: #ffffff; /* Thêm nền trắng để tách biệt với nền body xám nhạt */
-`;
-
-const SectionTitle = styled.h2`
-  font-size: 2.2rem;
-  font-weight: 600;
-  text-align: center;
-  margin-bottom: 3rem; /* Tăng khoảng cách với danh sách bên dưới */
-  color: #343a40;
-`;
-
-// Box hiển thị thông báo lỗi
-const ErrorMessage = styled.div`
-  color: #721c24;
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
-  text-align: center;
-  margin: 2rem auto;
-  max-width: 600px;
-`;
-
-// --- HomePage Component ---
-// Đây là component chính của trang chủ
+// Header và Footer đã được chuyển ra Layout, không cần import ở đây nữa
 
 const HomePage = () => {
-  // --- State Management ---
-  // Quản lý trạng thái của component: danh sách nhà, đang tải, và lỗi
+  // --- Toàn bộ phần logic state và data fetching được giữ nguyên ---
   const [houses, setHouses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // --- Data Fetching ---
-  // Sử dụng useEffect để gọi API (hoặc dữ liệu giả) một lần khi component render
   useEffect(() => {
     const fetchHouses = async () => {
       try {
-        setLoading(true); // Bắt đầu tải, bật spinner
-        const response = await getHouses(); // Gọi hàm lấy dữ liệu
-        setHouses(response.data); // Cập nhật state với dữ liệu nhận được
-        setError(null); // Xóa bất kỳ lỗi nào trước đó
+        setLoading(true);
+        const response = await getHouses();
+        setHouses(response.data);
+        setError(null);
       } catch (err) {
-        // Nếu có lỗi, cập nhật state lỗi
-        setError(
-          "Rất tiếc, đã có lỗi xảy ra. Không thể tải dữ liệu nhà cho thuê."
-        );
+        setError("Rất tiếc, đã có lỗi xảy ra. Không thể tải dữ liệu.");
         console.error("Lỗi khi fetch dữ liệu nhà:", err);
       } finally {
-        // Dù thành công hay thất bại, cũng tắt spinner
         setLoading(false);
       }
     };
-
     fetchHouses();
-  }, []); // Mảng rỗng `[]` đảm bảo useEffect chỉ chạy một lần duy nhất
+  }, []);
 
-  // --- Content Rendering Logic ---
-  // Một hàm nhỏ để quyết định hiển thị gì dựa trên trạng thái (loading, error, success)
+  // --- Logic render content giữ nguyên ---
   const renderHouseContent = () => {
-    if (loading) {
-      return <LoadingSpinner />;
-    }
-    if (error) {
-      return <ErrorMessage>{error}</ErrorMessage>;
-    }
-    if (houses.length === 0) {
+    if (loading) return <LoadingSpinner />;
+    if (error)
       return (
-        <p style={{ textAlign: "center" }}>Hiện chưa có nhà nào để hiển thị.</p>
+        <div className="text-red-800 bg-red-100 p-4 rounded-lg text-center my-8">
+          {error}
+        </div>
       );
-    }
+    if (houses.length === 0)
+      return (
+        <p className="text-center text-gray-500">
+          Hiện chưa có nhà nào để hiển thị.
+        </p>
+      );
     return <HouseList houses={houses} />;
   };
 
-  // --- JSX to Render ---
-  // Cấu trúc HTML của trang chủ
   return (
-    <div>
-      <Header />
-
-      <MainContent>
-        <HeroSection>
-          <h1>Tìm kiếm ngôi nhà mơ ước của bạn</h1>
+    <>
+      {/* Section 1: Nền gradient toàn màn hình */}
+      <section className="bg-gradient-to-r from-blue-500 to-purple-600 text-white text-center">
+        {/* Nội dung bên trong được căn giữa bởi .container */}
+        <div className="container py-20 px-4">
+          <h1
+            className="text-5xl font-bold mb-6"
+            style={{ textShadow: "0 2px 4px rgba(0,0,0,0.2)" }}
+          >
+            Tìm kiếm ngôi nhà mơ ước của bạn
+          </h1>
           <SearchBar />
-        </HeroSection>
+        </div>
+      </section>
 
-        <FeaturedSection>
-          <SectionTitle>Nhà cho thuê nổi bật</SectionTitle>
+      {/* Section 2: Nền trắng toàn màn hình */}
+      <section className="bg-white">
+        {/* Nội dung bên trong được căn giữa bởi .container */}
+        <div className="container py-16 px-4">
+          <h2 className="text-4xl font-semibold text-center mb-12 text-gray-800">
+            Nhà cho thuê nổi bật
+          </h2>
           {renderHouseContent()}
-        </FeaturedSection>
-      </MainContent>
-
-      <Footer />
-    </div>
+        </div>
+      </section>
+    </>
   );
 };
 

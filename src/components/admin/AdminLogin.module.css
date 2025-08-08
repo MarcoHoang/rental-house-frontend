@@ -1,0 +1,61 @@
+/* src/components/admin/AdminLogin.module.css */
+
+.loginContainer {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+}
+
+.gradientBorder::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+}
+
+.iconWrapper {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+}
+
+.inputField {
+  padding-left: 2.75rem;
+  background-color: #f9fafb; /* bg-gray-50 */
+  transition: all 0.2s ease-in-out;
+}
+
+.inputField:focus {
+  outline: none;
+  border-color: #4f46e5;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+
+.togglePassword {
+  position: absolute;
+  right: 0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af; /* text-gray-400 */
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.togglePassword:hover {
+  color: #4b5563; /* text-gray-600 */
+}
+
+.submitButton {
+  background: linear-gradient(135deg, #4f46e5, #8b5cf6);
+  transition: all 0.2s ease-in-out;
+}
+
+.submitButton:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.submitButton:disabled {
+  background: #9ca3af; /* bg-gray-400 */
+  cursor: not-allowed;
+}

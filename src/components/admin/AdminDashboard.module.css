@@ -1,0 +1,77 @@
+/* src/components/admin/AdminDashboard.module.css */
+
+.sidebarHeader {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+}
+
+.navItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0.875rem 1.5rem;
+  text-align: left;
+  background: none;
+  border: none;
+  border-right: 3px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  color: #4b5563; /* text-gray-600 */
+  font-weight: 500;
+}
+
+.navItem:hover {
+  background-color: #f8fafc; /* bg-gray-50 */
+  color: #2563eb; /* text-blue-600 */
+}
+
+.navItem.active {
+  color: #2563eb;
+  background-color: #eff6ff; /* bg-blue-50 */
+  border-right-color: #2563eb;
+  font-weight: 600;
+}
+
+.statIcon {
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+}
+
+.statIcon.total {
+  background: #dbeafe;
+  color: #2563eb;
+}
+.statIcon.available {
+  background: #d1fae5;
+  color: #059669;
+}
+.statIcon.rented {
+  background: #ffedd5;
+  color: #d97706;
+}
+.statIcon.revenue {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.375rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge.available {
+  background-color: #d1fae5;
+  color: #047857;
+}
+.badge.rented {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+.badge.maintenance {
+  background-color: #fee2e2;
+  color: #991b1b;
+}

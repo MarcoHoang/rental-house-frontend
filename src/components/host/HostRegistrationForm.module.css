@@ -1,0 +1,26 @@
+/* src/components/host/HostRegistrationForm.module.css */
+
+/* Style chung cho các ô input để có hiệu ứng focus nhất quán */
+.inputField {
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.inputField:focus {
+  outline: none;
+  border-color: #4f46e5; /* indigo-600 */
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* Style riêng cho ô tải file */
+.fileInput {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-style: dashed;
+  background-color: #f9fafb; /* bg-gray-50 */
+  cursor: pointer;
+}
+
+/* Ẩn nút "Choose File" mặc định của trình duyệt */
+.fileInput::file-selector-button {
+  display: none;
+}

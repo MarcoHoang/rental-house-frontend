@@ -1,0 +1,8 @@
+.mainContent {
+  /* Container này sẽ bao bọc nội dung chính của các trang */
+  width: 100%;
+  max-width: 1280px; /* Phải khớp với #root trong index.css */
+  margin-left: auto;
+  margin-right: auto;
+  /* padding ngang được lấy từ #root, không cần thêm ở đây */
+}
