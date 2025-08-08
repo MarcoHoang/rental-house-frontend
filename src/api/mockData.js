@@ -1,7 +1,4 @@
-// src/api/mockData.js
 
-// Đây là một mảng các đối tượng nhà, mô phỏng dữ liệu bạn sẽ nhận được từ backend.
-// Mỗi đối tượng có cấu trúc giống với HouseDTO của bạn.
 export const mockHouses = [
   {
     id: 1,

@@ -227,49 +227,48 @@ const AdminLogin = () => {
     if (error) setError("");
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  setError("");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
-  try {
-    const response = await adminAuth.login(formData);
-    const responseData = response.data?.data;
-    const token = responseData?.token;
+    try {
+      const response = await adminAuth.login(formData);
+      const responseData = response.data?.data;
+      const token = responseData?.token;
 
-    if (!token) {
-      throw new Error("Không nhận được token từ server.");
+      if (!token) {
+        throw new Error("Không nhận được token từ server.");
+      }
+
+      const decoded = jwtDecode(token);
+
+      const roleFromToken = decoded?.role?.replace("ROLE_", "") || ""; // lấy từ claim 'role' đã được backend thêm
+
+      if (roleFromToken !== "ADMIN") {
+        throw new Error("Bạn không có quyền truy cập Admin.");
+      }
+
+      const adminUser = {
+        id: decoded?.id || "",
+        email: decoded?.sub || "",
+        role: roleFromToken,
+      };
+
+      localStorage.setItem("adminToken", token);
+      localStorage.setItem("adminUser", JSON.stringify(adminUser));
+
+      navigate("/admin/dashboard");
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "Đăng nhập thất bại. Vui lòng thử lại.";
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
-
-    const decoded = jwtDecode(token);
-
-    const roleFromToken =
-      decoded?.role?.replace("ROLE_", "") || ""; // lấy từ claim 'role' đã được backend thêm
-
-    if (roleFromToken !== "ADMIN") {
-      throw new Error("Bạn không có quyền truy cập Admin.");
-    }
-
-    const adminUser = {
-      id: decoded?.id || "",
-      email: decoded?.sub || "",
-      role: roleFromToken,
-    };
-
-    localStorage.setItem("adminToken", token);
-    localStorage.setItem("adminUser", JSON.stringify(adminUser));
-
-    navigate("/admin/dashboard");
-  } catch (err) {
-    const errorMessage =
-      err.response?.data?.message ||
-      err.message ||
-      "Đăng nhập thất bại. Vui lòng thử lại.";
-    setError(errorMessage);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <LoginContainer>
