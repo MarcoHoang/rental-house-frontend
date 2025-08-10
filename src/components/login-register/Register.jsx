@@ -1,230 +1,272 @@
-// src/components/login-register/Register.jsx
-
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import {
-  UserPlus,
-  User,
-  Phone,
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  Home,
-  MapPin, // Thêm icon từ nhánh 'dev'
-} from "lucide-react";
-import axios from "axios";
+import styled from "styled-components";
+import { UserPlus, User, Phone, Mail, Lock, Eye, EyeOff, MapPin } from "lucide-react";
+import { useAuth } from "../../hooks/useAuth";
+import { useForm, validationRules } from "../../hooks/useForm";
+import FormField from "../common/FormField";
+import Button from "../common/Button";
+import ErrorMessage from "../common/ErrorMessage";
+
+const RegisterContainer = styled.div`
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 1rem;
+`;
+
+const RegisterCard = styled.div`
+  background: white;
+  padding: 2.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  width: 100%;
+  max-width: 480px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3182ce, #667eea);
+  }
+`;
+
+const RegisterHeader = styled.div`
+  text-align: center;
+  margin-bottom: 2rem;
+
+  .icon-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 4rem;
+    height: 4rem;
+    background: linear-gradient(135deg, #3182ce, #667eea);
+    border-radius: 50%;
+    margin-bottom: 1rem;
+  }
+
+  h1 {
+    color: #1a202c;
+    font-size: 1.75rem;
+    font-weight: bold;
+    margin: 0 0 0.5rem 0;
+  }
+
+  p {
+    color: #718096;
+    font-size: 0.875rem;
+    margin: 0;
+  }
+`;
+
+const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+`;
+
+const FooterLinks = styled.div`
+  text-align: center;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+
+  p {
+    margin: 0;
+    color: #718096;
+    font-size: 0.875rem;
+  }
+
+  a {
+    color: #3182ce;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+
+    &:hover {
+      color: #2c5aa0;
+      text-decoration: underline;
+    }
+  }
+`;
 
 const Register = () => {
-  // --- State: Kết hợp các trường từ cả hai nhánh ---
-  const [formData, setFormData] = useState({
-    username: "",
-    fullName: "", // Thêm từ nhánh 'dev'
-    phone: "",
-    email: "",
-    address: "", // Thêm từ nhánh 'dev'
-    password: "",
-    confirmPassword: "",
-  });
-  const [message, setMessage] = useState("");
-  const [isError, setIsError] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const { register, loading, error } = useAuth();
+  const navigate = useNavigate();
+  
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const navigate = useNavigate();
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    if (message) {
-      setMessage("");
-      setIsError(false);
+  
+  const { formData, errors, handleChange, handleBlur, validateForm } = useForm(
+    {
+      email: "",
+      phone: "",
+      password: "",
+      confirmPassword: "",
+      username: "",
+      address: "",
+    },
+    {
+      email: validationRules.email,
+      phone: validationRules.phone,
+      password: validationRules.password,
+      confirmPassword: validationRules.confirmPassword,
+      username: validationRules.username,
+      address: validationRules.address,
     }
-  };
+  );
 
-  // --- Logic: Kết hợp và tối ưu hóa từ cả hai nhánh ---
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setMessage("");
-    setIsError(false);
-
-    // Kết hợp validation từ cả 2 nhánh
-    if (!formData.username || !formData.phone || !formData.email || !formData.password || !formData.confirmPassword) {
-      setMessage("Vui lòng điền đầy đủ các trường bắt buộc (*)");
-      setIsError(true);
-      setLoading(false);
-      return;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      setMessage("Email không đúng định dạng");
-      setIsError(true);
-      setLoading(false);
-      return;
-    }
-    if (!/^0\d{9}$/.test(formData.phone)) {
-      setMessage("Số điện thoại không hợp lệ (gồm 10 số, bắt đầu bằng 0)");
-      setIsError(true);
-      setLoading(false);
-      return;
-    }
-    if (formData.password.length < 6 || formData.password.length > 32) {
-      setMessage("Mật khẩu phải từ 6 đến 32 ký tự");
-      setIsError(true);
-      setLoading(false);
-      return;
-    }
-    if (formData.password !== formData.confirmPassword) {
-      setMessage("Mật khẩu xác nhận không khớp");
-      setIsError(true);
-      setLoading(false);
+    
+    if (!validateForm()) {
       return;
     }
 
-    try {
-      // Chuẩn bị dữ liệu gửi đi, bao gồm cả các trường tùy chọn
-      const payload = {
-        username: formData.username,
-        email: formData.email,
-        phone: formData.phone,
-        password: formData.password,
-        fullName: formData.fullName || null,
-        address: formData.address || null,
-      };
+    const userData = {
+      email: formData.email,
+      password: formData.password,
+      username: formData.username,
+      phone: formData.phone || undefined,
+      address: formData.address || undefined
+    };
 
-      const response = await axios.post(
-        "http://localhost:8080/api/auth/register",
-        payload
-      );
-      
-      setMessage(response.data.message || "Đăng ký thành công! Đang chuyển hướng...");
-      setIsError(false);
-
-      // Chuyển hướng đến trang Login với thông báo thành công
+    const result = await register(userData);
+    
+    if (result.success) {
+      // Chuyển hướng về trang đăng nhập sau 1.5 giây
       setTimeout(() => {
-        navigate('/login', { 
-          state: { message: "Đăng ký thành công! Vui lòng đăng nhập." } 
-        });
+        navigate(`/login?email=${encodeURIComponent(formData.email)}`);
       }, 1500);
-
-    } catch (error) {
-      setMessage(error.response?.data?.message || "Đã có lỗi xảy ra. Vui lòng thử lại.");
-      setIsError(true);
-    } finally {
-      setLoading(false);
     }
   };
 
-  // --- Giao diện: Sử dụng Tailwind CSS và tích hợp các trường mới ---
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-indigo-500 to-purple-600 p-4">
-      <div className="bg-white p-8 sm:p-10 rounded-xl shadow-2xl w-full max-w-md relative overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 to-indigo-500" />
-
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-500 rounded-full mb-4">
-            <UserPlus className="text-white" size={32} />
+    <RegisterContainer>
+      <RegisterCard>
+        <RegisterHeader>
+          <div className="icon-wrapper">
+            <UserPlus color="white" size={32} />
           </div>
-          <h1 className="text-gray-800 text-2xl sm:text-3xl font-bold mb-1">
-            Đăng ký tài khoản
-          </h1>
-          <p className="text-gray-500 text-sm">Tạo tài khoản mới để bắt đầu</p>
-        </div>
+          <h1>Đăng ký tài khoản</h1>
+          <p>Tạo tài khoản mới để bắt đầu</p>
+        </RegisterHeader>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          {message && (
-            <div className={`p-3.5 rounded-lg text-sm text-center border-l-4 ${isError ? "bg-red-100 text-red-800 border-red-500" : "bg-green-100 text-green-800 border-green-500"}`}>
-              {message}
-            </div>
-          )}
-          
-          {/* Tên đăng nhập */}
-          <div>
-            <label className="block mb-2 font-medium text-gray-700 text-sm">Tên đăng nhập <span className="text-red-500">*</span></label>
-            <div className="relative">
-              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input type="text" name="username" placeholder="Nhập tên đăng nhập" value={formData.username} onChange={handleChange} required className="w-full py-3 px-4 pl-11 border-2 border-gray-200 rounded-lg text-base transition-all bg-gray-50 focus:outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10" />
-            </div>
-          </div>
-          
-          {/* Email */}
-          <div>
-            <label className="block mb-2 font-medium text-gray-700 text-sm">Email <span className="text-red-500">*</span></label>
-            <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input type="email" name="email" placeholder="Nhập email" value={formData.email} onChange={handleChange} required className="w-full py-3 px-4 pl-11 border-2 border-gray-200 rounded-lg text-base transition-all bg-gray-50 focus:outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10" />
-            </div>
-          </div>
-          
-          {/* Số điện thoại */}
-          <div>
-            <label className="block mb-2 font-medium text-gray-700 text-sm">Số điện thoại <span className="text-red-500">*</span></label>
-            <div className="relative">
-              <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input type="tel" name="phone" placeholder="Nhập số điện thoại" value={formData.phone} onChange={handleChange} required className="w-full py-3 px-4 pl-11 border-2 border-gray-200 rounded-lg text-base transition-all bg-gray-50 focus:outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10" />
-            </div>
-          </div>
+        <Form onSubmit={handleSubmit}>
+          {error && <ErrorMessage type="error" message={error} />}
 
-          {/* Họ và tên (Tùy chọn) */}
-          <div>
-            <label className="block mb-2 font-medium text-gray-700 text-sm">Họ và tên (Tùy chọn)</label>
-            <div className="relative">
-              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input type="text" name="fullName" placeholder="Nhập họ và tên" value={formData.fullName} onChange={handleChange} className="w-full py-3 px-4 pl-11 border-2 border-gray-200 rounded-lg text-base transition-all bg-gray-50 focus:outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10" />
-            </div>
-          </div>
+          <FormField
+            label="Email"
+            name="email"
+            type="email"
+            placeholder="Nhập email"
+            value={formData.email}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            error={errors.email}
+            required
+            icon={Mail}
+          />
 
-          {/* Địa chỉ (Tùy chọn) */}
-          <div>
-            <label className="block mb-2 font-medium text-gray-700 text-sm">Địa chỉ (Tùy chọn)</label>
-            <div className="relative">
-              <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input type="text" name="address" placeholder="Nhập địa chỉ" value={formData.address} onChange={handleChange} className="w-full py-3 px-4 pl-11 border-2 border-gray-200 rounded-lg text-base transition-all bg-gray-50 focus:outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10" />
-            </div>
-          </div>
+          <FormField
+            label="Số điện thoại"
+            name="phone"
+            type="tel"
+            placeholder="Nhập số điện thoại (9-12 số)"
+            value={formData.phone}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            error={errors.phone}
+            required
+            icon={Phone}
+            inputMode="numeric"
+          />
 
-          {/* Mật khẩu */}
-          <div>
-            <label className="block mb-2 font-medium text-gray-700 text-sm">Mật khẩu <span className="text-red-500">*</span></label>
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input type={showPassword ? "text" : "password"} name="password" placeholder="Nhập mật khẩu (6-32 ký tự)" value={formData.password} onChange={handleChange} required className="w-full py-3 px-4 pl-11 pr-11 border-2 border-gray-200 rounded-lg text-base transition-all bg-gray-50 focus:outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10" />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-gray-400 transition-colors hover:text-gray-700">
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
-          </div>
+          <FormField
+            label="Tên người dùng"
+            name="username"
+            type="text"
+            placeholder="Nhập tên người dùng"
+            value={formData.username}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            error={errors.username}
+            required
+            icon={User}
+            maxLength={100}
+          />
 
-          {/* Xác nhận mật khẩu */}
-          <div>
-            <label className="block mb-2 font-medium text-gray-700 text-sm">Xác nhận mật khẩu <span className="text-red-500">*</span></label>
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input type={showConfirmPassword ? "text" : "password"} name="confirmPassword" placeholder="Nhập lại mật khẩu" value={formData.confirmPassword} onChange={handleChange} required className="w-full py-3 px-4 pl-11 pr-11 border-2 border-gray-200 rounded-lg text-base transition-all bg-gray-50 focus:outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10" />
-              <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-gray-400 transition-colors hover:text-gray-700">
-                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
-          </div>
+          <FormField
+            label="Địa chỉ (tùy chọn)"
+            name="address"
+            type="text"
+            placeholder="Nhập địa chỉ"
+            value={formData.address}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            error={errors.address}
+            icon={MapPin}
+          />
 
-          <button type="submit" disabled={loading} className="bg-gradient-to-r from-blue-600 to-indigo-500 text-white p-3.5 border-none rounded-lg text-base font-semibold cursor-pointer transition-all min-h-[48px] flex items-center justify-center mt-2 hover:-translate-y-0.5 hover:shadow-lg disabled:bg-gray-400 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none">
-            {loading ? "Đang xử lý..." : "Đăng ký tài khoản"}
-          </button>
-        </form>
+          <FormField
+            label="Mật khẩu"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            placeholder="Nhập mật khẩu (6-32 ký tự)"
+            value={formData.password}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            error={errors.password}
+            required
+            icon={Lock}
+            showToggle={true}
+            onToggle={() => setShowPassword(!showPassword)}
+            toggleIcon={showPassword ? EyeOff : Eye}
+          />
 
-        <div className="text-center mt-8 pt-6 border-t border-gray-200">
-          <p className="mb-4 text-gray-500 text-sm">
-            Đã có tài khoản?{" "}
-            <Link to="/login" className="text-blue-600 no-underline font-medium transition-colors hover:text-blue-800 hover:underline">
-              Đăng nhập ngay
-            </Link>
+          <FormField
+            label="Xác nhận mật khẩu"
+            name="confirmPassword"
+            type={showConfirmPassword ? "text" : "password"}
+            placeholder="Nhập lại mật khẩu"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            error={errors.confirmPassword}
+            required
+            icon={Lock}
+            showToggle={true}
+            onToggle={() => setShowConfirmPassword(!showConfirmPassword)}
+            toggleIcon={showConfirmPassword ? EyeOff : Eye}
+          />
+
+          <Button
+            type="submit"
+            fullWidth
+            loading={loading}
+            disabled={loading}
+          >
+            {loading ? "Đang xử lý..." : "Đăng ký"}
+          </Button>
+        </Form>
+
+        <FooterLinks>
+          <p>
+            Đã có tài khoản?{' '}
+            <Link to="/login">Đăng nhập ngay</Link>
           </p>
-          <Link to="/" className="text-blue-600 no-underline text-sm font-medium inline-flex items-center gap-2 transition-colors hover:text-blue-800 hover:underline">
-            <Home size={16} />
-            Quay về trang chủ
-          </Link>
-        </div>
-      </div>
-    </div>
+        </FooterLinks>
+      </RegisterCard>
+    </RegisterContainer>
   );
 };
 

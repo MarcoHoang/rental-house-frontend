@@ -4,6 +4,10 @@ import styled from "styled-components";
 import { Shield, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import LoadingSpinner from "../common/LoadingSpinner";
 import { adminAuth } from "../../api/adminApi";
+import { useForm, validationRules } from "../../hooks/useForm";
+import FormField from "../common/FormField";
+import Button from "../common/Button";
+import ErrorMessage from "../common/ErrorMessage";
 import { jwtDecode } from "jwt-decode";
 
 const LoginContainer = styled.div`
@@ -78,116 +82,6 @@ const Form = styled.form`
   gap: 1.5rem;
 `;
 
-const FormGroup = styled.div`
-  position: relative;
-
-  label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-    color: #4a5568;
-    font-size: 0.875rem;
-  }
-
-  .input-wrapper {
-    position: relative;
-
-    input {
-      width: 100%;
-      padding: 0.875rem 1rem 0.875rem 2.75rem;
-      border: 2px solid #e2e8f0;
-      border-radius: 0.5rem;
-      font-size: 1rem;
-      transition: all 0.2s;
-      background: #f7fafc;
-
-      &:focus {
-        outline: none;
-        border-color: #3182ce;
-        background: white;
-        box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
-      }
-
-      &::placeholder {
-        color: #a0aec0;
-      }
-    }
-
-    .input-icon {
-      position: absolute;
-      left: 0.875rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #a0aec0;
-      width: 1.25rem;
-      height: 1.25rem;
-    }
-
-    .toggle-password {
-      position: absolute;
-      right: 0.875rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #a0aec0;
-      cursor: pointer;
-      width: 1.25rem;
-      height: 1.25rem;
-      transition: color 0.2s;
-      background: none;
-      border: none;
-      padding: 0;
-
-      &:hover {
-        color: #4a5568;
-      }
-    }
-  }
-`;
-
-const SubmitButton = styled.button`
-  background: linear-gradient(135deg, #3182ce, #667eea);
-  color: white;
-  padding: 0.875rem 1rem;
-  border: none;
-  border-radius: 0.5rem;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  min-height: 3rem;
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-
-  &:disabled {
-    background: #a0aec0;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-  }
-`;
-
-const ErrorMessage = styled.div`
-  background: #fed7d7;
-  color: #742a2a;
-  padding: 0.875rem 1rem;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  text-align: center;
-  border-left: 4px solid #e53e3e;
-  margin-bottom: 1rem;
-`;
-
 const BackToHome = styled.div`
   text-align: center;
   margin-top: 2rem;
@@ -209,28 +103,31 @@ const BackToHome = styled.div`
 `;
 
 const AdminLogin = () => {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-    // Clear error when user starts typing
-    if (error) setError("");
-  };
+  const { formData, errors, handleChange, handleBlur, validateForm } = useForm(
+    {
+      email: "",
+      password: "",
+    },
+    {
+      email: validationRules.email,
+      password: validationRules.password,
+    }
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+
+    if (!validateForm()) {
+      setLoading(false);
+      return;
+    }
 
     try {
       const response = await adminAuth.login(formData);
@@ -242,8 +139,7 @@ const AdminLogin = () => {
       }
 
       const decoded = jwtDecode(token);
-
-      const roleFromToken = decoded?.role?.replace("ROLE_", "") || ""; // lấy từ claim 'role' đã được backend thêm
+      const roleFromToken = decoded?.role?.replace("ROLE_", "") || "";
 
       if (roleFromToken !== "ADMIN") {
         throw new Error("Bạn không có quyền truy cập Admin.");
@@ -282,58 +178,47 @@ const AdminLogin = () => {
         </LoginHeader>
 
         <Form onSubmit={handleSubmit}>
-          {error && <ErrorMessage>{error}</ErrorMessage>}
-          {/* ... (Phần còn lại của JSX giữ nguyên không đổi) ... */}
-          <FormGroup>
-            <label htmlFor="email">Email Admin</label>
-            <div className="input-wrapper">
-              <Mail className="input-icon" />
-              <input
-                type="email"
-                id="email"
-                name="email"
-                placeholder="admin@renthouse.com"
-                value={formData.email}
-                onChange={handleChange}
-                required
-              />
-            </div>
-          </FormGroup>
+          {error && <ErrorMessage type="error" message={error} />}
 
-          <FormGroup>
-            <label htmlFor="password">Mật khẩu</label>
-            <div className="input-wrapper">
-              <Lock className="input-icon" />
-              <input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                name="password"
-                placeholder="Nhập mật khẩu admin"
-                value={formData.password}
-                onChange={handleChange}
-                required
-              />
-              <button
-                type="button"
-                className="toggle-password"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff /> : <Eye />}
-              </button>
-            </div>
-          </FormGroup>
+          <FormField
+            label="Email Admin"
+            name="email"
+            type="email"
+            placeholder="admin@renthouse.com"
+            value={formData.email}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            error={errors.email}
+            required
+            icon={Mail}
+          />
 
-          <SubmitButton type="submit" disabled={loading}>
-            {loading ? (
-              <>
-                <LoadingSpinner />
-                Đang đăng nhập...
-              </>
-            ) : (
-              "Đăng nhập Admin"
-            )}
-          </SubmitButton>
+          <FormField
+            label="Mật khẩu"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            placeholder="Nhập mật khẩu admin"
+            value={formData.password}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            error={errors.password}
+            required
+            icon={Lock}
+            showToggle={true}
+            onToggle={() => setShowPassword(!showPassword)}
+            toggleIcon={showPassword ? EyeOff : Eye}
+          />
+
+          <Button
+            type="submit"
+            fullWidth
+            loading={loading}
+            disabled={loading}
+          >
+            {loading ? "Đang đăng nhập..." : "Đăng nhập Admin"}
+          </Button>
         </Form>
+
         <BackToHome>
           <a href="/">← Quay về trang chủ</a>
         </BackToHome>

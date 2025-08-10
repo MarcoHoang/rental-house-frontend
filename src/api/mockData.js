@@ -1,4 +1,15 @@
 
+export const mockUser = {
+  id: 1,
+  email: "user@example.com",
+  fullName: "Nguyễn Văn A",
+  phone: "0123456789",
+  address: "123 Đường ABC, Quận 1, TP.HCM",
+  dateOfBirth: "1990-01-01",
+  avatar: "/default-avatar.png",
+  roleName: "USER"
+};
+
 export const mockHouses = [
   {
     id: 1,

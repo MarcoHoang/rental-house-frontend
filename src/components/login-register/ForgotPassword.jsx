@@ -84,7 +84,9 @@ const ForgotPassword = () => {
 
     setIsLoading(true);
     try {
-      await authService.resetPassword(email, otp, newPassword);
+      // Sử dụng token thay vì email + otp
+      // Backend expect: /users/password-reset/confirm?token=xxx&newPassword=xxx
+      await authService.resetPassword(otp, newPassword); // otp được sử dụng như token
       setMessage({
         text: "Đặt lại mật khẩu thành công! Bạn sẽ được chuyển hướng về trang đăng nhập",
         type: "success",

@@ -1,199 +1,198 @@
-// src/components/login-register/Login.jsx
-
-import { useState } from "react";
-import { useNavigate, Link, useLocation } from "react-router-dom";
-import authService from "../../api/authService";
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import styled from "styled-components";
 import { LogIn, Mail, Lock, Home } from "lucide-react";
+import { useAuth } from "../../hooks/useAuth";
+import { useForm, validationRules } from "../../hooks/useForm";
+import FormField from "../common/FormField";
+import Button from "../common/Button";
+import ErrorMessage from "../common/ErrorMessage";
+
+const LoginContainer = styled.div`
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 1rem;
+`;
+
+const LoginCard = styled.div`
+  background: white;
+  padding: 2.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  width: 100%;
+  max-width: 480px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3182ce, #667eea);
+  }
+`;
+
+const LoginHeader = styled.div`
+  text-align: center;
+  margin-bottom: 2rem;
+
+  .icon-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 4rem;
+    height: 4rem;
+    background: linear-gradient(135deg, #3182ce, #667eea);
+    border-radius: 50%;
+    margin-bottom: 1rem;
+  }
+
+  h1 {
+    color: #1a202c;
+    font-size: 1.75rem;
+    font-weight: bold;
+    margin: 0 0 0.5rem 0;
+  }
+
+  p {
+    color: #718096;
+    font-size: 0.875rem;
+    margin: 0;
+  }
+`;
+
+const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+`;
+
+const FooterLinks = styled.div`
+  text-align: center;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+
+  p {
+    margin: 0 0 1rem 0;
+    color: #718096;
+    font-size: 0.875rem;
+  }
+
+  a {
+    color: #3182ce;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: color 0.2s;
+
+    &:hover {
+      color: #2c5aa0;
+      text-decoration: underline;
+    }
+  }
+`;
 
 const Login = () => {
-  // --- Toàn bộ logic và state được giữ nguyên vẹn ---
-  const location = useLocation();
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-  const [message, setMessage] = useState(location.state?.message || "");
-  const [isError, setIsError] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-    if (message) {
-      setMessage("");
-      setIsError(false);
+  const { login, loading, error } = useAuth();
+  
+  const { formData, errors, handleChange, handleBlur, validateForm } = useForm(
+    {
+      email: "",
+      password: "",
+    },
+    {
+      email: validationRules.email,
+      password: validationRules.password,
     }
-  };
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setMessage("Đang xử lý...");
-    setIsError(false);
-
-    if (!formData.email || !formData.password) {
-      setMessage("Vui lòng điền đầy đủ email và mật khẩu.");
-      setIsError(true);
-      setLoading(false);
+    
+    if (!validateForm()) {
       return;
     }
 
-    try {
-      const response = await authService.login(
-        formData.email,
-        formData.password
-      );
-
-      if (response.token) {
-        localStorage.setItem("token", response.token);
-        if (response.user) {
-          localStorage.setItem("user", JSON.stringify(response.user));
-        }
-
-        setMessage("Đăng nhập thành công!");
-        setIsError(false);
-
-        window.dispatchEvent(new Event("storage"));
-
-        setTimeout(() => {
-          navigate("/");
-          // Không cần reload cả trang, việc dispatch event đã đủ để Header cập nhật
-          // window.location.reload(); 
-        }, 1000);
-      } else {
-        throw new Error("Không nhận được thông tin đăng nhập từ máy chủ");
-      }
-    } catch (error) {
-      console.error("Lỗi đăng nhập:", error);
-      setMessage(
-        error.response?.data?.message || error.message || "Đăng nhập thất bại"
-      );
-      setIsError(true);
-    } finally {
-      setLoading(false);
+    const result = await login(formData.email, formData.password);
+    
+    if (!result.success) {
+      // Error is already handled by useAuth hook
+      return;
     }
   };
-  // --- Kết thúc phần logic không thay đổi ---
 
-  // --- JSX đã được hợp nhất, sử dụng Tailwind CSS ---
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-indigo-500 to-purple-600 p-4">
-      <div className="bg-white p-8 sm:p-10 rounded-xl shadow-2xl w-full max-w-md relative overflow-hidden">
-        {/* Đường viền gradient phía trên */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 to-indigo-500" />
-
-        {/* Phần tiêu đề */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-500 rounded-full mb-4">
-            <LogIn className="text-white" size={32} />
+    <LoginContainer>
+      <LoginCard>
+        <LoginHeader>
+          <div className="icon-wrapper">
+            <LogIn color="white" size={32} />
           </div>
-          <h1 className="text-gray-800 text-2xl sm:text-3xl font-bold mb-1">
-            Đăng nhập tài khoản
-          </h1>
-          <p className="text-gray-500 text-sm">Chào mừng bạn quay trở lại!</p>
-        </div>
+          <h1>Đăng nhập tài khoản</h1>
+          <p>Chào mừng bạn quay trở lại!</p>
+        </LoginHeader>
 
-        {/* Form đăng nhập */}
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          {/* Hộp thông báo */}
-          {message && (
-            <div
-              className={`p-3.5 rounded-lg text-sm text-center border-l-4 ${
-                isError
-                  ? "bg-red-100 text-red-800 border-red-500"
-                  : "bg-green-100 text-green-800 border-green-500"
-              }`}
-            >
-              {message}
-            </div>
-          )}
+        <Form onSubmit={handleSubmit}>
+          {error && <ErrorMessage type="error" message={error} />}
 
-          {/* Trường Email */}
-          <div>
-            <label
-              htmlFor="email"
-              className="block mb-2 font-medium text-gray-700 text-sm"
-            >
-              Email <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="Địa chỉ email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                className="w-full py-3 px-4 pl-11 border-2 border-gray-200 rounded-lg text-base transition-all bg-gray-50 focus:outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
-              />
-            </div>
-          </div>
+          <FormField
+            label="Email"
+            name="email"
+            type="email"
+            placeholder="Địa chỉ email"
+            value={formData.email}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            error={errors.email}
+            required
+            icon={Mail}
+          />
 
-          {/* Trường Mật khẩu */}
-          <div>
-            <label
-              htmlFor="password"
-              className="block mb-2 font-medium text-gray-700 text-sm"
-            >
-              Mật khẩu <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="Mật khẩu"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                className="w-full py-3 px-4 pl-11 border-2 border-gray-200 rounded-lg text-base transition-all bg-gray-50 focus:outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
-              />
-            </div>
-          </div>
+          <FormField
+            label="Mật khẩu"
+            name="password"
+            type="password"
+            placeholder="Mật khẩu"
+            value={formData.password}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            error={errors.password}
+            required
+            icon={Lock}
+          />
 
-          {/* Nút Đăng nhập */}
-          <button
+          <Button
             type="submit"
+            fullWidth
+            loading={loading}
             disabled={loading}
-            className="bg-gradient-to-r from-blue-600 to-indigo-500 text-white p-3.5 border-none rounded-lg text-base font-semibold cursor-pointer transition-all min-h-[48px] flex items-center justify-center mt-2 hover:-translate-y-0.5 hover:shadow-lg disabled:bg-gray-400 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
           >
             {loading ? "Đang đăng nhập..." : "Đăng nhập"}
-          </button>
-        </form>
+          </Button>
+        </Form>
 
-        {/* Phần liên kết chân trang */}
-        <div className="text-center mt-8 pt-6 border-t border-gray-200">
-          <p className="mb-4 text-gray-500 text-sm">
+        <FooterLinks>
+          <p>
             Chưa có tài khoản?{" "}
-            <Link
-              to="/register"
-              className="text-blue-600 no-underline font-medium transition-colors hover:text-blue-800 hover:underline"
-            >
-              Đăng ký ngay
-            </Link>
+            <Link to="/register">Đăng ký ngay</Link>
           </p>
-          <Link
-            to="/forgot-password"
-            className="block mb-4 text-blue-600 no-underline text-sm font-medium transition-colors hover:text-blue-800 hover:underline"
-          >
-            Quên mật khẩu?
-          </Link>
-          <Link
-            to="/"
-            className="text-blue-600 no-underline text-sm font-medium inline-flex items-center gap-2 transition-colors hover:text-blue-800 hover:underline"
-          >
-            <Home size={16} />
+          <Link to="/forgot-password">Quên mật khẩu?</Link>
+          <br />
+          <Link to="/">
+            <Home size={16} style={{ marginRight: '0.5rem' }} />
             Quay về trang chủ
           </Link>
-        </div>
-      </div>
-    </div>
+        </FooterLinks>
+      </LoginCard>
+    </LoginContainer>
   );
 };
 

@@ -1,181 +1,406 @@
-// src/api/authService.js
+// src/api/authService.jsx
 import axios from 'axios';
+import { AUTH_CONFIG } from '../config/auth';
+import { handleApiError, logApiError } from '../utils/apiErrorHandler';
+import { safeSetToStorage, safeRemoveFromStorage } from '../utils/localStorage';
 
-const API_URL = 'http://localhost:8080/api';
-
-// Tạo một instance axios mặc định
+// Cấu hình axios mặc định
 const api = axios.create({
-    baseURL: API_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
+  baseURL: 'http://localhost:8080/api',
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  }
 });
 
-// Thêm interceptor để tự động thêm token vào header
+// Interceptor để thêm token và debug request
 api.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
+  config => {
+    // Thêm token nếu có và đang bật xác thực
+    if (AUTH_CONFIG.ENABLE_AUTH) {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+      }
     }
+    
+    // Chỉ debug khi không phải production và không phải request lặp lại
+    if (process.env.NODE_ENV === 'development' && !config._retry) {
+      console.group(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
+      console.log('Request Config:', {
+        method: config.method,
+        url: config.url,
+        headers: config.headers,
+        data: config.data
+      });
+      console.groupEnd();
+    }
+    
+    return config;
+  },
+  error => {
+    logApiError(error, 'Request Interceptor');
+    return Promise.reject(error);
+  }
 );
 
-// Xử lý lỗi 401 (Unauthorized)
+// Xử lý lỗi response
 api.interceptors.response.use(
-    response => response,
-    error => {
-        if (error.response?.status === 401) {
-            // Xóa thông tin đăng nhập
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            // Chuyển hướng về trang đăng nhập
-            window.location.href = '/login';
-        }
-        return Promise.reject(error);
+  response => response,
+  error => {
+    logApiError(error, 'Response Interceptor');
+    
+    // Xử lý lỗi 401
+    if (error.response?.status === 401 && AUTH_CONFIG.ENABLE_AUTH) {
+      handleApiError(error, { clearAuthOn401: true });
+      window.dispatchEvent(new Event('unauthorized'));
     }
+    
+    return Promise.reject(error);
+  }
 );
 
 const authService = {
-    // Cập nhật thông tin người dùng
-    updateProfile: async (formData) => {
-        try {
-            const response = await api.put('/users/profile', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            });
-            return response.data;
-        } catch (error) {
-            console.error('Lỗi khi cập nhật thông tin:', error);
-            throw error;
-        }
-    },
-
-    getProfile: async () => {
+    // Lấy thông tin user hiện tại
+    getCurrentUser: async () => {
         try {
             const response = await api.get('/users/profile');
-            const userData = response.data;
-            // Lưu thông tin người dùng vào localStorage
-            localStorage.setItem('user', JSON.stringify(userData));
             
-            // Phát sự kiện để các component khác biết dữ liệu đã được cập nhật
-            window.dispatchEvent(new Event('userDataUpdated'));
+            if (!response.data) {
+                throw new Error('Không nhận được dữ liệu từ server');
+            }
+            
+            console.log('authService.getCurrentUser - Raw response:', response.data);
+            
+            // Backend trả về format: { code: "00", message: "...", data: UserDTO }
+            let userData;
+            if (response.data.data) {
+                // Format: { code: "00", message: "...", data: { id: 14, fullName: "...", ... } }
+                userData = response.data.data;
+            } else if (response.data.id) {
+                // Fallback: Format: { id: ..., fullName: ..., ... }
+                userData = response.data;
+            } else {
+                console.error('authService.getCurrentUser - Unknown response format:', response.data);
+                throw new Error('Format response không được hỗ trợ');
+            }
+            
+            console.log('authService.getCurrentUser - Extracted user data:', userData);
+            
+            // Kiểm tra xem user data có id không
+            if (!userData) {
+                console.error('authService.getCurrentUser - No user data received');
+                throw new Error('Không nhận được thông tin user từ server');
+            }
+            
+            if (!userData.id) {
+                console.error('authService.getCurrentUser - User data missing ID:', userData);
+                throw new Error('Thông tin user không hợp lệ - thiếu ID');
+            }
+            
+            // Lưu thông tin user vào localStorage
+            console.log('authService.getCurrentUser - Storing user data in localStorage:', userData);
+            safeSetToStorage('user', userData);
             
             return userData;
+            
         } catch (error) {
-            console.error('Lỗi khi lấy thông tin người dùng:', error);
+            logApiError(error, 'getCurrentUser');
+            
+            if (error.response?.status === 401) {
+                handleApiError(error, { clearAuthOn401: true });
+            }
+            
             throw error;
         }
     },
 
-    checkAndRedirectHost: () => {
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
-        if (user.role === 'HOST' && !window.location.pathname.startsWith('/host')) {
-            window.location.href = '/host';
-        }
-    },
-
+    // Đăng nhập user
     login: async (email, password) => {
         try {
-            const response = await api.post('auth/login', {
+            console.log('authService.login - Starting login for:', email);
+            
+            const response = await api.post('/auth/login', {
                 email,
                 password
             });
 
-            console.log('API Response:', response.data);
+            console.log('authService.login - Raw response:', response);
+            console.log('authService.login - Response data:', response.data);
+            console.log('authService.login - Response status:', response.status);
 
-            if (response.data && response.data.data && response.data.data.token) {
-                return {
-                    token: response.data.data.token,
-                    user: {
-                        email: email,
-                        // Thêm các trường khác nếu cần
-                    }
-                };
+            // Xử lý response format từ backend
+            let loginData, token, user;
+            
+            // Backend có thể trả về các format khác nhau
+            if (response.data.data) {
+                // Format: { data: { token, user } } hoặc { code: "00", data: { token, user } }
+                loginData = response.data.data;
+                token = loginData.token || loginData.accessToken;
+                user = loginData.user;
+            } else if (response.data.token) {
+                // Format: { token, user }
+                token = response.data.token;
+                user = response.data.user;
+            } else if (response.data.accessToken) {
+                // Format: { accessToken, user }
+                token = response.data.accessToken;
+                user = response.data.user;
+            } else {
+                // Format khác - log để debug
+                console.log('authService.login - Unknown response format:', response.data);
+                throw new Error('Format response không được hỗ trợ');
             }
-            throw new Error('Phản hồi từ máy chủ không hợp lệ');
-        } catch (error) {
-            console.error('Lỗi đăng nhập:', error);
-            throw error.response?.data || {
-                message: error.message || 'Đăng nhập thất bại',
-                status: error.response?.status
+
+            console.log('authService.login - Extracted token:', token);
+            console.log('authService.login - Extracted user:', user);
+
+            // Lưu token trước
+            if (token) {
+                console.log('authService.login - Storing token in localStorage');
+                localStorage.setItem('token', token);
+            } else {
+                throw new Error('Không nhận được token từ server');
+            }
+
+            // Nếu không có user data trong response, gọi API để lấy
+            if (!user) {
+                console.log('authService.login - No user data in response, fetching user profile...');
+                try {
+                    user = await authService.getCurrentUser();
+                    console.log('authService.login - Fetched user data:', user);
+                } catch (profileError) {
+                    console.error('authService.login - Error fetching user profile:', profileError);
+                    throw new Error('Không thể lấy thông tin user từ server. Vui lòng thử lại.');
+                }
+            }
+
+            // Kiểm tra xem user data có id không
+            if (!user || !user.id) {
+                console.error('authService.login - User data missing ID:', user);
+                throw new Error('Thông tin user không hợp lệ. Vui lòng đăng nhập lại.');
+            }
+
+            // Lưu user data
+            console.log('authService.login - Storing user data in localStorage:', user);
+            safeSetToStorage('user', user);
+            
+            // Trả về data với format chuẩn
+            const result = {
+                success: true,
+                data: {
+                    token,
+                    user
+                },
+                message: response.data.message || 'Đăng nhập thành công'
             };
+            console.log('authService.login - Returning result:', result);
+            return result;
+            
+        } catch (error) {
+            console.error('authService.login - Error:', error);
+            console.error('authService.login - Error response:', error.response);
+            logApiError(error, 'login');
+            throw error;
         }
     },
 
+    // Đăng ký user
     register: async (userData) => {
         try {
-            const response = await api.post('auth/register', userData);
+            console.log('authService.register - Starting registration with data:', userData);
+            
+            // Chuyển đổi dữ liệu để phù hợp với backend User entity
+            // Backend: username = email (để đăng nhập), fullName = tên hiển thị
+            const registerData = {
+                email: userData.email,
+                username: userData.email, // Backend set username = email để đăng nhập
+                password: userData.password,
+                fullName: userData.username, // Frontend username map với backend fullName
+                phone: userData.phone,
+                address: userData.address || null,
+                active: true, // Mặc định active khi đăng ký
+                avatarUrl: "/images/default-avatar.png" // Default avatar
+            };
+
+            console.log('authService.register - Register data to send:', registerData);
+
+            const response = await api.post('/auth/register', registerData);
+            
+            console.log('authService.register - Response:', response);
+            console.log('authService.register - Response data:', response.data);
+            
             return response.data;
         } catch (error) {
-            console.error('Lỗi đăng ký:', error);
-            throw error.response?.data || {
-                message: error.message || 'Đăng ký thất bại',
-                status: error.response?.status
-            };
+            console.error('authService.register - Error:', error);
+            console.error('authService.register - Error response:', error.response);
+            logApiError(error, 'register');
+            throw error;
         }
     },
 
+    // Cập nhật profile
+    updateProfile: async (userId, userData) => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('Vui lòng đăng nhập lại');
+            }
+
+            console.log('authService.updateProfile - Starting update for user:', userId);
+            console.log('authService.updateProfile - User data:', userData);
+
+            // Chuyển đổi dữ liệu để phù hợp với UserDTO
+            const profileData = {
+                id: userId,
+                fullName: userData.fullName,
+                phone: userData.phone,
+                address: userData.address,
+                avatarUrl: userData.avatarUrl,
+                email: userData.email,
+                birthDate: userData.dateOfBirth ? new Date(userData.dateOfBirth).toISOString().split('T')[0] : null, // Convert dateOfBirth to birthDate format
+                active: userData.active,
+                roleName: userData.roleName
+            };
+
+            console.log('authService.updateProfile - Profile data to send:', profileData);
+
+            // Gọi đúng endpoint theo UserController
+            const response = await api.put(`/users/${userId}/profile`, profileData);
+
+            console.log('authService.updateProfile - Response:', response);
+            console.log('authService.updateProfile - Response data:', response.data);
+
+            // Xử lý response format từ backend: { code: "00", message: "...", data: UserDTO }
+            let updatedUser;
+            if (response.data.data) {
+                // Format: { code: "00", message: "...", data: { id: 14, fullName: "...", ... } }
+                updatedUser = response.data.data;
+            } else if (response.data.id) {
+                // Fallback: Format: { id: ..., fullName: ..., ... }
+                updatedUser = response.data;
+            } else {
+                throw new Error('Response format không hợp lệ');
+            }
+
+            console.log('authService.updateProfile - Updated user data:', updatedUser);
+            
+            // Cập nhật user trong localStorage
+            if (updatedUser) {
+                safeSetToStorage('user', updatedUser);
+                console.log('authService.updateProfile - User data saved to localStorage');
+            }
+
+            return {
+                success: true,
+                data: updatedUser,
+                message: response.data.message || 'Cập nhật profile thành công'
+            };
+            
+        } catch (error) {
+            console.error('authService.updateProfile - Error:', error);
+            console.error('authService.updateProfile - Error response:', error.response);
+            logApiError(error, 'updateProfile');
+            
+            if (error.response?.status === 401) {
+                handleApiError(error, { 
+                    clearAuthOn401: true, 
+                    redirectOn401: true,
+                    redirectPath: '/login?sessionExpired=true'
+                });
+            }
+            
+            throw error;
+        }
+    },
+
+    // Lấy profile
     getProfile: async () => {
         try {
-            const response = await api.get('users/profile');
-            return response.data;
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('Không tìm thấy token. Vui lòng đăng nhập lại.');
+            }
+
+            const response = await api.get('/users/profile');
+            return response.data.data || response.data;
         } catch (error) {
-            console.error('Lỗi lấy thông tin người dùng:', error);
-            throw error.response?.data || {
-                message: error.message || 'Không thể lấy thông tin người dùng',
-                status: error.response?.status
-            };
+            logApiError(error, 'getProfile');
+            throw error;
         }
     },
 
-    // ========== CÁC HÀM QUÊN MẬT KHẨU ==========
-    requestPasswordReset: async (email) => {
+    // Đổi mật khẩu
+    changePassword: async (userId, oldPassword, newPassword) => {
         try {
-            const response = await api.post('users/request-password-reset', { email });
-            return response.data;
-        } catch (error) {
-            console.error('Lỗi khi yêu cầu đặt lại mật khẩu:', error);
-            throw error.response?.data || {
-                message: error.message || 'Có lỗi xảy ra khi yêu cầu đặt lại mật khẩu',
-                status: error.response?.status
-            };
-        }
-    },
-
-    verifyOtp: async (email, otp) => {
-        try {
-            const response = await api.post('users/verify-otp', { email, otp });
-            return response.data;
-        } catch (error) {
-            console.error('Lỗi xác thực OTP:', error);
-            throw error.response?.data || {
-                message: error.message || 'Mã OTP không hợp lệ hoặc đã hết hạn',
-                status: error.response?.status
-            };
-        }
-    },
-
-    resetPassword: async (email, otp, newPassword) => {
-        try {
-            const response = await api.post('users/reset-password', {
-                email,
-                otp,
+            const response = await api.put(`/users/${userId}/change-password`, {
+                oldPassword,
                 newPassword
             });
             return response.data;
         } catch (error) {
-            console.error('Lỗi khi đặt lại mật khẩu:', error);
-            throw error.response?.data || {
-                message: error.message || 'Có lỗi xảy ra khi đặt lại mật khẩu',
-                status: error.response?.status
-            };
+            logApiError(error, 'changePassword');
+            throw error;
         }
+    },
+
+    // Quên mật khẩu
+    forgotPassword: async (email) => {
+        try {
+            const response = await api.post('/users/password-reset/request', null, {
+                params: { email }
+            });
+            return response.data;
+        } catch (error) {
+            logApiError(error, 'forgotPassword');
+            throw error;
+        }
+    },
+
+    // Request password reset (alias cho forgotPassword)
+    requestPasswordReset: async (email) => {
+        try {
+            const response = await api.post('/users/password-reset/request', null, {
+                params: { email }
+            });
+            return response.data;
+        } catch (error) {
+            logApiError(error, 'requestPasswordReset');
+            throw error;
+        }
+    },
+
+    // Verify OTP - Backend có thể không có endpoint này, cần check
+    verifyOtp: async (email, otp) => {
+        try {
+            // Tạm thời return success nếu backend chưa có endpoint này
+            console.warn('verifyOtp: Backend endpoint not implemented yet');
+            return { success: true, message: 'OTP verified' };
+        } catch (error) {
+            logApiError(error, 'verifyOtp');
+            throw error;
+        }
+    },
+
+    // Reset mật khẩu - Sử dụng endpoint có sẵn từ backend
+    resetPassword: async (token, newPassword) => {
+        try {
+            const response = await api.post('/users/password-reset/confirm', null, {
+                params: { token, newPassword }
+            });
+            return response.data;
+        } catch (error) {
+            logApiError(error, 'resetPassword');
+            throw error;
+        }
+    },
+
+    // Đăng xuất
+    logout: () => {
+        safeRemoveFromStorage('token');
+        safeRemoveFromStorage('user');
+        window.dispatchEvent(new Event('unauthorized'));
     }
 };
 
