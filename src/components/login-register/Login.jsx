@@ -1,430 +1,198 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import authService from "../../api/authService"; // Giữ nguyên import authService
-import { LogIn, Mail, Lock, Home } from "lucide-react"; // Thêm các icon từ lucide-react
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import styled from "styled-components";
+import { LogIn, Mail, Lock, Home } from "lucide-react";
+import { useAuth } from "../../hooks/useAuth";
+import { useForm, validationRules } from "../../hooks/useForm";
+import FormField from "../common/FormField";
+import Button from "../common/Button";
+import ErrorMessage from "../common/ErrorMessage";
+
+const LoginContainer = styled.div`
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 1rem;
+`;
+
+const LoginCard = styled.div`
+  background: white;
+  padding: 2.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  width: 100%;
+  max-width: 480px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3182ce, #667eea);
+  }
+`;
+
+const LoginHeader = styled.div`
+  text-align: center;
+  margin-bottom: 2rem;
+
+  .icon-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 4rem;
+    height: 4rem;
+    background: linear-gradient(135deg, #3182ce, #667eea);
+    border-radius: 50%;
+    margin-bottom: 1rem;
+  }
+
+  h1 {
+    color: #1a202c;
+    font-size: 1.75rem;
+    font-weight: bold;
+    margin: 0 0 0.5rem 0;
+  }
+
+  p {
+    color: #718096;
+    font-size: 0.875rem;
+    margin: 0;
+  }
+`;
+
+const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+`;
+
+const FooterLinks = styled.div`
+  text-align: center;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+
+  p {
+    margin: 0 0 1rem 0;
+    color: #718096;
+    font-size: 0.875rem;
+  }
+
+  a {
+    color: #3182ce;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: color 0.2s;
+
+    &:hover {
+      color: #2c5aa0;
+      text-decoration: underline;
+    }
+  }
+`;
 
 const Login = () => {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-  const [message, setMessage] = useState("");
-  const [isError, setIsError] = useState(false);
-  const [loading, setLoading] = useState(false); // Thêm trạng thái loading
-  const navigate = useNavigate();
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-    if (message) {
-      setMessage("");
-      setIsError(false);
+  const { login, loading, error } = useAuth();
+  
+  const { formData, errors, handleChange, handleBlur, validateForm } = useForm(
+    {
+      email: "",
+      password: "",
+    },
+    {
+      email: validationRules.email,
+      password: validationRules.password,
     }
-  };
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setMessage("Đang xử lý...");
-    setIsError(false);
-
-    // Kiểm tra validation cơ bản phía client
-    if (!formData.email || !formData.password) {
-      setMessage("Vui lòng điền đầy đủ email và mật khẩu.");
-      setIsError(true);
-      setLoading(false);
+    
+    if (!validateForm()) {
       return;
     }
 
-    try {
-      // Gọi API đăng nhập
-      const response = await authService.login(formData.email, formData.password);
-      // Kiểm tra nếu có lỗi từ API
-      if (response.error) {
-        throw new Error(response.message || 'Đăng nhập thất bại');
-      }
-
-      // Lưu thông tin đăng nhập thành công
-      setMessage("Đăng nhập thành công! Đang chuyển hướng...");
-      setIsError(false);
-
-        const user = await authService.getProfile();
-        if (user.roleName === 'HOST') {
-            navigate("/host");
-        } else if (user.role === "ADMIN") {
-            navigate("/admin");
-        } else if (user.roleName === 'USER') {
-            navigate("/");
-        }
-    } catch (error) {
-      console.error("Lỗi đăng nhập:", error);
-      
-      // Xử lý thông báo lỗi chi tiết hơn
-      let errorMessage = "Đăng nhập thất bại";
-      
-      if (error.response) {
-        // Lỗi từ phản hồi API
-        errorMessage = error.response.data?.message || errorMessage;
-      } else if (error.request) {
-        // Không nhận được phản hồi từ server
-        errorMessage = "Không thể kết nối đến máy chủ. Vui lòng thử lại sau.";
-      } else {
-        // Lỗi khác
-        errorMessage = error.message || errorMessage;
-      }
-      
-      setMessage(errorMessage);
-      setIsError(true);
-      
-      // Xóa thông tin đăng nhập nếu có lỗi xác thực
-      if (error.response?.status === 401) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-      }
-    } finally {
-      setLoading(false);
+    const result = await login(formData.email, formData.password);
+    
+    if (!result.success) {
+      // Error is already handled by useAuth hook
+      return;
     }
   };
 
-  // Định nghĩa style cho input và icon để tái sử dụng
-  const inputStyle = {
-    width: "100%",
-    padding: "0.875rem 1rem 0.875rem 2.75rem", // Thêm padding cho icon
-    border: "2px solid #e2e8f0",
-    borderRadius: "0.5rem",
-    fontSize: "1rem",
-    transition: "all 0.2s",
-    background: "#f7fafc",
-    boxSizing: "border-box", // Đảm bảo padding không làm tăng kích thước tổng thể
-  };
-
-  const iconStyle = {
-    position: "absolute",
-    left: "0.875rem",
-    top: "50%",
-    transform: "translateY(-50%)",
-    color: "#a0aec0",
-    width: "1.25rem",
-height: "1.25rem",
-  };
-
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-        padding: "1rem",
-      }}
-    >
-      <div
-        style={{
-          background: "white",
-          padding: "2.5rem",
-          borderRadius: "1rem",
-          boxShadow:
-            "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-          width: "100%",
-          maxWidth: "480px",
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
-        {/* Đường viền gradient phía trên */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: "4px",
-            background: "linear-gradient(90deg, #3182ce, #667eea)",
-          }}
-        />
-
-        {/* Phần tiêu đề */}
-        <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "4rem",
-              height: "4rem",
-              background: "linear-gradient(135deg, #3182ce, #667eea)",
-              borderRadius: "50%",
-              marginBottom: "1rem",
-            }}
-          >
+    <LoginContainer>
+      <LoginCard>
+        <LoginHeader>
+          <div className="icon-wrapper">
             <LogIn color="white" size={32} />
           </div>
-          <h1
-            style={{
-              color: "#1a202c",
-              fontSize: "1.75rem",
-              fontWeight: "bold",
-              margin: "0 0 0.5rem 0",
-            }}
-          >
-            Đăng nhập tài khoản
-          </h1>
-          <p
-            style={{
-              color: "#718096",
-              fontSize: "0.875rem",
-              margin: 0,
-            }}
-          >
-            Chào mừng bạn quay trở lại!
-          </p>
-        </div>
+          <h1>Đăng nhập tài khoản</h1>
+          <p>Chào mừng bạn quay trở lại!</p>
+        </LoginHeader>
 
-        {/* Form đăng nhập */}
-        <form
-          onSubmit={handleSubmit}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "1.25rem",
-          }}
-        >
-          {/* Hộp thông báo */}
-          {message && (
-            <div
-              style={{
-                background: isError ? "#fed7d7" : "#c6f6d5",
-                color: isError ? "#742a2a" : "#22543d",
-                padding: "0.875rem 1rem",
-                borderRadius: "0.5rem",
-                fontSize: "0.875rem",
-                textAlign: "center",
-                borderLeft: `4px solid ${isError ? "#e53e3e" : "#38a169"}`,
-              }}
-            >
-              {message}
-            </div>
-          )}
+        <Form onSubmit={handleSubmit}>
+          {error && <ErrorMessage type="error" message={error} />}
 
-          {/* Trường Email */}
-          <div>
-            <label
-              htmlFor="email"
-              style={{
-                display: "block",
-                marginBottom: "0.5rem",
-                fontWeight: "500",
-color: "#4a5568",
-                fontSize: "0.875rem",
-              }}
-            >
-              Email <span style={{ color: "#e53e3e" }}>*</span>
-            </label>
-            <div style={{ position: "relative" }}>
-              <Mail style={iconStyle} />
-              <input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="Địa chỉ email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                style={{
-                  ...inputStyle,
-                  // Thêm hiệu ứng focus/blur
-                  onFocus: (e) => {
-                    e.target.style.outline = "none";
-                    e.target.style.borderColor = "#3182ce";
-                    e.target.style.background = "white";
-                    e.target.style.boxShadow =
-                      "0 0 0 3px rgba(49, 130, 206, 0.1)";
-                  },
-                  onBlur: (e) => {
-                    e.target.style.borderColor = "#e2e8f0";
-                    e.target.style.background = "#f7fafc";
-                    e.target.style.boxShadow = "none";
-                  },
-                }}
-              />
-            </div>
-          </div>
+          <FormField
+            label="Email"
+            name="email"
+            type="email"
+            placeholder="Địa chỉ email"
+            value={formData.email}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            error={errors.email}
+            required
+            icon={Mail}
+          />
 
-          {/* Trường Mật khẩu */}
-          <div>
-            <label
-              htmlFor="password"
-              style={{
-                display: "block",
-                marginBottom: "0.5rem",
-                fontWeight: "500",
-                color: "#4a5568",
-                fontSize: "0.875rem",
-              }}
-            >
-              Mật khẩu <span style={{ color: "#e53e3e" }}>*</span>
-            </label>
-            <div style={{ position: "relative" }}>
-              <Lock style={iconStyle} />
-              <input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="Mật khẩu"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                style={{
-                  ...inputStyle,
-                  // Thêm hiệu ứng focus/blur
-                  onFocus: (e) => {
-                    e.target.style.outline = "none";
-                    e.target.style.borderColor = "#3182ce";
-                    e.target.style.background = "white";
-                    e.target.style.boxShadow =
-                      "0 0 0 3px rgba(49, 130, 206, 0.1)";
-                  },
-                  onBlur: (e) => {
-                    e.target.style.borderColor = "#e2e8f0";
-                    e.target.style.background = "#f7fafc";
-                    e.target.style.boxShadow = "none";
-                  },
-                }}
-              />
-            </div>
-          </div>
+          <FormField
+            label="Mật khẩu"
+            name="password"
+            type="password"
+            placeholder="Mật khẩu"
+            value={formData.password}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            error={errors.password}
+            required
+            icon={Lock}
+          />
 
-          {/* Nút Đăng nhập */}
-          <button
+          <Button
             type="submit"
+            fullWidth
+            loading={loading}
             disabled={loading}
-            style={{
-              background: loading
-? "#a0aec0" // Màu xám khi đang loading
-                : "linear-gradient(135deg, #3182ce, #667eea)", // Gradient khi không loading
-              color: "white",
-              padding: "0.875rem 1rem",
-              border: "none",
-              borderRadius: "0.5rem",
-              fontSize: "1rem",
-              fontWeight: "600",
-              cursor: loading ? "not-allowed" : "pointer",
-              transition: "all 0.2s",
-              minHeight: "3rem", // Đảm bảo chiều cao tối thiểu
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              marginTop: "0.5rem",
-            }}
-            // Hiệu ứng hover
-            onMouseEnter={(e) => {
-              if (!loading) {
-                e.target.style.transform = "translateY(-1px)";
-                e.target.style.boxShadow =
-                  "0 10px 15px -3px rgba(0, 0, 0, 0.1)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.transform = "translateY(0)";
-              e.target.style.boxShadow = "none";
-            }}
           >
             {loading ? "Đang đăng nhập..." : "Đăng nhập"}
-          </button>
-        </form>
+          </Button>
+        </Form>
 
-        {/* Phần liên kết chân trang */}
-        <div
-          style={{
-            textAlign: "center",
-            marginTop: "2rem",
-            paddingTop: "1.5rem",
-            borderTop: "1px solid #e2e8f0",
-          }}
-        >
-          <p
-            style={{
-              margin: "0 0 1rem 0",
-              color: "#718096",
-              fontSize: "0.875rem",
-            }}
-          >
+        <FooterLinks>
+          <p>
             Chưa có tài khoản?{" "}
-            <Link
-              to="/register"
-              style={{
-                color: "#3182ce",
-                textDecoration: "none",
-                fontWeight: "500",
-                transition: "color 0.2s",
-              }}
-              // Hiệu ứng hover
-              onMouseEnter={(e) => {
-                e.target.style.color = "#2c5aa0";
-                e.target.style.textDecoration = "underline";
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.color = "#3182ce";
-                e.target.style.textDecoration = "none";
-              }}
-            >
-              Đăng ký ngay
-            </Link>
+            <Link to="/register">Đăng ký ngay</Link>
           </p>
-          <Link
-            to="/forgot-password"
-            style={{
-              color: "#3182ce",
-              textDecoration: "none",
-              fontSize: "0.875rem",
-              fontWeight: "500",
-              transition: "color 0.2s",
-              display: "block",
-              marginBottom: "1rem",
-            }}
-            // Hiệu ứng hover
-            onMouseEnter={(e) => {
-              e.target.style.color = "#2c5aa0";
-              e.target.style.textDecoration = "underline";
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.color = "#3182ce";
-e.target.style.textDecoration = "none";
-            }}
-          >
-            Quên mật khẩu?
-          </Link>
-          <Link
-            to="/"
-            style={{
-              color: "#3182ce",
-              textDecoration: "none",
-              fontSize: "0.875rem",
-              fontWeight: "500",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              transition: "color 0.2s",
-            }}
-            // Hiệu ứng hover
-            onMouseEnter={(e) => {
-              e.target.style.color = "#2c5aa0";
-              e.target.style.textDecoration = "underline";
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.color = "#3182ce";
-              e.target.style.textDecoration = "none";
-            }}
-          >
-            <Home size={16} />
+          <Link to="/forgot-password">Quên mật khẩu?</Link>
+          <br />
+          <Link to="/">
+            <Home size={16} style={{ marginRight: '0.5rem' }} />
             Quay về trang chủ
           </Link>
-        </div>
-      </div>
-    </div>
+        </FooterLinks>
+      </LoginCard>
+    </LoginContainer>
   );
 };
 

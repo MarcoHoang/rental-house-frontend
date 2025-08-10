@@ -1,13 +1,8 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
+import { isAdminAuthenticated } from "../../utils/localStorage";
 
 const AdminRoute = ({ children }) => {
-  const isAdminAuthenticated = () => {
-    const token = localStorage.getItem("adminToken");
-    const adminUser = localStorage.getItem("adminUser");
-    return token && adminUser;
-  };
-
   return isAdminAuthenticated() ? (
     children
   ) : (
