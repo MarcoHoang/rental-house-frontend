@@ -103,27 +103,102 @@ const ErrorText = styled.p`
 `;
 
 const UserProfilePage = () => {
-  // Lấy thông tin user từ localStorage khi component mount
-  const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
-
+  const [user, setUser] = useState(null);
+  const [userId, setUserId] = useState(null);
   const [profile, setProfile] = useState({
-    email: user?.email || '',
-    fullName: user?.fullName || '',
-    phone: user?.phone || '',
-    address: user?.address || '',
-    dateOfBirth: user?.dateOfBirth || '',
+    email: '',
+    fullName: '',
+    phone: '',
+    address: '',
+    dateOfBirth: '',
     avatar: null,
-    avatarPreview: user?.avatar || '/default-avatar.png'
+    avatarPreview: '/default-avatar.png'
   });
-  
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
   const navigate = useNavigate();
-  
+
+  // Lấy thông tin user khi component mount
+  useEffect(() => {
+    console.log('UserProfilePage mounted or updated');
+    let isMounted = true;
+    
+    const fetchUserProfile = async () => {
+      console.log('Starting to fetch user profile...');
+      if (!isMounted) return;
+      
+      setIsSubmitting(true);
+      try {
+        // Kiểm tra token trước khi gọi API
+        const token = localStorage.getItem('token');
+        if (!token) {
+          navigate('/login', { 
+            state: { 
+              from: '/profile',
+              error: 'Vui lòng đăng nhập để tiếp tục'
+            },
+            replace: true 
+          });
+          return;
+        }
+
+        const userData = await authService.getCurrentUser();
+        console.log('Received user data:', userData);
+        
+        if (!isMounted) {
+          console.log('Component unmounted, skipping state update');
+          return;
+        }
+        
+        // Cập nhật state với dữ liệu người dùng
+        setUser(userData);
+        setUserId(userData.id);
+        
+        setProfile(prev => ({
+          ...prev,
+          email: userData.email || '',
+          fullName: userData.fullName || '',
+          phone: userData.phone || '',
+          address: userData.address || '',
+          dateOfBirth: userData.dateOfBirth || '',
+          avatar: userData.avatar,
+          avatarPreview: userData.avatar || '/default-avatar.png'
+        }));
+        
+      } catch (error) {
+        if (!isMounted) return;
+        
+        if (error.response?.status === 401) {
+          // Chuyển hướng về trang đăng nhập nếu chưa đăng nhập
+          navigate('/login', { 
+            state: { 
+              from: '/profile',
+              error: 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại' 
+            },
+            replace: true 
+          });
+        } else {
+          setMessage({
+            text: 'Không thể tải thông tin người dùng',
+            type: 'error'
+          });
+        }
+      } finally {
+        if (isMounted) {
+          setIsSubmitting(false);
+        }
+      }
+    };
+
+    fetchUserProfile();
+
+    // Cleanup function
+    return () => {
+      isMounted = false;
+    };
+  }, [navigate]);
+
   // Hàm xử lý quay lại trang trước
   const handleGoBack = () => {
     navigate(-1); // Quay lại trang trước đó
@@ -165,18 +240,31 @@ const UserProfilePage = () => {
 
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfile(prev => ({
-          ...prev,
-          avatar: file,
-          avatarPreview: reader.result
-        }));
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    // Kiểm tra loại file
+    const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
+    if (!allowedTypes.includes(file.type)) {
+      setMessage({ text: "Chỉ chấp nhận file JPG hoặc PNG", type: "error" });
+      return;
     }
+
+    // Kiểm tra dung lượng file (tối đa 5MB)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setMessage({ text: "Kích thước ảnh tối đa 5MB", type: "error" });
+      return;
+    }
+
+    // Tạo URL tạm để hiển thị preview
+    const previewUrl = URL.createObjectURL(file);
+    setProfile(prev => ({
+      ...prev,
+      avatar: file,
+      avatarPreview: previewUrl
+    }));
   };
+
 
   const validateForm = () => {
     const newErrors = {};
@@ -210,7 +298,7 @@ const UserProfilePage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validateForm()) {
+    if (!validateForm() || !userId) {
       return;
     }
 
@@ -218,54 +306,46 @@ const UserProfilePage = () => {
     setMessage({ text: '', type: '' });
 
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
+      // Chuẩn bị dữ liệu gửi đi
+      const userData = {
+        fullName: profile.fullName,
+        phone: profile.phone,
+        address: profile.address || null,
+        dateOfBirth: profile.dateOfBirth || null,
+        avatar: typeof profile.avatar === 'string' ? profile.avatar : null
+      };
+
+      // Gọi API cập nhật profile
+      const updatedUser = await authService.updateProfile(userId, userData);
+      
+      // Nếu updatedUser là null, có thể đã xảy ra lỗi 401 và đã xử lý redirect
+      if (!updatedUser) {
         return;
       }
 
-      // Tạo đối tượng FormData
-      const formData = new FormData();
-
-      // Thêm các trường dữ liệu
-      formData.append('fullName', profile.fullName);
-      formData.append('phone', profile.phone);
-      if (profile.address) formData.append('address', profile.address);
-      if (profile.dateOfBirth) formData.append('dateOfBirth', profile.dateOfBirth);
-
-      // Thêm avatar nếu có
-      if (profile.avatar) {
-        formData.append('avatar', profile.avatar);
-      }
-
-      const response = await authService.updateProfile(formData);
-
-      // Cập nhật thông tin user trong localStorage
-      const updatedUser = {
-        ...user,
-        fullName: profile.fullName,
-        phone: profile.phone,
-        address: profile.address,
-        dateOfBirth: profile.dateOfBirth,
-        avatar: response.data?.avatar || user.avatar
-      };
-
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      setUser(updatedUser);
-
-      // Kích hoạt sự kiện để cập nhật header
-      window.dispatchEvent(new Event('storage'));
-
+      // Cập nhật thông tin trong localStorage
+      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const newUserData = { ...currentUser, ...updatedUser };
+      localStorage.setItem('user', JSON.stringify(newUserData));
+      
+      setUser(newUserData);
       setMessage({
-        text: response.message || 'Cập nhật thông tin thành công!',
+        text: 'Cập nhật thông tin thành công!',
         type: 'success'
       });
+
+      // Cập nhật lại giao diện
+      window.dispatchEvent(new Event('storage'));
+
     } catch (error) {
-      console.error('Error updating profile:', error);
-      setMessage({
-        text: error.response?.data?.message || error.message || 'Có lỗi xảy ra khi cập nhật thông tin',
-        type: 'error'
-      });
+      console.error('Lỗi khi cập nhật thông tin:', error);
+      // Chỉ hiển thị thông báo nếu không phải lỗi 401 (đã xử lý trong authService)
+      if (error.response?.status !== 401) {
+        setMessage({
+          text: error.message || 'Có lỗi xảy ra khi cập nhật thông tin',
+          type: 'error'
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -360,8 +440,8 @@ const UserProfilePage = () => {
           <Label>Ngày sinh</Label>
           <Input 
             type="date" 
-            name="dateOfBirth" 
-            value={profile.dateOfBirth ? profile.dateOfBirth.split('T')[0] : ''} 
+            name="dateOfBirth"
+            value={profile.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().split('T')[0] : ''}
             onChange={handleChange}
           />
         </FormGroup>
