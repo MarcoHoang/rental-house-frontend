@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  useNavigate,
+  Link,
+  useLocation,
+} from "react-router-dom";
 import styled from "styled-components";
 import {
   Home,
@@ -16,6 +22,7 @@ import {
 import UserManagement from "./UserManagement";
 import ConfirmDialog from "../common/ConfirmDialog";
 import { useToast } from "../common/Toast";
+import UserDetailPage from "./UserDetailPage";
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -531,7 +538,13 @@ const AdminDashboard = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { showSuccess } = useToast();
+
+  useEffect(() => {
+    const path = location.pathname.split("/")[2] || "dashboard"; // Lấy phần sau '/admin/'
+    setActiveTab(path);
+  }, [location.pathname]);
 
   useEffect(() => {
     const adminData = localStorage.getItem("adminUser");
@@ -540,9 +553,7 @@ const AdminDashboard = () => {
     }
   }, []);
 
-  const handleLogout = () => {
-    setShowLogoutConfirm(true);
-  };
+  const handleLogout = () => setShowLogoutConfirm(true);
 
   const performLogout = () => {
     localStorage.removeItem("adminUser");
@@ -577,13 +588,38 @@ const AdminDashboard = () => {
   };
 
   const sidebarItems = [
-    { id: "dashboard", label: "Tổng quan", icon: Home },
-    { id: "users", label: "Quản lý User", icon: Users },
-    { id: "houses", label: "Quản lý nhà", icon: Home },
-    { id: "tenants", label: "Khách thuê", icon: Users },
-    { id: "contracts", label: "Hợp đồng", icon: FileText },
-    { id: "revenue", label: "Doanh thu", icon: DollarSign },
-    { id: "settings", label: "Cài đặt", icon: Settings },
+    {
+      id: "dashboard",
+      label: "Tổng quan",
+      icon: Home,
+      path: "/admin/dashboard",
+    },
+    {
+      id: "user-management",
+      label: "Quản lý User",
+      icon: Users,
+      path: "/admin/user-management",
+    },
+    { id: "houses", label: "Quản lý nhà", icon: Home, path: "/admin/houses" },
+    { id: "tenants", label: "Khách thuê", icon: Users, path: "/admin/tenants" },
+    {
+      id: "contracts",
+      label: "Hợp đồng",
+      icon: FileText,
+      path: "/admin/contracts",
+    },
+    {
+      id: "revenue",
+      label: "Doanh thu",
+      icon: DollarSign,
+      path: "/admin/revenue",
+    },
+    {
+      id: "settings",
+      label: "Cài đặt",
+      icon: Settings,
+      path: "/admin/settings",
+    },
   ];
 
   return (
@@ -598,14 +634,17 @@ const AdminDashboard = () => {
           {sidebarItems.map((item) => {
             const Icon = item.icon;
             return (
-              <NavItem
+              // Bọc trong Link để thay đổi URL
+              <Link
+                to={item.path}
                 key={item.id}
-                $active={activeTab === item.id}
-                onClick={() => setActiveTab(item.id)}
+                style={{ textDecoration: "none" }}
               >
-                <Icon />
-                {item.label}
-              </NavItem>
+                <NavItem $active={activeTab === item.id}>
+                  <Icon />
+                  {item.label}
+                </NavItem>
+              </Link>
             );
           })}
         </SidebarNav>
@@ -647,220 +686,38 @@ const AdminDashboard = () => {
         </Header>
 
         <Main>
-          {activeTab === "dashboard" && (
-            <div>
-              <StatsGrid>
-                <StatCard>
-                  <div className="stat-header">
-                    <span className="stat-title">Tổng số nhà</span>
-                    <div className="stat-icon total">
-                      <Home size={20} />
-                    </div>
-                  </div>
-                  <div className="stat-value">{mockStats.totalHouses}</div>
-                  <div className="stat-change">+2 từ tháng trước</div>
-                </StatCard>
+          <Routes>
+            {/* Route cho Dashboard */}
+            <Route index element={<DashboardContent />} />
+            <Route path="dashboard" element={<DashboardContent />} />
 
-                <StatCard>
-                  <div className="stat-header">
-                    <span className="stat-title">Nhà có sẵn</span>
-                    <div className="stat-icon available">
-                      <Home size={20} />
-                    </div>
-                  </div>
-                  <div className="stat-value">{mockStats.availableHouses}</div>
-                  <div className="stat-change">72% tổng số nhà</div>
-                </StatCard>
+            {/* Route cho User Management */}
+            <Route path="user-management" element={<UserManagement />} />
 
-                <StatCard>
-                  <div className="stat-header">
-                    <span className="stat-title">Đã cho thuê</span>
-                    <div className="stat-icon rented">
-                      <Users size={20} />
-                    </div>
-                  </div>
-                  <div className="stat-value">{mockStats.rentedHouses}</div>
-                  <div className="stat-change">
-                    {mockStats.totalTenants} khách thuê
-                  </div>
-                </StatCard>
+            {/* Route cho User Detail Page */}
+            <Route
+              path="user-management/:userId"
+              element={<UserDetailPage />}
+            />
 
-                <StatCard>
-                  <div className="stat-header">
-                    <span className="stat-title">Doanh thu tháng</span>
-                    <div className="stat-icon revenue">
-                      <DollarSign size={20} />
-                    </div>
-                  </div>
-                  <div className="stat-value">
-                    {formatPrice(mockStats.monthlyRevenue)}
-                  </div>
-                  <div className="stat-change">+12% từ tháng trước</div>
-                </StatCard>
-              </StatsGrid>
+            {/* Route cho các trang khác (ví dụ) */}
+            <Route path="houses" element={<HousesContent />} />
 
-              <Card>
-                <CardHeader>
-                  <h3>Nhà mới nhất</h3>
-                  <p>Danh sách các căn nhà được thêm gần đây</p>
-                </CardHeader>
-                <CardContent>
-                  {houses.slice(0, 3).map((house) => (
-                    <HouseItem key={house.id}>
-                      <img
-                        src={house.image || "/placeholder.svg"}
-                        alt={house.title}
-                      />
-                      <div className="house-info">
-                        <h4>{house.title}</h4>
-                        <p className="address">{house.address}</p>
-                        <p className="price">
-                          {formatPrice(house.price)}/tháng
-                        </p>
-                      </div>
-                      <Badge className={getStatusBadge(house.status).className}>
-                        {getStatusBadge(house.status).label}
-                      </Badge>
-                    </HouseItem>
-                  ))}
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {activeTab === "users" && <UserManagement />}
-
-          {activeTab === "houses" && (
-            <div>
-              <SearchContainer>
-                <div className="search-input">
-                  <Search />
-                  <input
-                    type="text"
-                    placeholder="Tìm kiếm theo tên hoặc địa chỉ..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                >
-                  <option value="all">Tất cả trạng thái</option>
-                  <option value="available">Có sẵn</option>
-                  <option value="rented">Đã thuê</option>
-                  <option value="maintenance">Bảo trì</option>
-                </select>
-              </SearchContainer>
-
-              <Card>
-                <Table>
-                  <thead>
-                    <tr>
-                      <th>Nhà</th>
-                      <th>Địa chỉ</th>
-                      <th>Giá thuê</th>
-                      <th>Loại</th>
-                      <th>Trạng thái</th>
-                      <th>Thông tin</th>
-                      <th>Hành động</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredHouses.map((house) => (
-                      <tr key={house.id}>
-                        <td>
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "0.75rem",
-                            }}
-                          >
-                            <img
-                              src={house.image || "/placeholder.svg"}
-                              alt={house.title}
-                              style={{
-                                width: "3rem",
-                                height: "3rem",
-                                borderRadius: "0.5rem",
-                                objectFit: "cover",
-                              }}
-                            />
-                            <div>
-                              <div style={{ fontWeight: "600" }}>
-                                {house.title}
-                              </div>
-                              <div
-                                style={{
-                                  fontSize: "0.75rem",
-                                  color: "#718096",
-                                }}
-                              >
-                                ID: {house.id}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td>{house.address}</td>
-                        <td style={{ fontWeight: "600", color: "#38a169" }}>
-                          {formatPrice(house.price)}
-                        </td>
-                        <td style={{ textTransform: "capitalize" }}>
-                          {house.type}
-                        </td>
-                        <td>
-                          <Badge
-                            className={getStatusBadge(house.status).className}
-                          >
-                            {getStatusBadge(house.status).label}
-                          </Badge>
-                        </td>
-                        <td>
-                          <div style={{ fontSize: "0.875rem" }}>
-                            <div>
-                              {house.bedrooms} PN • {house.bathrooms} WC
-                            </div>
-                            <div>{house.area}m²</div>
-                          </div>
-                        </td>
-                        <td>
-                          <Button className="ghost">
-                            <MoreHorizontal />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </Card>
-            </div>
-          )}
-
-          {(activeTab === "tenants" ||
-            activeTab === "contracts" ||
-            activeTab === "revenue" ||
-            activeTab === "settings") && (
-            <Card>
-              <CardHeader>
-                <h3>Đang phát triển</h3>
-                <p>
-                  Tính năng{" "}
-                  {sidebarItems.find((item) => item.id === activeTab)?.label}{" "}
-                  đang được phát triển
-                </p>
-              </CardHeader>
-              <CardContent>
-                <p style={{ color: "#718096" }}>
-                  Tính năng này sẽ được cập nhật trong phiên bản tiếp theo.
-                </p>
-              </CardContent>
-            </Card>
-          )}
+            {/* Các route đang phát triển */}
+            <Route
+              path="tenants"
+              element={
+                <DevelopingFeaturePage featureName="Quản lý khách thuê" />
+              }
+            />
+            <Route
+              path="contracts"
+              element={<DevelopingFeaturePage featureName="Quản lý hợp đồng" />}
+            />
+          </Routes>
         </Main>
       </MainContent>
 
-      {/* Logout Confirmation Dialog */}
       <ConfirmDialog
         isOpen={showLogoutConfirm}
         onClose={() => setShowLogoutConfirm(false)}
@@ -874,5 +731,30 @@ const AdminDashboard = () => {
     </DashboardContainer>
   );
 };
+
+const DashboardContent = () => (
+  // Toàn bộ JSX cho trang Dashboard của bạn đặt ở đây
+  <div>
+    <p>Nội dung trang tổng quan (Dashboard)...</p>
+    {/* Ví dụ: <StatsGrid>...</StatsGrid> <Card>...</Card> */}
+  </div>
+);
+
+const HousesContent = () => (
+  // Toàn bộ JSX cho trang Quản lý nhà của bạn đặt ở đây
+  <div>
+    <p>Nội dung trang quản lý nhà (Houses)...</p>
+    {/* Ví dụ: <SearchContainer>...</SearchContainer> <Card>...</Card> */}
+  </div>
+);
+
+const DevelopingFeaturePage = ({ featureName }) => (
+  <Card>
+    <CardHeader>
+      <h3>Đang phát triển</h3>
+    </CardHeader>
+    <CardContent>Tính năng "{featureName}" đang được phát triển.</CardContent>
+  </Card>
+);
 
 export default AdminDashboard;
