@@ -7,6 +7,7 @@ import { useForm, validationRules } from "../../hooks/useForm";
 import FormField from "../common/FormField";
 import Button from "../common/Button";
 import ErrorMessage from "../common/ErrorMessage";
+import { useToast } from "../common/Toast";
 
 const LoginContainer = styled.div`
   min-height: 100vh;
@@ -102,6 +103,7 @@ const FooterLinks = styled.div`
 
 const Login = () => {
   const { login, loading, error } = useAuth();
+  const { showSuccess } = useToast();
   
   const { formData, errors, handleChange, handleBlur, validateForm } = useForm(
     {
@@ -123,9 +125,11 @@ const Login = () => {
 
     const result = await login(formData.email, formData.password);
     
-    if (!result.success) {
-      // Error is already handled by useAuth hook
-      return;
+    if (result.success) {
+      showSuccess(
+        "Đăng nhập thành công!",
+        `Chào mừng bạn quay trở lại, ${result.data?.user?.fullName || 'Người dùng'}!`
+      );
     }
   };
 

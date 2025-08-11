@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import  authService  from '../api/authService';
+import authService from '../api/authService';
+import { useToast } from '../components/common/Toast';
 
 const ProfileContainer = styled.div`
   max-width: 800px;
@@ -118,6 +119,7 @@ const UserProfilePage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
   const navigate = useNavigate();
+  const { showSuccess, showError } = useToast();
 
   // Lấy thông tin user khi component mount
   useEffect(() => {
@@ -149,7 +151,12 @@ const UserProfilePage = () => {
         }
 
         const userData = await authService.getCurrentUser();
-        console.log('Received user data:', userData);
+        console.log('=== DEBUG USER PROFILE PAGE ===');
+        console.log('UserProfilePage - Received user data:', userData);
+        console.log('UserProfilePage - userData.fullName (tên hiển thị):', userData?.fullName);
+        console.log('UserProfilePage - userData.email (email):', userData?.email);
+        console.log('UserProfilePage - userData.username (username):', userData?.username);
+        console.log('=== END DEBUG ===');
         
         if (!isMounted) {
           console.log('Component unmounted, skipping state update');
@@ -343,15 +350,19 @@ const UserProfilePage = () => {
           if (uploadResult.success && uploadResult.data.fileUrl) {
             avatarUrl = uploadResult.data.fileUrl;
             console.log('UserProfilePage.handleSubmit - Avatar uploaded successfully:', avatarUrl);
+            showSuccess(
+              "Upload avatar thành công!",
+              "Ảnh đại diện của bạn đã được cập nhật."
+            );
           } else {
             throw new Error('Upload avatar thất bại');
           }
         } catch (uploadError) {
           console.error('UserProfilePage.handleSubmit - Avatar upload error:', uploadError);
-          setMessage({
-            text: 'Lỗi khi upload ảnh đại diện: ' + (uploadError.message || 'Upload thất bại'),
-            type: 'error'
-          });
+          showError(
+            "Upload avatar thất bại!",
+            'Lỗi khi upload ảnh đại diện: ' + (uploadError.message || 'Upload thất bại')
+          );
           return;
         }
       }
@@ -388,10 +399,10 @@ const UserProfilePage = () => {
         avatar: null // Reset avatar file
       }));
 
-      setMessage({
-        text: 'Cập nhật thông tin thành công!',
-        type: 'success'
-      });
+      showSuccess(
+        "Cập nhật thành công!",
+        "Thông tin hồ sơ của bạn đã được cập nhật thành công."
+      );
 
       // Cập nhật lại giao diện
       window.dispatchEvent(new Event('storage'));
@@ -400,10 +411,10 @@ const UserProfilePage = () => {
       console.error('Lỗi khi cập nhật thông tin:', error);
       // Chỉ hiển thị thông báo nếu không phải lỗi 401 (đã xử lý trong authService)
       if (error.response?.status !== 401) {
-        setMessage({
-          text: error.message || 'Có lỗi xảy ra khi cập nhật thông tin',
-          type: 'error'
-        });
+        showError(
+          "Cập nhật thất bại!",
+          error.message || 'Có lỗi xảy ra khi cập nhật thông tin'
+        );
       }
     } finally {
       setIsSubmitting(false);

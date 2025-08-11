@@ -265,8 +265,8 @@ const Header = () => {
             if (storedUser) {
                 const userData = JSON.parse(storedUser);
                 setUserData({
-                    username: userData.username || '',
-                    fullName: userData.fullName || userData.username || '',
+                    username: userData.email || '', // Lưu email vào username để tương thích
+                    fullName: userData.fullName || 'Người dùng',
                     avatar: userData.avatar || null,
                     email: userData.email || '',
                     roleName: userData.roleName || ''
@@ -278,8 +278,8 @@ const Header = () => {
             const profile = await authService.getProfile();
             if (profile) {
                 const userData = {
-                    username: profile.username || '',
-                    fullName: profile.fullName || profile.username || '',
+                    username: profile.email || '', // Lưu email vào username để tương thích
+                    fullName: profile.fullName || 'Người dùng',
                     avatar: profile.avatar || null,
                     email: profile.email || '',
                     roleName: profile.roleName || ''
@@ -308,8 +308,8 @@ const Header = () => {
                     const userData = JSON.parse(user);
                     console.log('User data from localStorage:', userData); // Thêm dòng này để kiểm tra
                     setUserData({
-                        username: userData.username || '',
-                        fullName: userData.fullName || userData.username || '',
+                        username: userData.email || '', // Lưu email vào username để tương thích
+                        fullName: userData.fullName || 'Người dùng',
                         avatar: userData.avatar || null,
                         email: userData.email || '',
                         roleName: userData.roleName || ''
@@ -383,20 +383,20 @@ const Header = () => {
                                 aria-expanded={showDropdown}
                             >
                                 <UserAvatar 
-                                    $bgColor={stringToColor(userData.fullName || userData.username || 'User')}
+                                    $bgColor={stringToColor(userData.fullName || 'User')}
                                 >
                                     {userData.avatar ? (
                                         <img 
                                             src={userData.avatar} 
-                                            alt={userData.fullName || userData.username} 
+                                            alt={userData.fullName || 'Người dùng'} 
                                             style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} 
                                         />
                                     ) : (
-                                        getInitials(userData.fullName || userData.username)
+                                        getInitials(userData.fullName || 'Người dùng')
                                     )}
                                 </UserAvatar>
                                 <div className="user-name">
-                                    {userData?.fullName || userData?.username || 'Người dùng'}
+                                    {userData?.fullName || 'Người dùng'}
                                 </div>
                                 <ChevronDownIcon className="w-4 h-4 text-gray-500 hidden md:block" />
                             </button>
@@ -410,9 +410,9 @@ const Header = () => {
                                     />
                                     <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg py-1 z-50 border border-gray-100">
                                         <div className="px-4 py-3 border-b border-gray-100">
-                                            <p className="text-sm font-medium text-gray-900 truncate">
-                                                {userData.fullName || userData.username}
-                                            </p>
+                                                                                         <p className="text-sm font-medium text-gray-900 truncate">
+                                                 {userData.fullName || 'Người dùng'}
+                                             </p>
                                             <p className="text-xs text-gray-500 truncate">
                                                 {userData.email}
                                             </p>

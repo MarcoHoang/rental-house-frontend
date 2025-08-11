@@ -91,7 +91,12 @@ const authService = {
                 throw new Error('Format response không được hỗ trợ');
             }
             
+            console.log('=== DEBUG PROFILE DATA ===');
             console.log('authService.getCurrentUser - Extracted user data:', userData);
+            console.log('authService.getCurrentUser - userData.fullName (tên hiển thị từ backend):', userData.fullName);
+            console.log('authService.getCurrentUser - userData.email (email từ backend):', userData.email);
+            console.log('authService.getCurrentUser - userData.username (username từ backend):', userData.username);
+            console.log('=== END DEBUG ===');
             
             // Kiểm tra xem user data có id không
             if (!userData) {
@@ -102,6 +107,14 @@ const authService = {
             if (!userData.id) {
                 console.error('authService.getCurrentUser - User data missing ID:', userData);
                 throw new Error('Thông tin user không hợp lệ - thiếu ID');
+            }
+            
+            // Kiểm tra xem fullName có phải là email không
+            if (userData.fullName && userData.fullName.includes('@') && userData.fullName === userData.email) {
+                console.warn('authService.getCurrentUser - fullName is same as email, this might be a backend issue');
+                // Nếu fullName giống email, có thể backend đã lưu sai
+                // Chúng ta sẽ để fullName trống để hiển thị "Người dùng"
+                userData.fullName = '';
             }
             
             // Lưu thông tin user vào localStorage
@@ -175,6 +188,8 @@ const authService = {
                 try {
                     user = await authService.getCurrentUser();
                     console.log('authService.login - Fetched user data:', user);
+                    console.log('authService.login - user.fullName:', user.fullName);
+                    console.log('authService.login - user.email:', user.email);
                 } catch (profileError) {
                     console.error('authService.login - Error fetching user profile:', profileError);
                     throw new Error('Không thể lấy thông tin user từ server. Vui lòng thử lại.');
@@ -187,6 +202,14 @@ const authService = {
                 throw new Error('Thông tin user không hợp lệ. Vui lòng đăng nhập lại.');
             }
 
+            // Kiểm tra xem fullName có phải là email không
+            if (user && user.fullName && user.fullName.includes('@') && user.fullName === user.email) {
+                console.warn('authService.login - fullName is same as email, this might be a backend issue');
+                // Nếu fullName giống email, có thể backend đã lưu sai
+                // Chúng ta sẽ để fullName trống để hiển thị "Người dùng"
+                user.fullName = '';
+            }
+            
             // Lưu user data
             console.log('authService.login - Storing user data in localStorage:', user);
             safeSetToStorage('user', user);
@@ -216,18 +239,24 @@ const authService = {
         try {
             console.log('authService.register - Starting registration with data:', userData);
             
-            // Chuyển đổi dữ liệu để phù hợp với backend User entity
-            // Backend: username = email (để đăng nhập), fullName = tên hiển thị
+            // Chuyển đổi dữ liệu để phù hợp với backend
+            // Thử gửi cả username và fullName để backend có thể map đúng
             const registerData = {
                 email: userData.email,
-                username: userData.email, // Backend set username = email để đăng nhập
+                username: userData.username, // Tên người dùng thật (Marco)
+                fullName: userData.username, // Thêm fullName để backend map vào entity
                 password: userData.password,
-                fullName: userData.username, // Frontend username map với backend fullName
                 phone: userData.phone,
-                address: userData.address || null,
-                active: true, // Mặc định active khi đăng ký
-                avatarUrl: "/images/default-avatar.png" // Default avatar
+                address: userData.address || null
             };
+            
+            console.log('=== DEBUG REGISTRATION MAPPING ===');
+            console.log('authService.register - userData.username (tên người dùng từ form):', userData.username);
+            console.log('authService.register - userData.email (email từ form):', userData.email);
+            console.log('authService.register - registerData.username (sẽ gửi đến backend):', registerData.username);
+            console.log('authService.register - registerData.email (sẽ gửi đến backend):', registerData.email);
+            console.log('authService.register - registerData object:', registerData);
+            console.log('=== END DEBUG ===');
 
             console.log('authService.register - Register data to send:', registerData);
 
@@ -235,6 +264,8 @@ const authService = {
             
             console.log('authService.register - Response:', response);
             console.log('authService.register - Response data:', response.data);
+            console.log('authService.register - Response status:', response.status);
+            console.log('authService.register - Response headers:', response.headers);
             
             return response.data;
         } catch (error) {
@@ -369,6 +400,14 @@ const authService = {
 
             console.log('authService.updateProfile - Updated user data:', updatedUser);
             
+            // Kiểm tra xem fullName có phải là email không
+            if (updatedUser && updatedUser.fullName && updatedUser.fullName.includes('@') && updatedUser.fullName === updatedUser.email) {
+                console.warn('authService.updateProfile - fullName is same as email, this might be a backend issue');
+                // Nếu fullName giống email, có thể backend đã lưu sai
+                // Chúng ta sẽ để fullName trống để hiển thị "Người dùng"
+                updatedUser.fullName = '';
+            }
+            
             // Cập nhật user trong localStorage
             if (updatedUser) {
                 safeSetToStorage('user', updatedUser);
@@ -407,7 +446,24 @@ const authService = {
             }
 
             const response = await api.get('/users/profile');
-            return response.data.data || response.data;
+            let userData = response.data.data || response.data;
+            
+            console.log('=== DEBUG GET PROFILE ===');
+            console.log('authService.getProfile - Raw response data:', response.data);
+            console.log('authService.getProfile - userData.fullName (tên hiển thị từ backend):', userData?.fullName);
+            console.log('authService.getProfile - userData.email (email từ backend):', userData?.email);
+            console.log('authService.getProfile - userData.username (username từ backend):', userData?.username);
+            console.log('=== END DEBUG ===');
+            
+            // Kiểm tra xem fullName có phải là email không
+            if (userData && userData.fullName && userData.fullName.includes('@') && userData.fullName === userData.email) {
+                console.warn('authService.getProfile - fullName is same as email, this might be a backend issue');
+                // Nếu fullName giống email, có thể backend đã lưu sai
+                // Chúng ta sẽ để fullName trống để hiển thị "Người dùng"
+                userData.fullName = '';
+            }
+            
+            return userData;
         } catch (error) {
             logApiError(error, 'getProfile');
             throw error;

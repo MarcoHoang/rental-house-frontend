@@ -7,6 +7,7 @@ import { useForm, validationRules } from "../../hooks/useForm";
 import FormField from "../common/FormField";
 import Button from "../common/Button";
 import ErrorMessage from "../common/ErrorMessage";
+import { useToast } from "../common/Toast";
 
 const RegisterContainer = styled.div`
   min-height: 100vh;
@@ -102,6 +103,7 @@ const FooterLinks = styled.div`
 const Register = () => {
   const { register, loading, error } = useAuth();
   const navigate = useNavigate();
+  const { showSuccess } = useToast();
   
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -139,14 +141,27 @@ const Register = () => {
       phone: formData.phone || undefined,
       address: formData.address || undefined
     };
+    
+    console.log('=== DEBUG REGISTER FORM DATA ===');
+    console.log('Register.handleSubmit - formData.username (tên người dùng từ form):', formData.username);
+    console.log('Register.handleSubmit - formData.email (email từ form):', formData.email);
+    console.log('Register.handleSubmit - userData.username (sẽ gửi đến authService):', userData.username);
+    console.log('Register.handleSubmit - userData.email (sẽ gửi đến authService):', userData.email);
+    console.log('Register.handleSubmit - userData object:', userData);
+    console.log('=== END DEBUG ===');
 
     const result = await register(userData);
     
     if (result.success) {
-      // Chuyển hướng về trang đăng nhập sau 1.5 giây
+      showSuccess(
+        "Đăng ký thành công!",
+        `Tài khoản của bạn đã được tạo thành công. Bạn sẽ được chuyển đến trang đăng nhập.`
+      );
+      
+      // Chuyển hướng về trang đăng nhập sau 2 giây
       setTimeout(() => {
         navigate(`/login?email=${encodeURIComponent(formData.email)}`);
-      }, 1500);
+      }, 2000);
     }
   };
 

@@ -12,6 +12,7 @@ import UserProfilePage from "./pages/UserProfilePage";
 import AdminPage from "./pages/AdminPage";
 import AdminRoute from "./components/admin/AdminRoute";
 import ErrorBoundary from "./components/common/ErrorBoundary";
+import ToastProvider from "./components/common/Toast";
 import { AUTH_CONFIG } from "./config/auth";
 import { getUserFromStorage } from "./utils/localStorage";
 
@@ -53,8 +54,9 @@ const RoleBasedRedirect = () => {
 function App() {
   return (
     <ErrorBoundary>
-      <Router>
-        <Routes>
+      <ToastProvider>
+        <Router>
+          <Routes>
           {/* Các route công khai */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -110,7 +112,8 @@ function App() {
           {/* Chuyển hướng các đường dẫn không xác định về trang chủ */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </Router>
+        </Router>
+      </ToastProvider>
     </ErrorBoundary>
   );
 }
