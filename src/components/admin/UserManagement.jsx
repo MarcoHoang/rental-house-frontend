@@ -1,5 +1,6 @@
 // src/components/admin/UserManagement.jsx
 import React, { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { usersApi } from "../../api/adminApi";
 import {
@@ -8,10 +9,10 @@ import {
   ChevronRight,
   RefreshCw,
   AlertTriangle,
+  Eye,
 } from "lucide-react";
 import { useToast } from "../common/Toast";
 
-// Tái sử dụng các styled-components từ AdminDashboard.jsx
 const Card = styled.div`
   background: white;
   border-radius: 0.75rem;
@@ -63,8 +64,9 @@ const Badge = styled.span`
   }
 `;
 
+// Bước 2: Cải tiến ActionButton và thêm ActionContainer
 const ActionButton = styled.button`
-  padding: 0.25rem 0.75rem;
+  padding: 0.5rem; // Tăng padding để nhấn dễ hơn
   font-size: 0.75rem;
   font-weight: 500;
   border: 1px solid #e2e8f0;
@@ -72,6 +74,8 @@ const ActionButton = styled.button`
   cursor: pointer;
   transition: all 0.2s;
   background: white;
+  display: flex; // Cần thiết để icon hiển thị đúng
+  align-items: center;
 
   &:hover {
     background: #f7fafc;
@@ -90,6 +94,18 @@ const ActionButton = styled.button`
       background: #c6f6d5;
     }
   }
+  // Thêm style cho nút xem
+  &.view {
+    color: #2b6cb0;
+    &:hover {
+      background: #ebf8ff;
+    }
+  }
+`;
+
+const ActionContainer = styled.div`
+  display: flex;
+  gap: 0.5rem; // Khoảng cách giữa các nút
 `;
 
 const PaginationContainer = styled.div`
@@ -276,12 +292,24 @@ const UserManagement = () => {
                 )}
               </td>
               <td>
-                <ActionButton
-                  className={user.active ? "lock" : "unlock"}
-                  onClick={() => handleToggleStatus(user.id, user.active)}
-                >
-                  {user.active ? "Khóa" : "Mở khóa"}
-                </ActionButton>
+                {/* Bước 3: Thêm nút Xem chi tiết và nhóm các nút lại */}
+                <ActionContainer>
+                  <Link
+                    to={`/admin/user-management/${user.id}`}
+                    title="Xem chi tiết"
+                  >
+                    <ActionButton className="view">
+                      <Eye size={16} />
+                    </ActionButton>
+                  </Link>
+                  <ActionButton
+                    title={user.active ? "Khóa tài khoản" : "Mở khóa tài khoản"}
+                    className={user.active ? "lock" : "unlock"}
+                    onClick={() => handleToggleStatus(user.id, user.active)}
+                  >
+                    {user.active ? "Khóa" : "Mở khóa"}
+                  </ActionButton>
+                </ActionContainer>
               </td>
             </tr>
           ))}
@@ -310,5 +338,4 @@ const UserManagement = () => {
     </Card>
   );
 };
-
 export default UserManagement;

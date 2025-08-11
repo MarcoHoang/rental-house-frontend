@@ -1,7 +1,7 @@
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
-import { handleApiError, logApiError } from '../utils/apiErrorHandler';
-import { safeSetToStorage, safeRemoveFromStorage } from '../utils/localStorage';
+import { handleApiError, logApiError } from "../utils/apiErrorHandler";
+import { safeSetToStorage, safeRemoveFromStorage } from "../utils/localStorage";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 const API_PREFIX = import.meta.env.VITE_API_PREFIX || "/api";
@@ -20,42 +20,44 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
+
     // Debug logging in development
-    if (process.env.NODE_ENV === 'development' && !config._retry) {
-      console.group(`Admin API Request: ${config.method?.toUpperCase()} ${config.url}`);
-      console.log('Request Config:', {
+    if (process.env.NODE_ENV === "development" && !config._retry) {
+      console.group(
+        `Admin API Request: ${config.method?.toUpperCase()} ${config.url}`
+      );
+      console.log("Request Config:", {
         method: config.method,
         url: config.url,
         headers: config.headers,
-        data: config.data
+        data: config.data,
       });
       console.groupEnd();
     }
-    
+
     return config;
   },
   (error) => {
-    logApiError(error, 'Admin Request Interceptor');
+    logApiError(error, "Admin Request Interceptor");
     return Promise.reject(error);
   }
 );
 
 // Response interceptor
 apiClient.interceptors.response.use(
-  response => response,
-  error => {
-    logApiError(error, 'Admin Response Interceptor');
-    
+  (response) => response,
+  (error) => {
+    logApiError(error, "Admin Response Interceptor");
+
     // Handle 401 errors for admin
     if (error.response?.status === 401) {
-      handleApiError(error, { 
+      handleApiError(error, {
         clearAuthOn401: true,
         redirectOn401: true,
-        redirectPath: '/admin/login'
+        redirectPath: "/admin/login",
       });
     }
-    
+
     return Promise.reject(error);
   }
 );
@@ -64,16 +66,22 @@ export const adminAuth = {
   // Admin login
   login: async (credentials) => {
     try {
-      console.log('adminAuth.login - Starting login with credentials:', credentials);
-      
-      const response = await apiClient.post(`${API_PREFIX}/admin/login`, credentials);
-      
-      console.log('adminAuth.login - Raw response:', response);
-      console.log('adminAuth.login - Response data:', response.data);
-      
+      console.log(
+        "adminAuth.login - Starting login with credentials:",
+        credentials
+      );
+
+      const response = await apiClient.post(
+        `${API_PREFIX}/admin/login`,
+        credentials
+      );
+
+      console.log("adminAuth.login - Raw response:", response);
+      console.log("adminAuth.login - Response data:", response.data);
+
       // Backend trả về format: { code: "07", message: "...", data: { token: "..." } }
       let loginData, token;
-      
+
       if (response.data.data) {
         // Format: { code: "07", message: "...", data: { token: "..." } }
         loginData = response.data.data;
@@ -82,16 +90,19 @@ export const adminAuth = {
         // Fallback: Format: { token: "..." }
         token = response.data.token;
       } else {
-        console.error('adminAuth.login - Unknown response format:', response.data);
-        throw new Error('Format response không được hỗ trợ');
+        console.error(
+          "adminAuth.login - Unknown response format:",
+          response.data
+        );
+        throw new Error("Format response không được hỗ trợ");
       }
-      
-      console.log('adminAuth.login - Extracted token:', token);
-      
+
+      console.log("adminAuth.login - Extracted token:", token);
+
       if (token) {
-        console.log('adminAuth.login - Storing admin token in localStorage');
+        console.log("adminAuth.login - Storing admin token in localStorage");
         localStorage.setItem("adminToken", token);
-        
+
         // Decode token để lấy thông tin admin
         try {
           const decoded = jwtDecode(token);
@@ -99,22 +110,22 @@ export const adminAuth = {
             id: decoded?.id || "",
             email: decoded?.sub || decoded?.email || "",
             role: decoded?.role?.replace("ROLE_", "") || "",
-            name: decoded?.name || ""
+            name: decoded?.name || "",
           };
           safeSetToStorage("adminUser", adminUser);
-          console.log('adminAuth.login - Stored admin user:', adminUser);
+          console.log("adminAuth.login - Stored admin user:", adminUser);
         } catch (decodeError) {
-          console.error('adminAuth.login - Error decoding token:', decodeError);
+          console.error("adminAuth.login - Error decoding token:", decodeError);
         }
       } else {
-        throw new Error('Không nhận được token từ server');
+        throw new Error("Không nhận được token từ server");
       }
-      
+
       return response.data;
     } catch (error) {
-      console.error('adminAuth.login - Error:', error);
-      console.error('adminAuth.login - Error response:', error.response);
-      logApiError(error, 'adminLogin');
+      console.error("adminAuth.login - Error:", error);
+      console.error("adminAuth.login - Error response:", error.response);
+      logApiError(error, "adminLogin");
       throw error;
     }
   },
@@ -123,7 +134,7 @@ export const adminAuth = {
   logout: () => {
     safeRemoveFromStorage("adminToken");
     safeRemoveFromStorage("adminUser");
-    window.dispatchEvent(new Event('adminUnauthorized'));
+    window.dispatchEvent(new Event("adminUnauthorized"));
   },
 
   // Get admin profile
@@ -132,7 +143,7 @@ export const adminAuth = {
       const response = await apiClient.get(`${API_PREFIX}/admin/profile`);
       return response.data.data || response.data;
     } catch (error) {
-      logApiError(error, 'adminGetProfile');
+      logApiError(error, "adminGetProfile");
       throw error;
     }
   },
@@ -140,10 +151,13 @@ export const adminAuth = {
   // Change admin password
   changePassword: async (passwordData) => {
     try {
-      const response = await apiClient.put(`${API_PREFIX}/admin/change-password`, passwordData);
+      const response = await apiClient.put(
+        `${API_PREFIX}/admin/change-password`,
+        passwordData
+      );
       return response.data;
     } catch (error) {
-      logApiError(error, 'adminChangePassword');
+      logApiError(error, "adminChangePassword");
       throw error;
     }
   },
@@ -154,12 +168,14 @@ export const usersApi = {
   // Get all users with pagination
   getAll: async (params = {}) => {
     try {
-      console.log('usersApi.getAll - Fetching users with params:', params);
-      
-      const response = await apiClient.get(`${API_PREFIX}/admin/users`, { params });
-      console.log('usersApi.getAll - Raw response:', response);
-      console.log('usersApi.getAll - Response data:', response.data);
-      
+      console.log("usersApi.getAll - Fetching users with params:", params);
+
+      const response = await apiClient.get(`${API_PREFIX}/admin/users`, {
+        params,
+      });
+      console.log("usersApi.getAll - Raw response:", response);
+      console.log("usersApi.getAll - Response data:", response.data);
+
       // Backend trả về format: { code: "04", message: "...", data: { content: [...], totalPages: 1, ... } }
       let usersData;
       if (response.data.data) {
@@ -169,16 +185,19 @@ export const usersApi = {
         // Fallback: Format: { content: [...], totalPages: 1, ... }
         usersData = response.data;
       } else {
-        console.error('usersApi.getAll - Unknown response format:', response.data);
-        throw new Error('Format response không được hỗ trợ');
+        console.error(
+          "usersApi.getAll - Unknown response format:",
+          response.data
+        );
+        throw new Error("Format response không được hỗ trợ");
       }
-      
-      console.log('usersApi.getAll - Extracted users data:', usersData);
+
+      console.log("usersApi.getAll - Extracted users data:", usersData);
       return usersData;
     } catch (error) {
-      console.error('usersApi.getAll - Error:', error);
-      console.error('usersApi.getAll - Error response:', error.response);
-      logApiError(error, 'getAllUsers');
+      console.error("usersApi.getAll - Error:", error);
+      console.error("usersApi.getAll - Error response:", error.response);
+      logApiError(error, "getAllUsers");
       throw error;
     }
   },
@@ -186,28 +205,70 @@ export const usersApi = {
   // Update user status (active/inactive)
   updateStatus: async (id, active) => {
     try {
-      console.log('usersApi.updateStatus - Updating status for user:', id, 'to:', active);
-      
-      const response = await apiClient.patch(`${API_PREFIX}/admin/users/${id}/status`, { active });
-      console.log('usersApi.updateStatus - Response:', response);
-      console.log('usersApi.updateStatus - Response data:', response.data);
-      
+      console.log(
+        "usersApi.updateStatus - Updating status for user:",
+        id,
+        "to:",
+        active
+      );
+
+      const response = await apiClient.patch(
+        `${API_PREFIX}/admin/users/${id}/status`,
+        { active }
+      );
+      console.log("usersApi.updateStatus - Response:", response);
+      console.log("usersApi.updateStatus - Response data:", response.data);
+
       return response.data;
     } catch (error) {
-      console.error('usersApi.updateStatus - Error:', error);
-      console.error('usersApi.updateStatus - Error response:', error.response);
-      logApiError(error, 'updateUserStatus');
+      console.error("usersApi.updateStatus - Error:", error);
+      console.error("usersApi.updateStatus - Error response:", error.response);
+      logApiError(error, "updateUserStatus");
       throw error;
     }
   },
 
+  getDetailsForAdmin: async (userId) => {
+    try {
+      console.log(
+        "usersApi.getDetailsForAdmin - Fetching details for user:",
+        userId
+      );
+
+      // Sử dụng endpoint admin mà chúng ta đã tạo ở backend
+      const response = await apiClient.get(
+        `${API_PREFIX}/admin/users/${userId}`
+      );
+
+      console.log("usersApi.getDetailsForAdmin - Raw response:", response);
+
+      // Tuân thủ cấu trúc response.data.data
+      if (response.data && response.data.data) {
+        console.log(
+          "usersApi.getDetailsForAdmin - Extracted user details:",
+          response.data.data
+        );
+        return response.data.data;
+      } else {
+        console.error(
+          "usersApi.getDetailsForAdmin - Unexpected response format:",
+          response.data
+        );
+        throw new Error("Format response không được hỗ trợ");
+      }
+    } catch (error) {
+      console.error("usersApi.getDetailsForAdmin - Error:", error);
+      logApiError(error, "getDetailsForAdmin"); // Sử dụng trình xử lý lỗi của bạn
+      throw error;
+    }
+  },
   // Get user by ID
   getById: async (id) => {
     try {
       const response = await apiClient.get(`${API_PREFIX}/users/${id}`);
       return response.data.data || response.data;
     } catch (error) {
-      logApiError(error, 'getUserById');
+      logApiError(error, "getUserById");
       throw error;
     }
   },
@@ -218,7 +279,7 @@ export const usersApi = {
       const response = await apiClient.post(`${API_PREFIX}/users`, userData);
       return response.data.data || response.data;
     } catch (error) {
-      logApiError(error, 'createUser');
+      logApiError(error, "createUser");
       throw error;
     }
   },
@@ -226,10 +287,13 @@ export const usersApi = {
   // Update user
   update: async (id, userData) => {
     try {
-      const response = await apiClient.put(`${API_PREFIX}/users/${id}`, userData);
+      const response = await apiClient.put(
+        `${API_PREFIX}/users/${id}`,
+        userData
+      );
       return response.data.data || response.data;
     } catch (error) {
-      logApiError(error, 'updateUser');
+      logApiError(error, "updateUser");
       throw error;
     }
   },
@@ -240,7 +304,7 @@ export const usersApi = {
       const response = await apiClient.delete(`${API_PREFIX}/users/${id}`);
       return response.data;
     } catch (error) {
-      logApiError(error, 'deleteUser');
+      logApiError(error, "deleteUser");
       throw error;
     }
   },
@@ -250,10 +314,12 @@ export const usersApi = {
 export const housesApi = {
   getAll: async (params = {}) => {
     try {
-      const response = await apiClient.get(`${API_PREFIX}/admin/houses`, { params });
+      const response = await apiClient.get(`${API_PREFIX}/admin/houses`, {
+        params,
+      });
       return response.data.data || response.data;
     } catch (error) {
-      logApiError(error, 'getAllHouses');
+      logApiError(error, "getAllHouses");
       throw error;
     }
   },
@@ -263,47 +329,58 @@ export const housesApi = {
       const response = await apiClient.get(`${API_PREFIX}/admin/houses/${id}`);
       return response.data.data || response.data;
     } catch (error) {
-      logApiError(error, 'getHouseById');
+      logApiError(error, "getHouseById");
       throw error;
     }
   },
 
   create: async (houseData) => {
     try {
-      const response = await apiClient.post(`${API_PREFIX}/admin/houses`, houseData);
+      const response = await apiClient.post(
+        `${API_PREFIX}/admin/houses`,
+        houseData
+      );
       return response.data.data || response.data;
     } catch (error) {
-      logApiError(error, 'createHouse');
+      logApiError(error, "createHouse");
       throw error;
     }
   },
 
   update: async (id, houseData) => {
     try {
-      const response = await apiClient.put(`${API_PREFIX}/admin/houses/${id}`, houseData);
+      const response = await apiClient.put(
+        `${API_PREFIX}/admin/houses/${id}`,
+        houseData
+      );
       return response.data.data || response.data;
     } catch (error) {
-      logApiError(error, 'updateHouse');
+      logApiError(error, "updateHouse");
       throw error;
     }
   },
 
   delete: async (id) => {
     try {
-      const response = await apiClient.delete(`${API_PREFIX}/admin/houses/${id}`);
+      const response = await apiClient.delete(
+        `${API_PREFIX}/admin/houses/${id}`
+      );
       return response.data;
     } catch (error) {
-      logApiError(error, 'deleteHouse');
+      logApiError(error, "deleteHouse");
       throw error;
     }
   },
 
   updateStatus: async (id, status) => {
     try {
-      const response = await apiClient.patch(`${API_PREFIX}/admin/houses/${id}/status`, { status });
+      const response = await apiClient.patch(
+        `${API_PREFIX}/admin/houses/${id}/status`,
+        { status }
+      );
       return response.data;
     } catch (error) {
-      logApiError(error, 'updateHouseStatus');
+      logApiError(error, "updateHouseStatus");
       throw error;
     }
   },
@@ -313,10 +390,12 @@ export const housesApi = {
 export const tenantsApi = {
   getAll: async (params = {}) => {
     try {
-      const response = await apiClient.get(`${API_PREFIX}/admin/tenants`, { params });
+      const response = await apiClient.get(`${API_PREFIX}/admin/tenants`, {
+        params,
+      });
       return response.data.data || response.data;
     } catch (error) {
-      logApiError(error, 'getAllTenants');
+      logApiError(error, "getAllTenants");
       throw error;
     }
   },
@@ -326,37 +405,45 @@ export const tenantsApi = {
       const response = await apiClient.get(`${API_PREFIX}/admin/tenants/${id}`);
       return response.data.data || response.data;
     } catch (error) {
-      logApiError(error, 'getTenantById');
+      logApiError(error, "getTenantById");
       throw error;
     }
   },
 
   create: async (tenantData) => {
     try {
-      const response = await apiClient.post(`${API_PREFIX}/admin/tenants`, tenantData);
+      const response = await apiClient.post(
+        `${API_PREFIX}/admin/tenants`,
+        tenantData
+      );
       return response.data.data || response.data;
     } catch (error) {
-      logApiError(error, 'createTenant');
+      logApiError(error, "createTenant");
       throw error;
     }
   },
 
   update: async (id, tenantData) => {
     try {
-      const response = await apiClient.put(`${API_PREFIX}/admin/tenants/${id}`, tenantData);
+      const response = await apiClient.put(
+        `${API_PREFIX}/admin/tenants/${id}`,
+        tenantData
+      );
       return response.data.data || response.data;
     } catch (error) {
-      logApiError(error, 'updateTenant');
+      logApiError(error, "updateTenant");
       throw error;
     }
   },
 
   delete: async (id) => {
     try {
-      const response = await apiClient.delete(`${API_PREFIX}/admin/tenants/${id}`);
+      const response = await apiClient.delete(
+        `${API_PREFIX}/admin/tenants/${id}`
+      );
       return response.data;
     } catch (error) {
-      logApiError(error, 'deleteTenant');
+      logApiError(error, "deleteTenant");
       throw error;
     }
   },
@@ -366,60 +453,74 @@ export const tenantsApi = {
 export const contractsApi = {
   getAll: async (params = {}) => {
     try {
-      const response = await apiClient.get(`${API_PREFIX}/admin/contracts`, { params });
+      const response = await apiClient.get(`${API_PREFIX}/admin/contracts`, {
+        params,
+      });
       return response.data.data || response.data;
     } catch (error) {
-      logApiError(error, 'getAllContracts');
+      logApiError(error, "getAllContracts");
       throw error;
     }
   },
 
   getById: async (id) => {
     try {
-      const response = await apiClient.get(`${API_PREFIX}/admin/contracts/${id}`);
+      const response = await apiClient.get(
+        `${API_PREFIX}/admin/contracts/${id}`
+      );
       return response.data.data || response.data;
     } catch (error) {
-      logApiError(error, 'getContractById');
+      logApiError(error, "getContractById");
       throw error;
     }
   },
 
   create: async (contractData) => {
     try {
-      const response = await apiClient.post(`${API_PREFIX}/admin/contracts`, contractData);
+      const response = await apiClient.post(
+        `${API_PREFIX}/admin/contracts`,
+        contractData
+      );
       return response.data.data || response.data;
     } catch (error) {
-      logApiError(error, 'createContract');
+      logApiError(error, "createContract");
       throw error;
     }
   },
 
   update: async (id, contractData) => {
     try {
-      const response = await apiClient.put(`${API_PREFIX}/admin/contracts/${id}`, contractData);
+      const response = await apiClient.put(
+        `${API_PREFIX}/admin/contracts/${id}`,
+        contractData
+      );
       return response.data.data || response.data;
     } catch (error) {
-      logApiError(error, 'updateContract');
+      logApiError(error, "updateContract");
       throw error;
     }
   },
 
   delete: async (id) => {
     try {
-      const response = await apiClient.delete(`${API_PREFIX}/admin/contracts/${id}`);
+      const response = await apiClient.delete(
+        `${API_PREFIX}/admin/contracts/${id}`
+      );
       return response.data;
     } catch (error) {
-      logApiError(error, 'deleteContract');
+      logApiError(error, "deleteContract");
       throw error;
     }
   },
 
   terminate: async (id) => {
     try {
-      const response = await apiClient.patch(`${API_PREFIX}/admin/contracts/${id}/terminate`);
+      const response = await apiClient.patch(
+        `${API_PREFIX}/admin/contracts/${id}/terminate`
+      );
       return response.data;
     } catch (error) {
-      logApiError(error, 'terminateContract');
+      logApiError(error, "terminateContract");
       throw error;
     }
   },
@@ -429,30 +530,36 @@ export const contractsApi = {
 export const dashboardApi = {
   getStats: async () => {
     try {
-      const response = await apiClient.get(`${API_PREFIX}/admin/dashboard/stats`);
+      const response = await apiClient.get(
+        `${API_PREFIX}/admin/dashboard/stats`
+      );
       return response.data.data || response.data;
     } catch (error) {
-      logApiError(error, 'getDashboardStats');
+      logApiError(error, "getDashboardStats");
       throw error;
     }
   },
 
   getRecentHouses: async () => {
     try {
-      const response = await apiClient.get(`${API_PREFIX}/admin/dashboard/recent-houses`);
+      const response = await apiClient.get(
+        `${API_PREFIX}/admin/dashboard/recent-houses`
+      );
       return response.data.data || response.data;
     } catch (error) {
-      logApiError(error, 'getRecentHouses');
+      logApiError(error, "getRecentHouses");
       throw error;
     }
   },
 
   getRevenueChart: async (period) => {
     try {
-      const response = await apiClient.get(`${API_PREFIX}/admin/dashboard/revenue?period=${period}`);
+      const response = await apiClient.get(
+        `${API_PREFIX}/admin/dashboard/revenue?period=${period}`
+      );
       return response.data.data || response.data;
     } catch (error) {
-      logApiError(error, 'getRevenueChart');
+      logApiError(error, "getRevenueChart");
       throw error;
     }
   },
