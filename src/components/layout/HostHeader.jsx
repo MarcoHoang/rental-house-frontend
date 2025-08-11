@@ -5,6 +5,8 @@ import authService from '../../api/authService';
 import { getAvatarUrl } from '../../utils/avatarHelper';
 import Avatar from '../common/Avatar';
 import styled from 'styled-components';
+import ConfirmDialog from '../common/ConfirmDialog';
+import { useToast } from '../common/Toast';
 
 // Styled components (giống với Header.jsx)
 const HeaderWrapper = styled.header`
@@ -178,6 +180,7 @@ const PostButton = styled(Link)`
 const HostHeader = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [userData, setUserData] = useState({
         username: '',
         fullName: '',
@@ -186,17 +189,24 @@ const HostHeader = () => {
         role: ''
     });
     const navigate = useNavigate();
+    const { showSuccess } = useToast();
 
     // Hàm xử lý đăng xuất
     const handleLogout = useCallback(() => {
+        setShowLogoutConfirm(true);
+    }, []);
+
+    // Hàm thực hiện đăng xuất sau khi xác nhận
+    const performLogout = useCallback(() => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setIsLoggedIn(false);
         setUserData({ username: '', fullName: '', avatar: null, email: '', role: '' });
         setShowDropdown(false);
         window.dispatchEvent(new Event('storage'));
+        showSuccess('Đăng xuất thành công', 'Bạn đã đăng xuất khỏi hệ thống');
         navigate('/');
-    }, [navigate]);
+    }, [navigate, showSuccess]);
 
     // Tải thông tin người dùng
     const loadUserProfile = useCallback(async () => {
@@ -372,6 +382,18 @@ const HostHeader = () => {
                     )}
                 </div>
             </HeaderContainer>
+            
+            {/* Logout Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={showLogoutConfirm}
+                onClose={() => setShowLogoutConfirm(false)}
+                onConfirm={performLogout}
+                title="Xác nhận đăng xuất"
+                message="Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?"
+                type="warning"
+                confirmText="Đăng xuất"
+                cancelText="Hủy"
+            />
         </HeaderWrapper>
     );
 };

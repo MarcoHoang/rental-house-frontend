@@ -6,6 +6,8 @@ import { getAvatarUrl } from '../../utils/avatarHelper';
 import Avatar from '../common/Avatar';
 import styled from 'styled-components';
 import HostRegistrationForm from '../host/HostRegistrationForm';
+import ConfirmDialog from '../common/ConfirmDialog';
+import { useToast } from '../common/Toast';
 
 // Hàm tạo màu ngẫu nhiên dựa trên tên
 
@@ -207,6 +209,7 @@ const Header = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
     const [showHostRegistration, setShowHostRegistration] = useState(false);
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [userData, setUserData] = useState({
         username: '',
         fullName: '',
@@ -214,12 +217,19 @@ const Header = () => {
         email: '',
         roleName: ''
     });
+    
+    const { showSuccess } = useToast();
 
 
     const navigate = useNavigate();
 
     // Hàm xử lý đăng xuất
     const handleLogout = useCallback(() => {
+        setShowLogoutConfirm(true);
+    }, []);
+
+    // Hàm thực hiện đăng xuất sau khi xác nhận
+    const performLogout = useCallback(() => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setIsLoggedIn(false);
@@ -227,8 +237,9 @@ const Header = () => {
         setShowDropdown(false);
         // Kích hoạt sự kiện để cập nhật giao diện
         window.dispatchEvent(new Event('storage'));
+        showSuccess('Đăng xuất thành công', 'Bạn đã đăng xuất khỏi hệ thống');
         navigate('/');
-    }, [navigate]);
+    }, [navigate, showSuccess]);
 
     // Hàm tải thông tin người dùng
     const loadUserProfile = useCallback(async () => {
@@ -476,6 +487,18 @@ const Header = () => {
                         alert(error.message || 'Có lỗi xảy ra khi gửi đơn đăng ký. Vui lòng thử lại sau.');
                     }
                 }}
+            />
+            
+            {/* Logout Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={showLogoutConfirm}
+                onClose={() => setShowLogoutConfirm(false)}
+                onConfirm={performLogout}
+                title="Xác nhận đăng xuất"
+                message="Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?"
+                type="warning"
+                confirmText="Đăng xuất"
+                cancelText="Hủy"
             />
         </HeaderWrapper>
     );

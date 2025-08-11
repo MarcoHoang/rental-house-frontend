@@ -568,6 +568,7 @@ const authService = {
         safeRemoveFromStorage('token');
         safeRemoveFromStorage('user');
         window.dispatchEvent(new Event('unauthorized'));
+        // Thông báo đăng xuất thành công sẽ được hiển thị từ component gọi logout
     }
 };
 
