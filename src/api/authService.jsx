@@ -19,10 +19,15 @@ api.interceptors.request.use(
   config => {
     // Thêm token nếu có và đang bật xác thực
     if (AUTH_CONFIG.ENABLE_AUTH) {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      const token = localStorage.getItem('token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
       }
+    }
+    
+    // Không set Content-Type cho FormData (để browser tự set với boundary)
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
     }
     
     // Chỉ debug khi không phải production và không phải request lặp lại
@@ -32,7 +37,7 @@ api.interceptors.request.use(
         method: config.method,
         url: config.url,
         headers: config.headers,
-        data: config.data
+        data: config.data instanceof FormData ? 'FormData' : config.data
       });
       console.groupEnd();
     }
@@ -240,6 +245,68 @@ const authService = {
         }
     },
 
+    // Upload avatar
+    uploadAvatar: async (file) => {
+        try {
+            const token = localStorage.getItem('token');
+            console.log('authService.uploadAvatar - Token exists:', !!token);
+            console.log('authService.uploadAvatar - AUTH_CONFIG.ENABLE_AUTH:', AUTH_CONFIG.ENABLE_AUTH);
+            
+            if (AUTH_CONFIG.ENABLE_AUTH && !token) {
+                throw new Error('Vui lòng đăng nhập lại');
+            }
+
+            console.log('authService.uploadAvatar - Starting avatar upload for file:', file.name, 'Size:', file.size);
+
+            // Tạo FormData để gửi file
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Không set Content-Type header - để browser tự set với boundary
+            const response = await api.post('/files/upload/avatar', formData);
+
+            console.log('authService.uploadAvatar - Response:', response);
+            console.log('authService.uploadAvatar - Response data:', response.data);
+
+            // Xử lý response format từ backend: { code: "00", message: "...", data: FileUploadResponse }
+            let fileResponse;
+            if (response.data.data) {
+                // Format: { code: "00", message: "...", data: { fileUrl: "...", fileName: "..." } }
+                fileResponse = response.data.data;
+            } else if (response.data.fileUrl) {
+                // Fallback: Format: { fileUrl: "...", fileName: "..." }
+                fileResponse = response.data;
+            } else {
+                console.error('authService.uploadAvatar - Unknown response format:', response.data);
+                throw new Error('Response format không hợp lệ');
+            }
+
+            console.log('authService.uploadAvatar - File response:', fileResponse);
+
+            return {
+                success: true,
+                data: fileResponse,
+                message: response.data.message || 'Upload avatar thành công'
+            };
+
+        } catch (error) {
+            console.error('authService.uploadAvatar - Error:', error);
+            console.error('authService.uploadAvatar - Error response:', error.response);
+            console.error('authService.uploadAvatar - Error data:', error.response?.data);
+            logApiError(error, 'uploadAvatar');
+            
+            if (error.response?.status === 401) {
+                handleApiError(error, { 
+                    clearAuthOn401: true, 
+                    redirectOn401: true,
+                    redirectPath: '/login?sessionExpired=true'
+                });
+            }
+            
+            throw error;
+        }
+    },
+
     // Cập nhật profile
     updateProfile: async (userId, userData) => {
         try {
@@ -251,6 +318,22 @@ const authService = {
             console.log('authService.updateProfile - Starting update for user:', userId);
             console.log('authService.updateProfile - User data:', userData);
 
+            // Xử lý ngày sinh - chuyển đổi sang format YYYY-MM-DD
+            let birthDate = null;
+            if (userData.dateOfBirth) {
+                try {
+                    const date = new Date(userData.dateOfBirth);
+                    if (!isNaN(date.getTime())) {
+                        birthDate = date.toISOString().split('T')[0];
+                        console.log('authService.updateProfile - Parsed birthDate:', birthDate);
+                    } else {
+                        console.warn('authService.updateProfile - Invalid dateOfBirth:', userData.dateOfBirth);
+                    }
+                } catch (error) {
+                    console.error('authService.updateProfile - Error parsing dateOfBirth:', error);
+                }
+            }
+
             // Chuyển đổi dữ liệu để phù hợp với UserDTO
             const profileData = {
                 id: userId,
@@ -259,7 +342,7 @@ const authService = {
                 address: userData.address,
                 avatarUrl: userData.avatarUrl,
                 email: userData.email,
-                birthDate: userData.dateOfBirth ? new Date(userData.dateOfBirth).toISOString().split('T')[0] : null, // Convert dateOfBirth to birthDate format
+                birthDate: birthDate, // Sử dụng ngày sinh đã xử lý
                 active: userData.active,
                 roleName: userData.roleName
             };
