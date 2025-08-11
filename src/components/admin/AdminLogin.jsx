@@ -1,14 +1,11 @@
-// src/components/admin/AdminLogin.jsx (Đã sửa - Chỉ dùng Tailwind CSS)
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Shield, Mail, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
-import LoadingSpinner from "@/components/common/LoadingSpinner.jsx"; // Đảm bảo đường dẫn đúng
+import LoadingSpinner from "@/components/common/LoadingSpinner.jsx";
 import { adminAuth } from "@/api/authApi.jsx";
 import { jwtDecode } from "jwt-decode";
 
 const AdminLogin = () => {
-  // --- TOÀN BỘ LOGIC CỦA BẠN ĐƯỢC GIỮ NGUYÊN ---
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -55,15 +52,12 @@ const AdminLogin = () => {
       setLoading(false);
     }
   };
-  // --- KẾT THÚC PHẦN LOGIC ---
 
   return (
-    // Sử dụng nền gradient tương tự trang user login nhưng với tông màu hồng-tím
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-pink-500 to-violet-600 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-500 to-indigo-600 p-4">
       <div className="bg-white p-8 sm:p-10 rounded-xl shadow-2xl w-full max-w-md relative">
-        {/* Phần tiêu đề */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-pink-500 to-violet-600 rounded-full mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-500 rounded-full mb-4">
             <Shield className="text-white" size={32} />
           </div>
           <h1 className="text-gray-800 text-2xl sm:text-3xl font-bold mb-1">
@@ -72,16 +66,13 @@ const AdminLogin = () => {
           <p className="text-gray-500 text-sm">Đăng nhập để quản lý hệ thống</p>
         </div>
 
-        {/* Form đăng nhập */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          {/* Hộp thông báo lỗi */}
           {error && (
             <div className="p-3.5 rounded-lg text-sm text-center border-l-4 bg-red-100 text-red-800 border-red-500">
               {error}
             </div>
           )}
 
-          {/* Trường Email Admin */}
           <div>
             <label
               htmlFor="email"
@@ -99,13 +90,11 @@ const AdminLogin = () => {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                // Áp dụng style tương tự trang user login
-                className="w-full py-3 px-4 pl-11 border-2 border-gray-200 rounded-lg text-base transition-all bg-gray-50 focus:outline-none focus:border-violet-600 focus:bg-white focus:ring-4 focus:ring-violet-600/10"
+                className="w-full py-3 px-4 pl-11 border-2 border-gray-200 rounded-lg text-base transition-all bg-gray-50 focus:outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
               />
             </div>
           </div>
 
-          {/* Trường Mật khẩu */}
           <div>
             <label
               htmlFor="password"
@@ -123,7 +112,7 @@ const AdminLogin = () => {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className="w-full py-3 px-4 pl-11 pr-12 border-2 border-gray-200 rounded-lg text-base transition-all bg-gray-50 focus:outline-none focus:border-violet-600 focus:bg-white focus:ring-4 focus:ring-violet-600/10"
+                className="w-full py-3 px-4 pl-11 pr-12 border-2 border-gray-200 rounded-lg text-base transition-all bg-gray-50 focus:outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
               />
               <button
                 type="button"
@@ -135,22 +124,19 @@ const AdminLogin = () => {
             </div>
           </div>
 
-          {/* Nút Đăng nhập Admin */}
           <button
             type="submit"
             disabled={loading}
-            // Áp dụng style nút tương tự trang user login
-            className="bg-gradient-to-r from-pink-500 to-violet-600 text-white p-3.5 border-none rounded-lg text-base font-semibold cursor-pointer transition-all min-h-[48px] flex items-center justify-center mt-2 hover:-translate-y-0.5 hover:shadow-lg disabled:bg-gray-400 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
+            className="bg-gradient-to-r from-blue-600 to-indigo-500 text-white p-3.5 border-none rounded-lg text-base font-semibold cursor-pointer transition-all min-h-[48px] flex items-center justify-center mt-2 hover:-translate-y-0.5 hover:shadow-lg disabled:bg-gray-400 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
           >
             {loading ? <LoadingSpinner /> : "Đăng nhập Admin"}
           </button>
         </form>
 
-        {/* Liên kết quay về trang chủ */}
         <div className="text-center mt-8 pt-6 border-t border-gray-200">
           <a
             href="/"
-            className="text-violet-600 no-underline text-sm font-medium inline-flex items-center gap-2 transition-colors hover:text-violet-800 hover:underline"
+            className="text-blue-600 no-underline text-sm font-medium inline-flex items-center gap-2 transition-colors hover:text-blue-800 hover:underline"
           >
             <ArrowLeft size={16} />
             Quay về trang chủ
