@@ -1,229 +1,22 @@
+// src/components/admin/AdminLogin.jsx (Đã sửa - Chỉ dùng Tailwind CSS)
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import styled from "styled-components";
-import { Shield, Mail, Lock, Eye, EyeOff } from "lucide-react";
-import LoadingSpinner from "../common/LoadingSpinner";
-import { adminAuth } from "../../api/adminApi";
+import { Shield, Mail, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import LoadingSpinner from "@/components/common/LoadingSpinner.jsx"; // Đảm bảo đường dẫn đúng
+import { adminAuth } from "@/api/authApi.jsx";
 import { jwtDecode } from "jwt-decode";
 
-const LoginContainer = styled.div`
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 1rem;
-`;
-
-const LoginCard = styled.div`
-  background: white;
-  padding: 2.5rem;
-  border-radius: 1rem;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  width: 100%;
-  max-width: 420px;
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #3182ce, #667eea);
-  }
-`;
-
-const LoginHeader = styled.div`
-  text-align: center;
-  margin-bottom: 2rem;
-
-  .icon-wrapper {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 4rem;
-    height: 4rem;
-    background: linear-gradient(135deg, #3182ce, #667eea);
-    border-radius: 50%;
-    margin-bottom: 1rem;
-
-    svg {
-      color: white;
-      width: 2rem;
-      height: 2rem;
-    }
-  }
-
-  h1 {
-    color: #1a202c;
-    font-size: 1.75rem;
-    font-weight: bold;
-    margin: 0 0 0.5rem 0;
-  }
-
-  p {
-    color: #718096;
-    font-size: 0.875rem;
-    margin: 0;
-  }
-`;
-
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-`;
-
-const FormGroup = styled.div`
-  position: relative;
-
-  label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-    color: #4a5568;
-    font-size: 0.875rem;
-  }
-
-  .input-wrapper {
-    position: relative;
-
-    input {
-      width: 100%;
-      padding: 0.875rem 1rem 0.875rem 2.75rem;
-      border: 2px solid #e2e8f0;
-      border-radius: 0.5rem;
-      font-size: 1rem;
-      transition: all 0.2s;
-      background: #f7fafc;
-
-      &:focus {
-        outline: none;
-        border-color: #3182ce;
-        background: white;
-        box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
-      }
-
-      &::placeholder {
-        color: #a0aec0;
-      }
-    }
-
-    .input-icon {
-      position: absolute;
-      left: 0.875rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #a0aec0;
-      width: 1.25rem;
-      height: 1.25rem;
-    }
-
-    .toggle-password {
-      position: absolute;
-      right: 0.875rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #a0aec0;
-      cursor: pointer;
-      width: 1.25rem;
-      height: 1.25rem;
-      transition: color 0.2s;
-      background: none;
-      border: none;
-      padding: 0;
-
-      &:hover {
-        color: #4a5568;
-      }
-    }
-  }
-`;
-
-const SubmitButton = styled.button`
-  background: linear-gradient(135deg, #3182ce, #667eea);
-  color: white;
-  padding: 0.875rem 1rem;
-  border: none;
-  border-radius: 0.5rem;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  min-height: 3rem;
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-
-  &:disabled {
-    background: #a0aec0;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-  }
-`;
-
-const ErrorMessage = styled.div`
-  background: #fed7d7;
-  color: #742a2a;
-  padding: 0.875rem 1rem;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  text-align: center;
-  border-left: 4px solid #e53e3e;
-  margin-bottom: 1rem;
-`;
-
-const BackToHome = styled.div`
-  text-align: center;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #e2e8f0;
-
-  a {
-    color: #3182ce;
-    text-decoration: none;
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: color 0.2s;
-
-    &:hover {
-      color: #2c5aa0;
-      text-decoration: underline;
-    }
-  }
-`;
-
 const AdminLogin = () => {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+  // --- TOÀN BỘ LOGIC CỦA BẠN ĐƯỢC GIỮ NGUYÊN ---
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-    // Clear error when user starts typing
+    setFormData({ ...formData, [e.target.name]: e.target.value });
     if (error) setError("");
   };
 
@@ -234,24 +27,19 @@ const AdminLogin = () => {
 
     try {
       const response = await adminAuth.login(formData);
-      const responseData = response.data?.data;
-      const token = responseData?.token;
+      const token = response.data?.data?.token;
 
-      if (!token) {
-        throw new Error("Không nhận được token từ server.");
-      }
+      if (!token) throw new Error("Không nhận được token từ server.");
 
       const decoded = jwtDecode(token);
+      const roleFromToken = decoded?.role?.replace("ROLE_", "");
 
-      const roleFromToken = decoded?.role?.replace("ROLE_", "") || ""; // lấy từ claim 'role' đã được backend thêm
-
-      if (roleFromToken !== "ADMIN") {
+      if (roleFromToken !== "ADMIN")
         throw new Error("Bạn không có quyền truy cập Admin.");
-      }
 
       const adminUser = {
-        id: decoded?.id || "",
-        email: decoded?.sub || "",
+        id: decoded?.id,
+        email: decoded?.sub,
         role: roleFromToken,
       };
 
@@ -261,84 +49,115 @@ const AdminLogin = () => {
       navigate("/admin/dashboard");
     } catch (err) {
       const errorMessage =
-        err.response?.data?.message ||
-        err.message ||
-        "Đăng nhập thất bại. Vui lòng thử lại.";
+        err.response?.data?.message || err.message || "Đăng nhập thất bại.";
       setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
+  // --- KẾT THÚC PHẦN LOGIC ---
 
   return (
-    <LoginContainer>
-      <LoginCard>
-        <LoginHeader>
-          <div className="icon-wrapper">
-            <Shield />
+    // Sử dụng nền gradient tương tự trang user login nhưng với tông màu hồng-tím
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-pink-500 to-violet-600 p-4">
+      <div className="bg-white p-8 sm:p-10 rounded-xl shadow-2xl w-full max-w-md relative">
+        {/* Phần tiêu đề */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-pink-500 to-violet-600 rounded-full mb-4">
+            <Shield className="text-white" size={32} />
           </div>
-          <h1>Admin Panel</h1>
-          <p>Đăng nhập để quản lý hệ thống</p>
-        </LoginHeader>
+          <h1 className="text-gray-800 text-2xl sm:text-3xl font-bold mb-1">
+            Admin Panel
+          </h1>
+          <p className="text-gray-500 text-sm">Đăng nhập để quản lý hệ thống</p>
+        </div>
 
-        <Form onSubmit={handleSubmit}>
-          {error && <ErrorMessage>{error}</ErrorMessage>}
-          {/* ... (Phần còn lại của JSX giữ nguyên không đổi) ... */}
-          <FormGroup>
-            <label htmlFor="email">Email Admin</label>
-            <div className="input-wrapper">
-              <Mail className="input-icon" />
+        {/* Form đăng nhập */}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          {/* Hộp thông báo lỗi */}
+          {error && (
+            <div className="p-3.5 rounded-lg text-sm text-center border-l-4 bg-red-100 text-red-800 border-red-500">
+              {error}
+            </div>
+          )}
+
+          {/* Trường Email Admin */}
+          <div>
+            <label
+              htmlFor="email"
+              className="block mb-2 font-medium text-gray-700 text-sm"
+            >
+              Email Admin <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
-                type="email"
                 id="email"
                 name="email"
-                placeholder="admin@renthouse.com"
+                type="email"
+                placeholder="admin@example.com"
                 value={formData.email}
                 onChange={handleChange}
                 required
+                // Áp dụng style tương tự trang user login
+                className="w-full py-3 px-4 pl-11 border-2 border-gray-200 rounded-lg text-base transition-all bg-gray-50 focus:outline-none focus:border-violet-600 focus:bg-white focus:ring-4 focus:ring-violet-600/10"
               />
             </div>
-          </FormGroup>
+          </div>
 
-          <FormGroup>
-            <label htmlFor="password">Mật khẩu</label>
-            <div className="input-wrapper">
-              <Lock className="input-icon" />
+          {/* Trường Mật khẩu */}
+          <div>
+            <label
+              htmlFor="password"
+              className="block mb-2 font-medium text-gray-700 text-sm"
+            >
+              Mật khẩu <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
-                type={showPassword ? "text" : "password"}
                 id="password"
                 name="password"
-                placeholder="Nhập mật khẩu admin"
+                type={showPassword ? "text" : "password"}
+                placeholder="Mật khẩu của bạn"
                 value={formData.password}
                 onChange={handleChange}
                 required
+                className="w-full py-3 px-4 pl-11 pr-12 border-2 border-gray-200 rounded-lg text-base transition-all bg-gray-50 focus:outline-none focus:border-violet-600 focus:bg-white focus:ring-4 focus:ring-violet-600/10"
               />
               <button
                 type="button"
-                className="toggle-password"
                 onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-800"
               >
-                {showPassword ? <EyeOff /> : <Eye />}
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
-          </FormGroup>
+          </div>
 
-          <SubmitButton type="submit" disabled={loading}>
-            {loading ? (
-              <>
-                <LoadingSpinner />
-                Đang đăng nhập...
-              </>
-            ) : (
-              "Đăng nhập Admin"
-            )}
-          </SubmitButton>
-        </Form>
-        <BackToHome>
-          <a href="/">← Quay về trang chủ</a>
-        </BackToHome>
-      </LoginCard>
-    </LoginContainer>
+          {/* Nút Đăng nhập Admin */}
+          <button
+            type="submit"
+            disabled={loading}
+            // Áp dụng style nút tương tự trang user login
+            className="bg-gradient-to-r from-pink-500 to-violet-600 text-white p-3.5 border-none rounded-lg text-base font-semibold cursor-pointer transition-all min-h-[48px] flex items-center justify-center mt-2 hover:-translate-y-0.5 hover:shadow-lg disabled:bg-gray-400 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
+          >
+            {loading ? <LoadingSpinner /> : "Đăng nhập Admin"}
+          </button>
+        </form>
+
+        {/* Liên kết quay về trang chủ */}
+        <div className="text-center mt-8 pt-6 border-t border-gray-200">
+          <a
+            href="/"
+            className="text-violet-600 no-underline text-sm font-medium inline-flex items-center gap-2 transition-colors hover:text-violet-800 hover:underline"
+          >
+            <ArrowLeft size={16} />
+            Quay về trang chủ
+          </a>
+        </div>
+      </div>
+    </div>
   );
 };
 

@@ -1,16 +1,16 @@
-// src/components/admin/UserManagement.jsx
+// src/components/admin/UserManagement.jsx (Đã sửa)
+
 import React, { useState, useEffect, useCallback } from "react";
 import styled from "styled-components";
-import { usersApi } from "../../api/adminApi";
+import { adminGetAllUsers, adminUpdateUserStatus } from "@/api/userApi.jsx";
 import {
-  MoreHorizontal,
   ChevronLeft,
   ChevronRight,
   RefreshCw,
   AlertTriangle,
 } from "lucide-react";
 
-// Tái sử dụng các styled-components từ AdminDashboard.jsx
+// Tái sử dụng các styled-components (Giữ nguyên)
 const Card = styled.div`
   background: white;
   border-radius: 0.75rem;
@@ -164,34 +164,28 @@ const UserManagement = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await usersApi.getAll({ page: page, size: 10 });
-
+      const response = await adminGetAllUsers({ page: page, size: 10 });
       const pageData = response.data.data;
-
-      const userList = pageData.content || [];
-      setUsers(userList);
-
+      setUsers(pageData.content || []);
       setPagination({
         number: pageData.number || 0,
         totalPages: pageData.totalPages || 1,
       });
     } catch (err) {
-      console.error("Lỗi khi fetch users:", err);
-      setError("Không thể tải danh sách người dùng. Vui lòng thử lại.");
-
-      setUsers([]);
+      setError("Không thể tải danh sách người dùng.");
     } finally {
       setLoading(false);
     }
   }, []);
+
   useEffect(() => {
     fetchUsers(0);
   }, [fetchUsers]);
 
   const handleToggleStatus = async (userId, currentStatus) => {
     try {
-      await usersApi.updateStatus(userId, !currentStatus);
-      // Cập nhật lại trạng thái của user trong state để UI thay đổi ngay lập tức
+      // Sửa lại cách gọi API cho đúng tên hàm
+      await adminUpdateUserStatus(userId, !currentStatus);
       setUsers((currentUsers) =>
         currentUsers.map((user) =>
           user.id === userId ? { ...user, active: !currentStatus } : user

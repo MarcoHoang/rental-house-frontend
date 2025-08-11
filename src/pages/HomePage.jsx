@@ -1,12 +1,12 @@
+// src/pages/HomePage.jsx
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { getHouses } from "../api/houseApi";
+import { getHouses } from "../api/houseApi"; // Đảm bảo import đúng hàm getHouses
 import HouseList from "../components/house/HouseList";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import SearchBar from "../components/house/SearchBar";
 import LoadingSpinner from "../components/common/LoadingSpinner";
-
 
 const MainContent = styled.main`
   /* Component chính bọc nội dung, đảm bảo không có style thừa */
@@ -69,15 +69,32 @@ const HomePage = () => {
     const fetchHouses = async () => {
       try {
         setLoading(true); // Bắt đầu tải, bật spinner
-        const response = await getHouses(); // Gọi hàm lấy dữ liệu
-        setHouses(response.data); // Cập nhật state với dữ liệu nhận được
+
+        // THÊM THAM SỐ PHÂN TRANG CHO getHouses
+        // Đây là ví dụ lấy 5 nhà đầu tiên. Bạn có thể điều chỉnh theo ý muốn.
+        const params = {
+          page: 0, // Trang đầu tiên (bắt đầu từ 0)
+          size: 5, // Lấy 5 nhà
+          sort: "createdAt,desc", // Sắp xếp theo ngày tạo giảm dần
+        };
+
+        // Gọi hàm lấy dữ liệu với params
+        const response = await getHouses(params);
+
+        // Cấu trúc dữ liệu trả về từ API (ApiResponse<Page<HouseDTO>>)
+        const pageData = response.data.data;
+
+        setHouses(pageData.content); // Cập nhật state với danh sách nhà từ trường 'content'
         setError(null); // Xóa bất kỳ lỗi nào trước đó
       } catch (err) {
         // Nếu có lỗi, cập nhật state lỗi
         setError(
           "Rất tiếc, đã có lỗi xảy ra. Không thể tải dữ liệu nhà cho thuê."
         );
-        console.error("Lỗi khi fetch dữ liệu nhà:", err);
+        console.error(
+          "Lỗi khi fetch dữ liệu nhà:",
+          err.response ? err.response.data : err.message
+        );
       } finally {
         // Dù thành công hay thất bại, cũng tắt spinner
         setLoading(false);
