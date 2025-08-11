@@ -1,6 +1,4 @@
-// src/components/host/HostRegistrationForm.jsx
-
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import {
   XMarkIcon,
   DocumentTextIcon,
@@ -8,61 +6,250 @@ import {
   MapPinIcon,
   CalendarIcon,
 } from "@heroicons/react/24/outline";
-import styles from "./HostRegistrationForm.module.css"; // Import CSS Modules
+import styled from "styled-components";
+
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+const ModalContent = styled.div`
+  background-color: white;
+  border-radius: 0.5rem;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+`;
+
+const ModalTitle = styled.h3`
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+`;
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+
+  &:hover {
+    background-color: #f3f4f6;
+    color: #4b5563;
+  }
+`;
+
+const Form = styled.form`
+  padding: 1.5rem;
+`;
+
+const FormGroup = styled.div`
+  margin-bottom: 1.25rem;
+`;
+
+const Label = styled.label`
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+
+  span {
+    color: #ef4444;
+    margin-left: 0.25rem;
+  }
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: 0.625rem 0.75rem 0.625rem 2.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+
+  &:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  }
+
+  &[type="file"] {
+    padding: 0.5rem 0.75rem;
+    border: 1px dashed #d1d5db;
+    background-color: #f9fafb;
+    cursor: pointer;
+
+    &::file-selector-button {
+      display: none;
+    }
+  }
+`;
+
+const InputWrapper = styled.div`
+  position: relative;
+`;
+
+const InputIcon = styled.div`
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  pointer-events: none;
+`;
+
+const ErrorText = styled.p`
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: #ef4444;
+`;
+
+const FilePreview = styled.div`
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: #f9fafb;
+  border: 1px dashed #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const SubmitButton = styled.button`
+  width: 100%;
+  padding: 0.625rem 1rem;
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 1rem;
+
+  &:hover {
+    background-color: #4338ca;
+  }
+
+  &:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+  }
+`;
 
 const HostRegistrationForm = ({ isOpen, onClose, onSubmit }) => {
-  // --- Toàn bộ logic, state, và các hàm xử lý được giữ nguyên ---
   const [formData, setFormData] = useState({
     idNumber: "",
     address: "",
     submissionDate: new Date().toISOString().split("T")[0],
-    idFrontPhoto: null,
-    idBackPhoto: null,
+    idPhoto: null,
   });
   const [frontPreviewUrl, setFrontPreviewUrl] = useState(null);
   const [backPreviewUrl, setBackPreviewUrl] = useState(null);
+
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const validateForm = useCallback(() => {
+  const validateForm = () => {
     const newErrors = {};
+    let isValid = true;
+
     if (!formData.idNumber.trim()) {
       newErrors.idNumber = "Vui lòng nhập số căn cước công dân/CMT";
+      isValid = false;
     } else if (!/^[0-9]{9,12}$/.test(formData.idNumber)) {
       newErrors.idNumber = "Số căn cước/CMT không hợp lệ";
+      isValid = false;
     }
-    if (!formData.address.trim()) newErrors.address = "Vui lòng nhập địa chỉ";
-    if (!formData.idFrontPhoto)
-      newErrors.idFrontPhoto = "Vui lòng tải ảnh mặt trước";
-    if (!formData.idBackPhoto)
-      newErrors.idBackPhoto = "Vui lòng tải ảnh mặt sau";
+
+    if (!formData.address.trim()) {
+      newErrors.address = "Vui lòng nhập địa chỉ";
+      isValid = false;
+    }
+
+    if (!formData.idPhoto) {
+      newErrors.idPhoto = "Vui lòng tải lên ảnh giấy tờ tùy thân";
+      isValid = false;
+    }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  }, [formData]);
+    return isValid;
+  };
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    if (name === "idFrontPhoto" || name === "idBackPhoto") {
-      const file = files && files[0];
-      if (!file) return;
-      setFormData((prev) => ({ ...prev, [name]: file }));
+
+    if (
+      (name === "idFrontPhoto" || name === "idBackPhoto") &&
+      files &&
+      files.length > 0
+    ) {
+      const file = files[0];
+      setFormData((prev) => ({
+        ...prev,
+        [name]: file,
+      }));
+
+      // Tạo URL xem trước cho ảnh
       const fileUrl = URL.createObjectURL(file);
-      name === "idFrontPhoto"
-        ? setFrontPreviewUrl(fileUrl)
-        : setBackPreviewUrl(fileUrl);
+      if (name === "idFrontPhoto") {
+        setFrontPreviewUrl(fileUrl);
+      } else {
+        setBackPreviewUrl(fileUrl);
+      }
     } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
     }
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
+
+    // Xóa thông báo lỗi khi người dùng nhập liệu
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
+
+    if (!validateForm()) {
+      return;
+    }
 
     setIsSubmitting(true);
+
     try {
+      // Tạo FormData để gửi file
       const formDataToSend = new FormData();
       formDataToSend.append("idNumber", formData.idNumber);
       formDataToSend.append("address", formData.address);
@@ -71,10 +258,9 @@ const HostRegistrationForm = ({ isOpen, onClose, onSubmit }) => {
       formDataToSend.append("idBackPhoto", formData.idBackPhoto);
 
       await onSubmit(formDataToSend);
-      onClose(); // Đóng modal sau khi submit thành công
+      onClose();
     } catch (error) {
       console.error("Lỗi khi gửi đơn đăng ký:", error);
-      // Có thể hiển thị một thông báo lỗi ở đây
     } finally {
       setIsSubmitting(false);
     }
@@ -83,186 +269,155 @@ const HostRegistrationForm = ({ isOpen, onClose, onSubmit }) => {
   if (!isOpen) return null;
 
   return (
-    // Modal Overlay: Nền mờ bao phủ toàn màn hình
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[1000] p-4">
-      {/* Modal Content: Hộp thoại chính */}
-      <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl">
-        {/* Modal Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-800">
-            Đăng ký trở thành chủ nhà
-          </h3>
-          <button
-            onClick={onClose}
-            className="p-1 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition-colors"
-          >
+    <ModalOverlay onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <ModalContent onClick={(e) => e.stopPropagation()}>
+        <ModalHeader>
+          <ModalTitle>Đăng ký trở thành chủ nhà</ModalTitle>
+          <CloseButton onClick={onClose}>
             <XMarkIcon className="w-5 h-5" />
-          </button>
-        </div>
+          </CloseButton>
+        </ModalHeader>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto">
-          {/* Form Group: ID Number */}
-          <div>
-            <label
-              htmlFor="idNumber"
-              className="block mb-1.5 text-sm font-medium text-gray-700"
-            >
-              Số căn cước công dân/CMT <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <DocumentTextIcon className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
+        <Form onSubmit={handleSubmit}>
+          <FormGroup>
+            <Label htmlFor="idNumber">
+              Số căn cước công dân/CMT <span>*</span>
+            </Label>
+            <InputWrapper>
+              <InputIcon>
+                <DocumentTextIcon className="w-5 h-5" />
+              </InputIcon>
+              <Input
                 type="text"
                 id="idNumber"
                 name="idNumber"
                 value={formData.idNumber}
                 onChange={handleChange}
                 placeholder="Nhập số căn cước/CMT"
-                className={`w-full pl-10 pr-3 py-2 border rounded-md text-sm ${
-                  styles.inputField
-                } ${errors.idNumber ? "border-red-500" : "border-gray-300"}`}
+                className={errors.idNumber ? "border-red-500" : ""}
               />
-            </div>
-            {errors.idNumber && (
-              <p className="mt-1 text-xs text-red-600">{errors.idNumber}</p>
-            )}
-          </div>
+            </InputWrapper>
+            {errors.idNumber && <ErrorText>{errors.idNumber}</ErrorText>}
+          </FormGroup>
 
-          {/* Form Group: Address */}
-          <div>
-            <label
-              htmlFor="address"
-              className="block mb-1.5 text-sm font-medium text-gray-700"
-            >
-              Địa chỉ thường trú <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <MapPinIcon className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
+          <FormGroup>
+            <Label htmlFor="address">
+              Địa chỉ thường trú <span>*</span>
+            </Label>
+            <InputWrapper>
+              <InputIcon>
+                <MapPinIcon className="w-5 h-5" />
+              </InputIcon>
+              <Input
                 type="text"
                 id="address"
                 name="address"
                 value={formData.address}
                 onChange={handleChange}
                 placeholder="Nhập địa chỉ thường trú"
-                className={`w-full pl-10 pr-3 py-2 border rounded-md text-sm ${
-                  styles.inputField
-                } ${errors.address ? "border-red-500" : "border-gray-300"}`}
+                className={errors.address ? "border-red-500" : ""}
               />
-            </div>
-            {errors.address && (
-              <p className="mt-1 text-xs text-red-600">{errors.address}</p>
-            )}
-          </div>
+            </InputWrapper>
+            {errors.address && <ErrorText>{errors.address}</ErrorText>}
+          </FormGroup>
 
-          {/* Form Group: Submission Date */}
-          <div>
-            <label
-              htmlFor="submissionDate"
-              className="block mb-1.5 text-sm font-medium text-gray-700"
-            >
-              Ngày gửi đơn
-            </label>
-            <div className="relative">
-              <CalendarIcon className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
+          <FormGroup>
+            <Label htmlFor="submissionDate">Ngày gửi đơn</Label>
+            <InputWrapper>
+              <InputIcon>
+                <CalendarIcon className="w-5 h-5" />
+              </InputIcon>
+              <Input
                 type="date"
                 id="submissionDate"
                 name="submissionDate"
                 value={formData.submissionDate}
                 onChange={handleChange}
                 disabled
-                className={`w-full pl-10 pr-3 py-2 border rounded-md text-sm bg-gray-100 text-gray-500 cursor-not-allowed border-gray-300`}
               />
-            </div>
-          </div>
+            </InputWrapper>
+          </FormGroup>
 
-          {/* Form Group: File Uploads (chia 2 cột) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div>
-              <label
-                htmlFor="idFrontPhoto"
-                className="block mb-1.5 text-sm font-medium text-gray-700"
-              >
-                Ảnh mặt trước CCCD/CMT <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="file"
-                id="idFrontPhoto"
-                name="idFrontPhoto"
-                accept="image/*"
-                onChange={handleChange}
-                disabled={isSubmitting}
-                className={`w-full text-sm text-gray-500 rounded-md ${
-                  styles.fileInput
-                } ${
-                  errors.idFrontPhoto ? "border-red-500" : "border-gray-300"
-                }`}
-              />
-              {errors.idFrontPhoto && (
-                <p className="mt-1 text-xs text-red-600">
-                  {errors.idFrontPhoto}
-                </p>
-              )}
-              {frontPreviewUrl && (
-                <img
-                  src={frontPreviewUrl}
-                  alt="Mặt trước"
-                  className="mt-2 w-full h-auto rounded-md border border-gray-200"
-                />
-              )}
-            </div>
-            <div>
-              <label
-                htmlFor="idBackPhoto"
-                className="block mb-1.5 text-sm font-medium text-gray-700"
-              >
-                Ảnh mặt sau CCCD/CMT <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="file"
-                id="idBackPhoto"
-                name="idBackPhoto"
-                accept="image/*"
-                onChange={handleChange}
-                disabled={isSubmitting}
-                className={`w-full text-sm text-gray-500 rounded-md ${
-                  styles.fileInput
-                } ${errors.idBackPhoto ? "border-red-500" : "border-gray-300"}`}
-              />
-              {errors.idBackPhoto && (
-                <p className="mt-1 text-xs text-red-600">
-                  {errors.idBackPhoto}
-                </p>
-              )}
-              {backPreviewUrl && (
-                <img
-                  src={backPreviewUrl}
-                  alt="Mặt sau"
-                  className="mt-2 w-full h-auto rounded-md border border-gray-200"
-                />
-              )}
-            </div>
-          </div>
+          <FormGroup>
+            <Label htmlFor="idFrontPhoto">
+              Ảnh mặt trước CCCD/CMT <span>*</span>
+            </Label>
+            <Input
+              type="file"
+              id="idFrontPhoto"
+              name="idFrontPhoto"
+              accept="image/*"
+              onChange={handleChange}
+              disabled={isSubmitting}
+            />
+            {errors.idFrontPhoto && (
+              <ErrorText>{errors.idFrontPhoto}</ErrorText>
+            )}
+
+            {frontPreviewUrl && (
+              <FilePreview>
+                <PhotoIcon className="w-4 h-4" />
+                <span>Đã chọn: {formData.idFrontPhoto?.name}</span>
+                <div style={{ marginTop: "8px" }}>
+                  <img
+                    src={frontPreviewUrl}
+                    alt="Mặt trước giấy tờ tùy thân"
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: "200px",
+                      border: "1px solid #e5e7eb",
+                      borderRadius: "4px",
+                    }}
+                  />
+                </div>
+              </FilePreview>
+            )}
+          </FormGroup>
+
+          <FormGroup>
+            <Label htmlFor="idBackPhoto">
+              Ảnh mặt sau CCCD/CMT <span>*</span>
+            </Label>
+            <Input
+              type="file"
+              id="idBackPhoto"
+              name="idBackPhoto"
+              accept="image/*"
+              onChange={handleChange}
+              className={errors.idBackPhoto ? "border-red-500" : ""}
+            />
+            {errors.idBackPhoto && <ErrorText>{errors.idBackPhoto}</ErrorText>}
+
+            {backPreviewUrl && (
+              <FilePreview>
+                <PhotoIcon className="w-4 h-4" />
+                <span>Đã chọn: {formData.idBackPhoto?.name}</span>
+                <div style={{ marginTop: "8px" }}>
+                  <img
+                    src={backPreviewUrl}
+                    alt="Mặt sau giấy tờ tùy thân"
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: "200px",
+                      border: "1px solid #e5e7eb",
+                      borderRadius: "4px",
+                    }}
+                  />
+                </div>
+              </FilePreview>
+            )}
+          </FormGroup>
 
           <p className="mt-1 text-xs text-gray-500">
-            Vui lòng tải lên ảnh rõ nét, đầy đủ thông tin trên giấy tờ tùy thân.
+            Vui lòng tải lên ảnh rõ nét, đầy đủ thông tin trên giấy tờ tùy thân
           </p>
 
-          {/* Submit Button */}
-          <div className="pt-2">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full py-2.5 px-4 bg-indigo-600 text-white rounded-md font-semibold text-sm cursor-pointer hover:bg-indigo-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? "Đang gửi..." : "Gửi đơn đăng ký"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+          <SubmitButton type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Đang gửi..." : "Gửi đơn đăng ký"}
+          </SubmitButton>
+        </Form>
+      </ModalContent>
+    </ModalOverlay>
   );
 };
 
