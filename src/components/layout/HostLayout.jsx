@@ -1,7 +1,7 @@
-import React from 'react';
-import { Outlet } from 'react-router-dom';
-import HostHeader from './HostHeader';
-import Footer from './Footer';
+import React from "react";
+import { Outlet } from "react-router-dom";
+import HostHeader from "./HostHeader";
+import Footer from "./Footer";
 
 const HostLayout = () => {
   return (
