@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import ChangePassword from '../components/common/ChangePassword';
 import { useAuth } from '../hooks/useAuth';
@@ -35,7 +35,19 @@ const BackButton = styled.button`
 
 const ChangePasswordPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
+
+  // Lấy trang gốc từ state hoặc từ referrer
+  const getOriginalPage = () => {
+    // Ưu tiên state từ navigation
+    if (location.state?.from) {
+      return location.state.from;
+    }
+    
+    // Fallback về profile
+    return '/profile';
+  };
 
   // Kiểm tra xem user đã đăng nhập chưa
   if (!user) {
@@ -44,17 +56,26 @@ const ChangePasswordPage = () => {
   }
 
   const handleSuccess = () => {
-    // Có thể chuyển hướng về trang profile hoặc trang chủ
-    navigate('/profile');
+    // Quay lại trang gốc
+    const originalPage = getOriginalPage();
+    navigate(originalPage, { replace: true });
   };
 
   const handleCancel = () => {
-    navigate('/profile');
+    // Quay lại trang gốc
+    const originalPage = getOriginalPage();
+    navigate(originalPage, { replace: true });
+  };
+
+  const handleGoBack = () => {
+    // Quay lại trang gốc
+    const originalPage = getOriginalPage();
+    navigate(originalPage, { replace: true });
   };
 
   return (
     <PageContainer>
-      <BackButton onClick={() => navigate('/profile')}>
+      <BackButton onClick={handleGoBack}>
         ← Quay lại
       </BackButton>
       

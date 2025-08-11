@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import authService from '../api/authService';
 import { useToast } from '../components/common/Toast';
@@ -116,6 +116,7 @@ const UserProfilePage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
   const navigate = useNavigate();
+  const location = useLocation();
   const { showSuccess, showError } = useToast();
 
   // Lấy thông tin user khi component mount
@@ -224,7 +225,16 @@ const UserProfilePage = () => {
 
   // Hàm xử lý quay lại trang trước
   const handleGoBack = () => {
-    navigate(-1); // Quay lại trang trước đó
+    // Kiểm tra xem có phải đang từ trang change-password quay lại không
+    const referrer = location.state?.from;
+    
+    if (referrer && referrer !== '/change-password') {
+      // Nếu có referrer và không phải từ change-password, quay lại trang đó
+      navigate(referrer, { replace: true });
+    } else {
+      // Nếu không có referrer hoặc từ change-password, quay về trang chủ
+      navigate('/', { replace: true });
+    }
   };
 
   // Cập nhật thông tin profile khi user thay đổi
@@ -577,6 +587,40 @@ const UserProfilePage = () => {
           {isSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}
         </Button>
       </form>
+      
+      {/* Phần đổi mật khẩu */}
+      <div style={{ 
+        marginTop: '2rem', 
+        paddingTop: '2rem', 
+        borderTop: '1px solid #e5e7eb' 
+      }}>
+        <h3 style={{ marginBottom: '1rem', color: '#374151' }}>
+          Bảo mật tài khoản
+        </h3>
+        <p style={{ 
+          fontSize: '0.875rem', 
+          color: '#6b7280', 
+          marginBottom: '1rem' 
+        }}>
+          Đổi mật khẩu để bảo vệ tài khoản của bạn
+        </p>
+                 <Button
+           type="button"
+           onClick={() => {
+             // Truyền thông tin về trang gốc (trang trước Profile)
+             const originalFrom = location.state?.from || '/';
+             navigate('/change-password', { 
+               state: { from: originalFrom } 
+             });
+           }}
+           style={{
+             backgroundColor: '#059669',
+             ':hover': { backgroundColor: '#047857' }
+           }}
+         >
+           Đổi mật khẩu
+         </Button>
+      </div>
     </ProfileContainer>
   );
 };

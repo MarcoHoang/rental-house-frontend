@@ -16,6 +16,7 @@ import ToastProvider from "./components/common/Toast";
 import { AUTH_CONFIG } from "./config/auth";
 import { getUserFromStorage } from "./utils/localStorage";
 import AvatarTestPage from "./pages/AvatarTestPage";
+import ChangePasswordPage from "./pages/ChangePasswordPage";
 
 // Protected Route Component (đã cải thiện)
 const ProtectedRoute = ({ children, requireHost = false, requireUser = false }) => {
@@ -80,6 +81,16 @@ function App() {
             element={
               <ProtectedRoute requireUser={true}>
                 <UserProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* Trang đổi mật khẩu */}
+          <Route 
+            path="/change-password" 
+            element={
+              <ProtectedRoute requireUser={true}>
+                <ChangePasswordPage />
               </ProtectedRoute>
             }
           />

@@ -509,14 +509,39 @@ const authService = {
     },
 
     // Đổi mật khẩu
-    changePassword: async (userId, oldPassword, newPassword) => {
+    changePassword: async (userId, oldPassword, newPassword, confirmPassword) => {
         try {
+            console.log('authService.changePassword - Starting password change for user:', userId);
+            console.log('authService.changePassword - Request data:', {
+                oldPassword: oldPassword ? '***' : 'empty',
+                newPassword: newPassword ? '***' : 'empty',
+                confirmPassword: confirmPassword ? '***' : 'empty'
+            });
+
             const response = await api.put(`/users/${userId}/change-password`, {
                 oldPassword,
-                newPassword
+                newPassword,
+                confirmPassword
             });
-            return response.data;
+
+            console.log('authService.changePassword - Response:', response);
+            console.log('authService.changePassword - Response data:', response.data);
+
+            // Xử lý response format từ backend: { code: "00", message: "...", data: ... }
+            let result;
+            if (response.data.data) {
+                // Format: { code: "00", message: "...", data: ... }
+                result = response.data;
+            } else {
+                // Fallback: Format: { message: "...", ... }
+                result = response.data;
+            }
+
+            console.log('authService.changePassword - Processed result:', result);
+            return result;
         } catch (error) {
+            console.error('authService.changePassword - Error:', error);
+            console.error('authService.changePassword - Error response:', error.response);
             logApiError(error, 'changePassword');
             throw error;
         }
