@@ -326,8 +326,17 @@ const Header = () => {
             }
         };
         
+        // Lắng nghe sự kiện storage tùy chỉnh (từ cùng tab)
+        const handleCustomStorageEvent = () => {
+            checkAuth();
+        };
+        
         window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
+        window.addEventListener('storage', handleCustomStorageEvent);
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('storage', handleCustomStorageEvent);
+        };
     }, [handleLogout]);
 
     // Tải thông tin người dùng khi đã đăng nhập

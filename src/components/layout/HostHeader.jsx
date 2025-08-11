@@ -236,7 +236,7 @@ const HostHeader = () => {
                 const userData = {
                     username: profile.email || '', // Lưu email vào username để tương thích
                     fullName: profile.fullName || 'Người dùng',
-                    avatar: profile.avatar || null,
+                    avatar: getAvatarUrl(profile.avatarUrl || profile.avatar),
                     email: profile.email || '',
                     role: profile.role || ''
                 };
@@ -264,7 +264,7 @@ const HostHeader = () => {
                     setUserData({
                         username: userData.email || '', // Lưu email vào username để tương thích
                         fullName: userData.fullName || 'Người dùng',
-                        avatar: userData.avatar || null,
+                        avatar: getAvatarUrl(userData.avatarUrl || userData.avatar),
                         email: userData.email || '',
                         role: userData.role || ''
                     });
@@ -286,8 +286,17 @@ const HostHeader = () => {
             }
         };
         
+        // Lắng nghe sự kiện storage tùy chỉnh (từ cùng tab)
+        const handleCustomStorageEvent = () => {
+            checkAuth();
+        };
+        
         window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
+        window.addEventListener('storage', handleCustomStorageEvent);
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('storage', handleCustomStorageEvent);
+        };
     }, [handleLogout]);
 
     // Tải thông tin người dùng khi đã đăng nhập

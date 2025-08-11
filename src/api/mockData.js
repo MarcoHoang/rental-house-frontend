@@ -1,14 +1,26 @@
 
-export const mockUser = {
-  id: 1,
-  email: "user@example.com",
-  fullName: "Nguyễn Văn A",
-  phone: "0123456789",
-  address: "123 Đường ABC, Quận 1, TP.HCM",
-  dateOfBirth: "1990-01-01",
-  avatar: "/default-avatar.png",
-  roleName: "USER"
-};
+export const mockUsers = [
+  {
+    id: 1,
+    username: "john_doe",
+    email: "john@example.com",
+    fullName: "John Doe",
+    phone: "0123456789",
+    address: "123 Main St, City",
+    avatar: "https://via.placeholder.com/150/cccccc/666666?text=User",
+    role: "user"
+  },
+  {
+    id: 2,
+    username: "jane_smith",
+    email: "jane@example.com",
+    fullName: "Jane Smith",
+    phone: "0987654321",
+    address: "456 Oak Ave, Town",
+    avatar: "https://via.placeholder.com/150/cccccc/666666?text=User",
+    role: "host"
+  }
+];
 
 export const mockHouses = [
   {

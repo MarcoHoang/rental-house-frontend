@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { getAvatarUrl } from '../../utils/avatarHelper';
+import { getAvatarUrl, loadAuthenticatedImage, requiresAuthentication, debugImageLoading } from '../../utils/avatarHelper';
 
 const AvatarContainer = styled.div`
   width: ${props => props.size || '40px'};
@@ -73,11 +73,42 @@ const Avatar = ({
 }) => {
   const [imageError, setImageError] = React.useState(false);
   const [imageLoaded, setImageLoaded] = React.useState(false);
+  const [authenticatedImageUrl, setAuthenticatedImageUrl] = React.useState(null);
   
   const avatarUrl = getAvatarUrl(src);
   const displayName = name || alt || 'User';
   const bgColor = stringToColor(displayName);
   const initials = getInitials(displayName);
+
+  // Load authenticated image if needed
+  React.useEffect(() => {
+    if (avatarUrl && avatarUrl !== 'https://via.placeholder.com/150/cccccc/666666?text=User' && requiresAuthentication(avatarUrl)) {
+      // Debug image loading if in development
+      if (process.env.NODE_ENV === 'development') {
+        debugImageLoading(avatarUrl);
+      }
+      
+      // This is a backend image URL that needs authentication
+      loadAuthenticatedImage(avatarUrl).then(blobUrl => {
+        if (blobUrl) {
+          setAuthenticatedImageUrl(blobUrl);
+        } else {
+          console.warn('Failed to load authenticated image, falling back to initials');
+          setImageError(true);
+        }
+      });
+    } else {
+      // This is a public image URL, no need for authentication
+      setAuthenticatedImageUrl(avatarUrl);
+    }
+
+    // Cleanup function to revoke blob URL
+    return () => {
+      if (authenticatedImageUrl && authenticatedImageUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(authenticatedImageUrl);
+      }
+    };
+  }, [avatarUrl]);
 
   const handleImageLoad = () => {
     setImageLoaded(true);
@@ -95,6 +126,9 @@ const Avatar = ({
     }
   };
 
+  // Determine which image URL to use
+  const imageUrlToUse = authenticatedImageUrl || avatarUrl;
+
   return (
     <AvatarContainer
       size={size}
@@ -104,9 +138,9 @@ const Avatar = ({
       onClick={handleClick}
       className={className}
     >
-      {!imageError && avatarUrl && avatarUrl !== '/default-avatar.png' ? (
+      {!imageError && imageUrlToUse && imageUrlToUse !== 'https://via.placeholder.com/150/cccccc/666666?text=User' ? (
         <img
-          src={avatarUrl}
+          src={imageUrlToUse}
           alt={alt || displayName}
           onLoad={handleImageLoad}
           onError={handleImageError}
@@ -117,7 +151,7 @@ const Avatar = ({
         />
       ) : null}
       
-      {(!avatarUrl || avatarUrl === '/default-avatar.png' || imageError) && (
+      {(!imageUrlToUse || imageUrlToUse === 'https://via.placeholder.com/150/cccccc/666666?text=User' || imageError) && (
         <span>{initials}</span>
       )}
     </AvatarContainer>

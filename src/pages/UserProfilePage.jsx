@@ -110,7 +110,7 @@ const UserProfilePage = () => {
     address: '',
     dateOfBirth: '',
     avatar: null,
-    avatarPreview: '/default-avatar.png'
+    avatarPreview: getAvatarUrl(null)
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -322,6 +322,21 @@ const UserProfilePage = () => {
       isValid = false;
     }
 
+    // Validation cho ngày sinh
+    if (profile.dateOfBirth) {
+      const selectedDate = new Date(profile.dateOfBirth);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999); // Đặt thời gian cuối ngày hôm nay
+      
+      if (isNaN(selectedDate.getTime())) {
+        newErrors.dateOfBirth = 'Ngày sinh không hợp lệ';
+        isValid = false;
+      } else if (selectedDate > today) {
+        newErrors.dateOfBirth = 'Ngày sinh không được vượt quá ngày hiện tại';
+        isValid = false;
+      }
+    }
+
     setErrors(newErrors);
     return isValid;
   };
@@ -384,7 +399,11 @@ const UserProfilePage = () => {
 
       // Cập nhật thông tin trong localStorage
       const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-      const newUserData = { ...currentUser, ...result.data };
+      const newUserData = { 
+        ...currentUser, 
+        ...result.data,
+        avatarUrl: avatarUrl // Đảm bảo avatar URL mới được lưu
+      };
       localStorage.setItem('user', JSON.stringify(newUserData));
       
       setUser(newUserData);
@@ -508,6 +527,7 @@ const UserProfilePage = () => {
           <Input 
             type="date" 
             name="dateOfBirth"
+            max={new Date().toISOString().split('T')[0]}
             value={(() => {
               if (!profile.dateOfBirth) return '';
               try {
@@ -521,6 +541,7 @@ const UserProfilePage = () => {
             })()}
             onChange={handleChange}
           />
+          {errors.dateOfBirth && <ErrorText>{errors.dateOfBirth}</ErrorText>}
         </FormGroup>
 
         <FormGroup>

@@ -383,13 +383,23 @@ const authService = {
                 try {
                     const date = new Date(userData.dateOfBirth);
                     if (!isNaN(date.getTime())) {
+                        // Kiểm tra ngày sinh không được vượt quá ngày hiện tại
+                        const today = new Date();
+                        today.setHours(23, 59, 59, 999); // Đặt thời gian cuối ngày hôm nay
+                        
+                        if (date > today) {
+                            throw new Error('Ngày sinh không được vượt quá ngày hiện tại');
+                        }
+                        
                         birthDate = date.toISOString().split('T')[0];
                         console.log('authService.updateProfile - Parsed birthDate:', birthDate);
                     } else {
                         console.warn('authService.updateProfile - Invalid dateOfBirth:', userData.dateOfBirth);
+                        throw new Error('Ngày sinh không hợp lệ');
                     }
                 } catch (error) {
                     console.error('authService.updateProfile - Error parsing dateOfBirth:', error);
+                    throw error;
                 }
             }
 

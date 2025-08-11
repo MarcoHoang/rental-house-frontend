@@ -111,7 +111,7 @@ const AvatarTestPage = () => {
 
   const testAvatars = [
     null,
-    '/default-avatar.png',
+    'https://via.placeholder.com/150/cccccc/666666?text=User',
     'avatar/test.jpg',
     'http://localhost:8080/api/files/avatar/test.jpg',
     'https://via.placeholder.com/150',
