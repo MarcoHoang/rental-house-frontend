@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import authService from "../api/authService";
+import { useToast } from "../components/common/Toast";
+import { getAvatarUrl } from "../utils/avatarHelper";
+import Avatar from "../components/common/Avatar";
 
 const ProfileContainer = styled.div`
   max-width: 800px;
@@ -45,19 +48,14 @@ const Input = styled.input`
   }
 `;
 
-const AvatarContainer = styled.div`
+const AvatarSection = styled.div`
   display: flex;
   align-items: center;
   margin-bottom: 1.5rem;
 `;
 
-const Avatar = styled.img`
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  object-fit: cover;
+const AvatarWrapper = styled.div`
   margin-right: 1.5rem;
-  border: 2px solid #e5e7eb;
 `;
 
 const FileInput = styled.input`
@@ -112,12 +110,13 @@ const UserProfilePage = () => {
     address: "",
     dateOfBirth: "",
     avatar: null,
-    avatarPreview: "/default-avatar.png",
+    avatarPreview: getAvatarUrl(null),
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
   const navigate = useNavigate();
+  const { showSuccess, showError } = useToast();
 
   // Lấy thông tin user khi component mount
   useEffect(() => {
@@ -149,7 +148,21 @@ const UserProfilePage = () => {
         }
 
         const userData = await authService.getCurrentUser();
-        console.log("Received user data:", userData);
+        console.log("=== DEBUG USER PROFILE PAGE ===");
+        console.log("UserProfilePage - Received user data:", userData);
+        console.log(
+          "UserProfilePage - userData.fullName (tên hiển thị):",
+          userData?.fullName
+        );
+        console.log(
+          "UserProfilePage - userData.email (email):",
+          userData?.email
+        );
+        console.log(
+          "UserProfilePage - userData.username (username):",
+          userData?.username
+        );
+        console.log("=== END DEBUG ===");
 
         if (!isMounted) {
           console.log("Component unmounted, skipping state update");
@@ -180,8 +193,7 @@ const UserProfilePage = () => {
           address: userData?.address || "",
           dateOfBirth: userData?.birthDate || userData?.dateOfBirth || "", // Hỗ trợ cả birthDate và dateOfBirth
           avatar: null, // Reset avatar file
-          avatarPreview:
-            userData?.avatarUrl || userData?.avatar || "/default-avatar.png", // Sử dụng avatarUrl từ backend
+          avatarPreview: getAvatarUrl(userData?.avatarUrl || userData?.avatar), // Sử dụng helper function để xử lý URL
         }));
       } catch (error) {
         if (!isMounted) return;
@@ -235,7 +247,7 @@ const UserProfilePage = () => {
         phone: user.phone || "",
         address: user.address || "",
         dateOfBirth: user.birthDate || user.dateOfBirth || "", // Hỗ trợ cả birthDate và dateOfBirth
-        avatarPreview: user.avatarUrl || user.avatar || "/default-avatar.png", // Sử dụng avatarUrl từ backend
+        avatarPreview: getAvatarUrl(user.avatarUrl || user.avatar), // Sử dụng helper function để xử lý URL
       }));
     } else if (ENABLE_AUTH) {
       // Nếu không có thông tin user và đang bật xác thực, chuyển hướng về trang đăng nhập
@@ -317,6 +329,21 @@ const UserProfilePage = () => {
       isValid = false;
     }
 
+    // Validation cho ngày sinh
+    if (profile.dateOfBirth) {
+      const selectedDate = new Date(profile.dateOfBirth);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999); // Đặt thời gian cuối ngày hôm nay
+
+      if (isNaN(selectedDate.getTime())) {
+        newErrors.dateOfBirth = "Ngày sinh không hợp lệ";
+        isValid = false;
+      } else if (selectedDate > today) {
+        newErrors.dateOfBirth = "Ngày sinh không được vượt quá ngày hiện tại";
+        isValid = false;
+      }
+    }
+
     setErrors(newErrors);
     return isValid;
   };
@@ -345,6 +372,10 @@ const UserProfilePage = () => {
               "UserProfilePage.handleSubmit - Avatar uploaded successfully:",
               avatarUrl
             );
+            showSuccess(
+              "Upload avatar thành công!",
+              "Ảnh đại diện của bạn đã được cập nhật."
+            );
           } else {
             throw new Error("Upload avatar thất bại");
           }
@@ -353,12 +384,11 @@ const UserProfilePage = () => {
             "UserProfilePage.handleSubmit - Avatar upload error:",
             uploadError
           );
-          setMessage({
-            text:
-              "Lỗi khi upload ảnh đại diện: " +
-              (uploadError.message || "Upload thất bại"),
-            type: "error",
-          });
+          showError(
+            "Upload avatar thất bại!",
+            "Lỗi khi upload ảnh đại diện: " +
+              (uploadError.message || "Upload thất bại")
+          );
           return;
         }
       }
@@ -386,7 +416,11 @@ const UserProfilePage = () => {
 
       // Cập nhật thông tin trong localStorage
       const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-      const newUserData = { ...currentUser, ...result.data };
+      const newUserData = {
+        ...currentUser,
+        ...result.data,
+        avatarUrl: avatarUrl, // Đảm bảo avatar URL mới được lưu
+      };
       localStorage.setItem("user", JSON.stringify(newUserData));
 
       setUser(newUserData);
@@ -394,14 +428,14 @@ const UserProfilePage = () => {
       // Cập nhật avatar preview với URL mới
       setProfile((prev) => ({
         ...prev,
-        avatarPreview: avatarUrl,
+        avatarPreview: getAvatarUrl(avatarUrl),
         avatar: null, // Reset avatar file
       }));
 
-      setMessage({
-        text: "Cập nhật thông tin thành công!",
-        type: "success",
-      });
+      showSuccess(
+        "Cập nhật thành công!",
+        "Thông tin hồ sơ của bạn đã được cập nhật thành công."
+      );
 
       // Cập nhật lại giao diện
       window.dispatchEvent(new Event("storage"));
@@ -409,10 +443,10 @@ const UserProfilePage = () => {
       console.error("Lỗi khi cập nhật thông tin:", error);
       // Chỉ hiển thị thông báo nếu không phải lỗi 401 (đã xử lý trong authService)
       if (error.response?.status !== 401) {
-        setMessage({
-          text: error.message || "Có lỗi xảy ra khi cập nhật thông tin",
-          type: "error",
-        });
+        showError(
+          "Cập nhật thất bại!",
+          error.message || "Có lỗi xảy ra khi cập nhật thông tin"
+        );
       }
     } finally {
       setIsSubmitting(false);
@@ -475,15 +509,15 @@ const UserProfilePage = () => {
       <form onSubmit={handleSubmit}>
         <FormGroup>
           <Label>Ảnh đại diện</Label>
-          <AvatarContainer>
-            <Avatar
-              src={profile.avatarPreview}
-              alt="Avatar"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = "/default-avatar.png";
-              }}
-            />
+          <AvatarSection>
+            <AvatarWrapper>
+              <Avatar
+                src={profile.avatarPreview}
+                alt="Avatar"
+                size="100px"
+                name={profile.fullName}
+              />
+            </AvatarWrapper>
             <div>
               <FileInput
                 type="file"
@@ -502,7 +536,7 @@ const UserProfilePage = () => {
                 Định dạng: JPG, PNG. Kích thước tối đa: 5MB
               </p>
             </div>
-          </AvatarContainer>
+          </AvatarSection>
         </FormGroup>
 
         <FormGroup>
@@ -536,6 +570,7 @@ const UserProfilePage = () => {
           <Input
             type="date"
             name="dateOfBirth"
+            max={new Date().toISOString().split("T")[0]}
             value={(() => {
               if (!profile.dateOfBirth) return "";
               try {
@@ -549,6 +584,7 @@ const UserProfilePage = () => {
             })()}
             onChange={handleChange}
           />
+          {errors.dateOfBirth && <ErrorText>{errors.dateOfBirth}</ErrorText>}
         </FormGroup>
 
         <FormGroup>

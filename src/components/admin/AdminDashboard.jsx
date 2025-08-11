@@ -14,6 +14,8 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import UserManagement from "./UserManagement";
+import ConfirmDialog from "../common/ConfirmDialog";
+import { useToast } from "../common/Toast";
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -527,7 +529,9 @@ const AdminDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [currentUser, setCurrentUser] = useState(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const navigate = useNavigate();
+  const { showSuccess } = useToast();
 
   useEffect(() => {
     const adminData = localStorage.getItem("adminUser");
@@ -537,8 +541,13 @@ const AdminDashboard = () => {
   }, []);
 
   const handleLogout = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const performLogout = () => {
     localStorage.removeItem("adminUser");
     localStorage.removeItem("adminToken");
+    showSuccess('Đăng xuất thành công', 'Bạn đã đăng xuất khỏi hệ thống admin');
     navigate("/admin/login");
   };
 
@@ -850,6 +859,18 @@ const AdminDashboard = () => {
           )}
         </Main>
       </MainContent>
+      
+      {/* Logout Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={performLogout}
+        title="Xác nhận đăng xuất"
+        message="Bạn có chắc chắn muốn đăng xuất khỏi hệ thống admin?"
+        type="warning"
+        confirmText="Đăng xuất"
+        cancelText="Hủy"
+      />
     </DashboardContainer>
   );
 };

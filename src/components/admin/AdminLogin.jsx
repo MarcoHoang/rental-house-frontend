@@ -8,6 +8,7 @@ import { useForm, validationRules } from "../../hooks/useForm";
 import FormField from "../common/FormField";
 import Button from "../common/Button";
 import ErrorMessage from "../common/ErrorMessage";
+import { useToast } from "../common/Toast";
 
 const LoginContainer = styled.div`
   min-height: 100vh;
@@ -106,6 +107,7 @@ const AdminLogin = () => {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { showSuccess } = useToast();
 
   const { formData, errors, handleChange, handleBlur, validateForm } = useForm(
     {
@@ -153,6 +155,11 @@ const AdminLogin = () => {
       if (userData.role !== "ADMIN") {
         throw new Error("Bạn không có quyền truy cập Admin.");
       }
+
+      showSuccess(
+        "Đăng nhập Admin thành công!",
+        `Chào mừng Admin ${userData.name || userData.email} quay trở lại!`
+      );
 
       console.log(
         "AdminLogin.handleSubmit - Login successful, navigating to dashboard"

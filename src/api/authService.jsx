@@ -28,6 +28,9 @@ api.interceptors.request.use(
     // Không set Content-Type cho FormData (để browser tự set với boundary)
     if (config.data instanceof FormData) {
       delete config.headers["Content-Type"];
+      console.log(
+        "Request interceptor - FormData detected, removed Content-Type header"
+      );
     }
 
     // Chỉ debug khi không phải production và không phải request lặp lại
@@ -96,10 +99,24 @@ const authService = {
         throw new Error("Format response không được hỗ trợ");
       }
 
+      console.log("=== DEBUG PROFILE DATA ===");
       console.log(
         "authService.getCurrentUser - Extracted user data:",
         userData
       );
+      console.log(
+        "authService.getCurrentUser - userData.fullName (tên hiển thị từ backend):",
+        userData.fullName
+      );
+      console.log(
+        "authService.getCurrentUser - userData.email (email từ backend):",
+        userData.email
+      );
+      console.log(
+        "authService.getCurrentUser - userData.username (username từ backend):",
+        userData.username
+      );
+      console.log("=== END DEBUG ===");
 
       // Kiểm tra xem user data có id không
       if (!userData) {
@@ -113,6 +130,20 @@ const authService = {
           userData
         );
         throw new Error("Thông tin user không hợp lệ - thiếu ID");
+      }
+
+      // Kiểm tra xem fullName có phải là email không
+      if (
+        userData.fullName &&
+        userData.fullName.includes("@") &&
+        userData.fullName === userData.email
+      ) {
+        console.warn(
+          "authService.getCurrentUser - fullName is same as email, this might be a backend issue"
+        );
+        // Nếu fullName giống email, có thể backend đã lưu sai
+        // Chúng ta sẽ để fullName trống để hiển thị "Người dùng"
+        userData.fullName = "";
       }
 
       // Lưu thông tin user vào localStorage
@@ -193,6 +224,8 @@ const authService = {
         try {
           user = await authService.getCurrentUser();
           console.log("authService.login - Fetched user data:", user);
+          console.log("authService.login - user.fullName:", user.fullName);
+          console.log("authService.login - user.email:", user.email);
         } catch (profileError) {
           console.error(
             "authService.login - Error fetching user profile:",
@@ -208,6 +241,21 @@ const authService = {
       if (!user || !user.id) {
         console.error("authService.login - User data missing ID:", user);
         throw new Error("Thông tin user không hợp lệ. Vui lòng đăng nhập lại.");
+      }
+
+      // Kiểm tra xem fullName có phải là email không
+      if (
+        user &&
+        user.fullName &&
+        user.fullName.includes("@") &&
+        user.fullName === user.email
+      ) {
+        console.warn(
+          "authService.login - fullName is same as email, this might be a backend issue"
+        );
+        // Nếu fullName giống email, có thể backend đã lưu sai
+        // Chúng ta sẽ để fullName trống để hiển thị "Người dùng"
+        user.fullName = "";
       }
 
       // Lưu user data
@@ -244,18 +292,36 @@ const authService = {
         userData
       );
 
-      // Chuyển đổi dữ liệu để phù hợp với backend User entity
-      // Backend: username = email (để đăng nhập), fullName = tên hiển thị
+      // Chuyển đổi dữ liệu để phù hợp với backend
+      // Thử gửi cả username và fullName để backend có thể map đúng
       const registerData = {
         email: userData.email,
-        username: userData.email, // Backend set username = email để đăng nhập
+        username: userData.username, // Tên người dùng thật (Marco)
+        fullName: userData.username, // Thêm fullName để backend map vào entity
         password: userData.password,
-        fullName: userData.username, // Frontend username map với backend fullName
         phone: userData.phone,
         address: userData.address || null,
-        active: true, // Mặc định active khi đăng ký
-        avatarUrl: "/images/default-avatar.png", // Default avatar
       };
+
+      console.log("=== DEBUG REGISTRATION MAPPING ===");
+      console.log(
+        "authService.register - userData.username (tên người dùng từ form):",
+        userData.username
+      );
+      console.log(
+        "authService.register - userData.email (email từ form):",
+        userData.email
+      );
+      console.log(
+        "authService.register - registerData.username (sẽ gửi đến backend):",
+        registerData.username
+      );
+      console.log(
+        "authService.register - registerData.email (sẽ gửi đến backend):",
+        registerData.email
+      );
+      console.log("authService.register - registerData object:", registerData);
+      console.log("=== END DEBUG ===");
 
       console.log(
         "authService.register - Register data to send:",
@@ -266,6 +332,8 @@ const authService = {
 
       console.log("authService.register - Response:", response);
       console.log("authService.register - Response data:", response.data);
+      console.log("authService.register - Response status:", response.status);
+      console.log("authService.register - Response headers:", response.headers);
 
       return response.data;
     } catch (error) {
@@ -300,9 +368,42 @@ const authService = {
       // Tạo FormData để gửi file
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("uploadType", "avatar"); // Thêm uploadType theo backend API
 
-      // Không set Content-Type header - để browser tự set với boundary
-      const response = await api.post("/files/upload/avatar", formData);
+      // Debug FormData
+      console.log("authService.uploadAvatar - FormData entries:");
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+      }
+
+      // Tạo config riêng cho upload để đảm bảo headers đúng
+      const uploadConfig = {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : undefined,
+        },
+      };
+
+      console.log("authService.uploadAvatar - Upload config:", uploadConfig);
+
+      // Gọi API upload - thử cả 2 endpoint
+      let response;
+      try {
+        // Thử endpoint chuyên biệt cho avatar trước
+        response = await api.post(
+          "/files/upload/avatar",
+          formData,
+          uploadConfig
+        );
+        console.log(
+          "authService.uploadAvatar - Using /files/upload/avatar endpoint"
+        );
+      } catch (error) {
+        console.log(
+          "authService.uploadAvatar - /files/upload/avatar failed, trying /files/upload"
+        );
+        // Nếu không được, thử endpoint chung
+        response = await api.post("/files/upload", formData, uploadConfig);
+      }
 
       console.log("authService.uploadAvatar - Response:", response);
       console.log("authService.uploadAvatar - Response data:", response.data);
@@ -340,6 +441,14 @@ const authService = {
         "authService.uploadAvatar - Error data:",
         error.response?.data
       );
+      console.error(
+        "authService.uploadAvatar - Error status:",
+        error.response?.status
+      );
+      console.error(
+        "authService.uploadAvatar - Error headers:",
+        error.response?.headers
+      );
       logApiError(error, "uploadAvatar");
 
       if (error.response?.status === 401) {
@@ -374,6 +483,14 @@ const authService = {
         try {
           const date = new Date(userData.dateOfBirth);
           if (!isNaN(date.getTime())) {
+            // Kiểm tra ngày sinh không được vượt quá ngày hiện tại
+            const today = new Date();
+            today.setHours(23, 59, 59, 999); // Đặt thời gian cuối ngày hôm nay
+
+            if (date > today) {
+              throw new Error("Ngày sinh không được vượt quá ngày hiện tại");
+            }
+
             birthDate = date.toISOString().split("T")[0];
             console.log(
               "authService.updateProfile - Parsed birthDate:",
@@ -384,12 +501,14 @@ const authService = {
               "authService.updateProfile - Invalid dateOfBirth:",
               userData.dateOfBirth
             );
+            throw new Error("Ngày sinh không hợp lệ");
           }
         } catch (error) {
           console.error(
             "authService.updateProfile - Error parsing dateOfBirth:",
             error
           );
+          throw error;
         }
       }
 
@@ -434,6 +553,21 @@ const authService = {
         updatedUser
       );
 
+      // Kiểm tra xem fullName có phải là email không
+      if (
+        updatedUser &&
+        updatedUser.fullName &&
+        updatedUser.fullName.includes("@") &&
+        updatedUser.fullName === updatedUser.email
+      ) {
+        console.warn(
+          "authService.updateProfile - fullName is same as email, this might be a backend issue"
+        );
+        // Nếu fullName giống email, có thể backend đã lưu sai
+        // Chúng ta sẽ để fullName trống để hiển thị "Người dùng"
+        updatedUser.fullName = "";
+      }
+
       // Cập nhật user trong localStorage
       if (updatedUser) {
         safeSetToStorage("user", updatedUser);
@@ -476,7 +610,40 @@ const authService = {
       }
 
       const response = await api.get("/users/profile");
-      return response.data.data || response.data;
+      let userData = response.data.data || response.data;
+
+      console.log("=== DEBUG GET PROFILE ===");
+      console.log("authService.getProfile - Raw response data:", response.data);
+      console.log(
+        "authService.getProfile - userData.fullName (tên hiển thị từ backend):",
+        userData?.fullName
+      );
+      console.log(
+        "authService.getProfile - userData.email (email từ backend):",
+        userData?.email
+      );
+      console.log(
+        "authService.getProfile - userData.username (username từ backend):",
+        userData?.username
+      );
+      console.log("=== END DEBUG ===");
+
+      // Kiểm tra xem fullName có phải là email không
+      if (
+        userData &&
+        userData.fullName &&
+        userData.fullName.includes("@") &&
+        userData.fullName === userData.email
+      ) {
+        console.warn(
+          "authService.getProfile - fullName is same as email, this might be a backend issue"
+        );
+        // Nếu fullName giống email, có thể backend đã lưu sai
+        // Chúng ta sẽ để fullName trống để hiển thị "Người dùng"
+        userData.fullName = "";
+      }
+
+      return userData;
     } catch (error) {
       logApiError(error, "getProfile");
       throw error;
@@ -553,6 +720,7 @@ const authService = {
     safeRemoveFromStorage("token");
     safeRemoveFromStorage("user");
     window.dispatchEvent(new Event("unauthorized"));
+    // Thông báo đăng xuất thành công sẽ được hiển thị từ component gọi logout
   },
 };
 

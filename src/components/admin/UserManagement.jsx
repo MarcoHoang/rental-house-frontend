@@ -9,6 +9,7 @@ import {
   RefreshCw,
   AlertTriangle,
 } from "lucide-react";
+import { useToast } from "../common/Toast";
 
 // Tái sử dụng các styled-components từ AdminDashboard.jsx
 const Card = styled.div`
@@ -159,6 +160,7 @@ const UserManagement = () => {
   const [pagination, setPagination] = useState({ number: 0, totalPages: 1 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { showSuccess, showError } = useToast();
 
   const fetchUsers = useCallback(async (page) => {
     setLoading(true);
@@ -218,9 +220,22 @@ const UserManagement = () => {
           user.id === userId ? { ...user, active: !currentStatus } : user
         )
       );
+
+      // Hiển thị thông báo thành công
+      const user = users.find((u) => u.id === userId);
+      const action = !currentStatus ? "mở khóa" : "khóa";
+      showSuccess(
+        "Cập nhật thành công!",
+        `Đã ${action} tài khoản của ${
+          user?.fullName || user?.email || "người dùng"
+        }`
+      );
     } catch (err) {
       console.error("UserManagement.handleToggleStatus - Error:", err);
-      alert("Cập nhật trạng thái thất bại! Vui lòng thử lại.");
+      showError(
+        "Cập nhật thất bại!",
+        "Không thể cập nhật trạng thái người dùng. Vui lòng thử lại."
+      );
     }
   };
 

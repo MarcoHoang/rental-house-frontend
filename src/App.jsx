@@ -17,8 +17,10 @@ import UserProfilePage from "./pages/UserProfilePage";
 import AdminPage from "./pages/AdminPage";
 import AdminRoute from "./components/admin/AdminRoute";
 import ErrorBoundary from "./components/common/ErrorBoundary";
+import ToastProvider from "./components/common/Toast";
 import { AUTH_CONFIG } from "./config/auth";
 import { getUserFromStorage } from "./utils/localStorage";
+import AvatarTestPage from "./pages/AvatarTestPage";
 
 // Protected Route Component (đã cải thiện)
 const ProtectedRoute = ({
@@ -62,64 +64,69 @@ const RoleBasedRedirect = () => {
 function App() {
   return (
     <ErrorBoundary>
-      <Router>
-        <Routes>
-          {/* Các route công khai */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
+      <ToastProvider>
+        <Router>
+          <Routes>
+            {/* Các route công khai */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
 
-          {/* Trang chủ chung cho tất cả người dùng */}
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <UserHomePage />
-              </ProtectedRoute>
-            }
-          />
+            {/* Trang chủ chung cho tất cả người dùng */}
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <UserHomePage />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Các route yêu cầu đăng nhập (chỉ dành cho user thường) */}
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute requireUser={true}>
-                <UserProfilePage />
-              </ProtectedRoute>
-            }
-          />
+            {/* Các route yêu cầu đăng nhập (chỉ dành cho user thường) */}
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute requireUser={true}>
+                  <UserProfilePage />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Trang admin */}
-          <Route
-            path="/admin/*"
-            element={
-              <AdminRoute>
-                <AdminPage />
-              </AdminRoute>
-            }
-          />
+            {/* Trang test avatar upload */}
+            <Route path="/avatar-test" element={<AvatarTestPage />} />
 
-          {/* Các route dành cho chủ nhà */}
-          <Route
-            path="/host"
-            element={
-              <ProtectedRoute requireHost={true}>
-                <HostLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<HostHomePage />} />
-            <Route path="post" element={<PostPropertyPage />} />
-          </Route>
+            {/* Trang admin */}
+            <Route
+              path="/admin/*"
+              element={
+                <AdminRoute>
+                  <AdminPage />
+                </AdminRoute>
+              }
+            />
 
-          {/* Chuyển hướng dựa trên vai trò */}
-          <Route path="/redirect" element={<RoleBasedRedirect />} />
+            {/* Các route dành cho chủ nhà */}
+            <Route
+              path="/host"
+              element={
+                <ProtectedRoute requireHost={true}>
+                  <HostLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<HostHomePage />} />
+              <Route path="post" element={<PostPropertyPage />} />
+            </Route>
 
-          {/* Chuyển hướng các đường dẫn không xác định về trang chủ */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
+            {/* Chuyển hướng dựa trên vai trò */}
+            <Route path="/redirect" element={<RoleBasedRedirect />} />
+
+            {/* Chuyển hướng các đường dẫn không xác định về trang chủ */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Router>
+      </ToastProvider>
     </ErrorBoundary>
   );
 }

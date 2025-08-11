@@ -7,33 +7,14 @@ import {
   HomeIcon,
 } from "@heroicons/react/24/outline";
 import authService from "../../api/authService";
+import { getAvatarUrl } from "../../utils/avatarHelper";
+import Avatar from "../common/Avatar";
 import styled from "styled-components";
 import HostRegistrationForm from "../host/HostRegistrationForm";
+import ConfirmDialog from "../common/ConfirmDialog";
+import { useToast } from "../common/Toast";
 
 // Hàm tạo màu ngẫu nhiên dựa trên tên
-const stringToColor = (string) => {
-  let hash = 0;
-  for (let i = 0; i < string.length; i++) {
-    hash = string.charCodeAt(i) + ((hash << 5) - hash);
-  }
-
-  let color = "#";
-  for (let i = 0; i < 3; i++) {
-    const value = (hash >> (i * 8)) & 0xff;
-    color += `00${value.toString(16)}`.slice(-2);
-  }
-
-  return color;
-};
-
-// Hàm lấy ký tự đầu tiên của tên
-const getInitials = (name) => {
-  if (!name) return "U";
-  const names = name.split(" ");
-  return names.length > 1
-    ? `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase()
-    : name[0].toUpperCase();
-};
 
 // Styled components
 const HeaderWrapper = styled.header`
@@ -233,6 +214,7 @@ const Header = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showHostRegistration, setShowHostRegistration] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [userData, setUserData] = useState({
     username: "",
     fullName: "",
@@ -241,10 +223,17 @@ const Header = () => {
     roleName: "",
   });
 
+  const { showSuccess } = useToast();
+
   const navigate = useNavigate();
 
   // Hàm xử lý đăng xuất
   const handleLogout = useCallback(() => {
+    setShowLogoutConfirm(true);
+  }, []);
+
+  // Hàm thực hiện đăng xuất sau khi xác nhận
+  const performLogout = useCallback(() => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setIsLoggedIn(false);
@@ -258,8 +247,9 @@ const Header = () => {
     setShowDropdown(false);
     // Kích hoạt sự kiện để cập nhật giao diện
     window.dispatchEvent(new Event("storage"));
+    showSuccess("Đăng xuất thành công", "Bạn đã đăng xuất khỏi hệ thống");
     navigate("/");
-  }, [navigate]);
+  }, [navigate, showSuccess]);
 
   // Hàm tải thông tin người dùng
   const loadUserProfile = useCallback(async () => {
@@ -276,9 +266,9 @@ const Header = () => {
       if (storedUser) {
         const userData = JSON.parse(storedUser);
         setUserData({
-          username: userData.username || "",
-          fullName: userData.fullName || userData.username || "",
-          avatar: userData.avatar || null,
+          username: userData.email || "", // Lưu email vào username để tương thích
+          fullName: userData.fullName || "Người dùng",
+          avatar: getAvatarUrl(userData.avatarUrl || userData.avatar),
           email: userData.email || "",
           roleName: userData.roleName || "",
         });
@@ -289,9 +279,9 @@ const Header = () => {
       const profile = await authService.getProfile();
       if (profile) {
         const userData = {
-          username: profile.username || "",
-          fullName: profile.fullName || profile.username || "",
-          avatar: profile.avatar || null,
+          username: profile.email || "", // Lưu email vào username để tương thích
+          fullName: profile.fullName || "Người dùng",
+          avatar: getAvatarUrl(profile.avatarUrl || profile.avatar),
           email: profile.email || "",
           roleName: profile.roleName || "",
         };
@@ -319,9 +309,9 @@ const Header = () => {
           const userData = JSON.parse(user);
           console.log("User data from localStorage:", userData); // Thêm dòng này để kiểm tra
           setUserData({
-            username: userData.username || "",
-            fullName: userData.fullName || userData.username || "",
-            avatar: userData.avatar || null,
+            username: userData.email || "", // Lưu email vào username để tương thích
+            fullName: userData.fullName || "Người dùng",
+            avatar: getAvatarUrl(userData.avatarUrl || userData.avatar),
             email: userData.email || "",
             roleName: userData.roleName || "",
           });
@@ -346,8 +336,17 @@ const Header = () => {
       }
     };
 
+    // Lắng nghe sự kiện storage tùy chỉnh (từ cùng tab)
+    const handleCustomStorageEvent = () => {
+      checkAuth();
+    };
+
     window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
+    window.addEventListener("storage", handleCustomStorageEvent);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("storage", handleCustomStorageEvent);
+    };
   }, [handleLogout]);
 
   // Tải thông tin người dùng khi đã đăng nhập
@@ -398,28 +397,14 @@ const Header = () => {
                 aria-haspopup="true"
                 aria-expanded={showDropdown}
               >
-                <UserAvatar
-                  $bgColor={stringToColor(
-                    userData.fullName || userData.username || "User"
-                  )}
-                >
-                  {userData.avatar ? (
-                    <img
-                      src={userData.avatar}
-                      alt={userData.fullName || userData.username}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        borderRadius: "50%",
-                        objectFit: "cover",
-                      }}
-                    />
-                  ) : (
-                    getInitials(userData.fullName || userData.username)
-                  )}
-                </UserAvatar>
+                <Avatar
+                  src={userData.avatar}
+                  alt={userData.fullName || "Người dùng"}
+                  name={userData.fullName || "Người dùng"}
+                  size="40px"
+                />
                 <div className="user-name">
-                  {userData?.fullName || userData?.username || "Người dùng"}
+                  {userData?.fullName || "Người dùng"}
                 </div>
                 <ChevronDownIcon className="w-4 h-4 text-gray-500 hidden md:block" />
               </button>
@@ -434,7 +419,7 @@ const Header = () => {
                   <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg py-1 z-50 border border-gray-100">
                     <div className="px-4 py-3 border-b border-gray-100">
                       <p className="text-sm font-medium text-gray-900 truncate">
-                        {userData.fullName || userData.username}
+                        {userData.fullName || "Người dùng"}
                       </p>
                       <p className="text-xs text-gray-500 truncate">
                         {userData.email}
@@ -534,6 +519,18 @@ const Header = () => {
             );
           }
         }}
+      />
+
+      {/* Logout Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={performLogout}
+        title="Xác nhận đăng xuất"
+        message="Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?"
+        type="warning"
+        confirmText="Đăng xuất"
+        cancelText="Hủy"
       />
     </HeaderWrapper>
   );
