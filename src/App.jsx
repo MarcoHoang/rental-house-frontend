@@ -15,6 +15,7 @@ import ErrorBoundary from "./components/common/ErrorBoundary";
 import ToastProvider from "./components/common/Toast";
 import { AUTH_CONFIG } from "./config/auth";
 import { getUserFromStorage } from "./utils/localStorage";
+import AvatarTestPage from "./pages/AvatarTestPage";
 
 // Protected Route Component (đã cải thiện)
 const ProtectedRoute = ({ children, requireHost = false, requireUser = false }) => {
@@ -81,6 +82,12 @@ function App() {
                 <UserProfilePage />
               </ProtectedRoute>
             }
+          />
+
+          {/* Trang test avatar upload */}
+          <Route 
+            path="/avatar-test" 
+            element={<AvatarTestPage />}
           />
 
           {/* Trang admin */}

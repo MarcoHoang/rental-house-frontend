@@ -2,33 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ChevronDownIcon, UserIcon, ArrowRightOnRectangleIcon, HomeIcon } from '@heroicons/react/24/outline';
 import authService from '../../api/authService';
+import { getAvatarUrl } from '../../utils/avatarHelper';
+import Avatar from '../common/Avatar';
 import styled from 'styled-components';
 import HostRegistrationForm from '../host/HostRegistrationForm';
 
 // Hàm tạo màu ngẫu nhiên dựa trên tên
-const stringToColor = (string) => {
-  let hash = 0;
-  for (let i = 0; i < string.length; i++) {
-    hash = string.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  
-  let color = '#';
-  for (let i = 0; i < 3; i++) {
-    const value = (hash >> (i * 8)) & 0xff;
-    color += `00${value.toString(16)}`.slice(-2);
-  }
-  
-  return color;
-};
 
-// Hàm lấy ký tự đầu tiên của tên
-const getInitials = (name) => {
-    if (!name) return 'U';
-    const names = name.split(' ');
-    return names.length > 1 
-        ? `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase()
-        : name[0].toUpperCase();
-};
 
 // Styled components
 const HeaderWrapper = styled.header`
@@ -267,7 +247,7 @@ const Header = () => {
                 setUserData({
                     username: userData.email || '', // Lưu email vào username để tương thích
                     fullName: userData.fullName || 'Người dùng',
-                    avatar: userData.avatar || null,
+                    avatar: getAvatarUrl(userData.avatarUrl || userData.avatar),
                     email: userData.email || '',
                     roleName: userData.roleName || ''
                 });
@@ -280,7 +260,7 @@ const Header = () => {
                 const userData = {
                     username: profile.email || '', // Lưu email vào username để tương thích
                     fullName: profile.fullName || 'Người dùng',
-                    avatar: profile.avatar || null,
+                    avatar: getAvatarUrl(profile.avatarUrl || profile.avatar),
                     email: profile.email || '',
                     roleName: profile.roleName || ''
                 };
@@ -310,7 +290,7 @@ const Header = () => {
                     setUserData({
                         username: userData.email || '', // Lưu email vào username để tương thích
                         fullName: userData.fullName || 'Người dùng',
-                        avatar: userData.avatar || null,
+                        avatar: getAvatarUrl(userData.avatarUrl || userData.avatar),
                         email: userData.email || '',
                         roleName: userData.roleName || ''
                     });
@@ -382,19 +362,12 @@ const Header = () => {
                                 aria-haspopup="true"
                                 aria-expanded={showDropdown}
                             >
-                                <UserAvatar 
-                                    $bgColor={stringToColor(userData.fullName || 'User')}
-                                >
-                                    {userData.avatar ? (
-                                        <img 
-                                            src={userData.avatar} 
-                                            alt={userData.fullName || 'Người dùng'} 
-                                            style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} 
-                                        />
-                                    ) : (
-                                        getInitials(userData.fullName || 'Người dùng')
-                                    )}
-                                </UserAvatar>
+                                <Avatar 
+                                    src={userData.avatar}
+                                    alt={userData.fullName || 'Người dùng'}
+                                    name={userData.fullName || 'Người dùng'}
+                                    size="40px"
+                                />
                                 <div className="user-name">
                                     {userData?.fullName || 'Người dùng'}
                                 </div>

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import authService from '../api/authService';
 import { useToast } from '../components/common/Toast';
+import { getAvatarUrl } from '../utils/avatarHelper';
+import Avatar from '../components/common/Avatar';
 
 const ProfileContainer = styled.div`
   max-width: 800px;
@@ -46,19 +48,14 @@ const Input = styled.input`
   }
 `;
 
-const AvatarContainer = styled.div`
+const AvatarSection = styled.div`
   display: flex;
   align-items: center;
   margin-bottom: 1.5rem;
 `;
 
-const Avatar = styled.img`
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  object-fit: cover;
+const AvatarWrapper = styled.div`
   margin-right: 1.5rem;
-  border: 2px solid #e5e7eb;
 `;
 
 const FileInput = styled.input`
@@ -187,7 +184,7 @@ const UserProfilePage = () => {
           address: userData?.address || '',
           dateOfBirth: userData?.birthDate || userData?.dateOfBirth || '', // Hỗ trợ cả birthDate và dateOfBirth
           avatar: null, // Reset avatar file
-          avatarPreview: userData?.avatarUrl || userData?.avatar || '/default-avatar.png' // Sử dụng avatarUrl từ backend
+          avatarPreview: getAvatarUrl(userData?.avatarUrl || userData?.avatar) // Sử dụng helper function để xử lý URL
         }));
         
       } catch (error) {
@@ -242,7 +239,7 @@ const UserProfilePage = () => {
         phone: user.phone || '',
         address: user.address || '',
         dateOfBirth: user.birthDate || user.dateOfBirth || '', // Hỗ trợ cả birthDate và dateOfBirth
-        avatarPreview: user.avatarUrl || user.avatar || '/default-avatar.png' // Sử dụng avatarUrl từ backend
+        avatarPreview: getAvatarUrl(user.avatarUrl || user.avatar) // Sử dụng helper function để xử lý URL
       }));
     } else if (ENABLE_AUTH) {
       // Nếu không có thông tin user và đang bật xác thực, chuyển hướng về trang đăng nhập
@@ -395,7 +392,7 @@ const UserProfilePage = () => {
       // Cập nhật avatar preview với URL mới
       setProfile(prev => ({
         ...prev,
-        avatarPreview: avatarUrl,
+        avatarPreview: getAvatarUrl(avatarUrl),
         avatar: null // Reset avatar file
       }));
 
@@ -458,15 +455,15 @@ const UserProfilePage = () => {
       <form onSubmit={handleSubmit}>
         <FormGroup>
           <Label>Ảnh đại diện</Label>
-          <AvatarContainer>
-            <Avatar 
-              src={profile.avatarPreview} 
-              alt="Avatar"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = '/default-avatar.png';
-              }}
-            />
+          <AvatarSection>
+            <AvatarWrapper>
+              <Avatar 
+                src={profile.avatarPreview} 
+                alt="Avatar"
+                size="100px"
+                name={profile.fullName}
+              />
+            </AvatarWrapper>
             <div>
               <FileInput
                 type="file"
@@ -479,7 +476,7 @@ const UserProfilePage = () => {
                 Định dạng: JPG, PNG. Kích thước tối đa: 5MB
               </p>
             </div>
-          </AvatarContainer>
+          </AvatarSection>
         </FormGroup>
 
         <FormGroup>

@@ -28,6 +28,7 @@ api.interceptors.request.use(
     // Không set Content-Type cho FormData (để browser tự set với boundary)
     if (config.data instanceof FormData) {
       delete config.headers['Content-Type'];
+      console.log('Request interceptor - FormData detected, removed Content-Type header');
     }
     
     // Chỉ debug khi không phải production và không phải request lặp lại
@@ -292,9 +293,34 @@ const authService = {
             // Tạo FormData để gửi file
             const formData = new FormData();
             formData.append('file', file);
+            formData.append('uploadType', 'avatar'); // Thêm uploadType theo backend API
 
-            // Không set Content-Type header - để browser tự set với boundary
-            const response = await api.post('/files/upload/avatar', formData);
+            // Debug FormData
+            console.log('authService.uploadAvatar - FormData entries:');
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}:`, value);
+            }
+
+            // Tạo config riêng cho upload để đảm bảo headers đúng
+            const uploadConfig = {
+                headers: {
+                    'Authorization': token ? `Bearer ${token}` : undefined
+                }
+            };
+
+            console.log('authService.uploadAvatar - Upload config:', uploadConfig);
+
+            // Gọi API upload - thử cả 2 endpoint
+            let response;
+            try {
+                // Thử endpoint chuyên biệt cho avatar trước
+                response = await api.post('/files/upload/avatar', formData, uploadConfig);
+                console.log('authService.uploadAvatar - Using /files/upload/avatar endpoint');
+            } catch (error) {
+                console.log('authService.uploadAvatar - /files/upload/avatar failed, trying /files/upload');
+                // Nếu không được, thử endpoint chung
+                response = await api.post('/files/upload', formData, uploadConfig);
+            }
 
             console.log('authService.uploadAvatar - Response:', response);
             console.log('authService.uploadAvatar - Response data:', response.data);
@@ -324,6 +350,8 @@ const authService = {
             console.error('authService.uploadAvatar - Error:', error);
             console.error('authService.uploadAvatar - Error response:', error.response);
             console.error('authService.uploadAvatar - Error data:', error.response?.data);
+            console.error('authService.uploadAvatar - Error status:', error.response?.status);
+            console.error('authService.uploadAvatar - Error headers:', error.response?.headers);
             logApiError(error, 'uploadAvatar');
             
             if (error.response?.status === 401) {
