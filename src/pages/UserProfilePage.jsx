@@ -178,9 +178,9 @@ const UserProfilePage = () => {
           fullName: userData?.fullName || '',
           phone: userData?.phone || '',
           address: userData?.address || '',
-          dateOfBirth: userData?.dateOfBirth || '',
-          avatar: userData?.avatar,
-          avatarPreview: userData?.avatar || '/default-avatar.png'
+          dateOfBirth: userData?.birthDate || userData?.dateOfBirth || '', // Hỗ trợ cả birthDate và dateOfBirth
+          avatar: null, // Reset avatar file
+          avatarPreview: userData?.avatarUrl || userData?.avatar || '/default-avatar.png' // Sử dụng avatarUrl từ backend
         }));
         
       } catch (error) {
@@ -234,8 +234,8 @@ const UserProfilePage = () => {
         fullName: user.fullName || '',
         phone: user.phone || '',
         address: user.address || '',
-        dateOfBirth: user.dateOfBirth || '',
-        avatarPreview: user.avatar || '/default-avatar.png'
+        dateOfBirth: user.birthDate || user.dateOfBirth || '', // Hỗ trợ cả birthDate và dateOfBirth
+        avatarPreview: user.avatarUrl || user.avatar || '/default-avatar.png' // Sử dụng avatarUrl từ backend
       }));
     } else if (ENABLE_AUTH) {
       // Nếu không có thông tin user và đang bật xác thực, chuyển hướng về trang đăng nhập
@@ -245,6 +245,12 @@ const UserProfilePage = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    
+    // Debug cho ngày sinh
+    if (name === 'dateOfBirth') {
+      console.log('UserProfilePage.handleChange - dateOfBirth changed:', value);
+    }
+    
     setProfile(prev => ({
       ...prev,
       [name]: value
@@ -327,29 +333,61 @@ const UserProfilePage = () => {
     setMessage({ text: '', type: '' });
 
     try {
+      let avatarUrl = profile.avatarPreview; // Giữ avatar hiện tại
+
+      // Upload avatar mới nếu có
+      if (profile.avatar && profile.avatar instanceof File) {
+        console.log('UserProfilePage.handleSubmit - Uploading new avatar file');
+        try {
+          const uploadResult = await authService.uploadAvatar(profile.avatar);
+          if (uploadResult.success && uploadResult.data.fileUrl) {
+            avatarUrl = uploadResult.data.fileUrl;
+            console.log('UserProfilePage.handleSubmit - Avatar uploaded successfully:', avatarUrl);
+          } else {
+            throw new Error('Upload avatar thất bại');
+          }
+        } catch (uploadError) {
+          console.error('UserProfilePage.handleSubmit - Avatar upload error:', uploadError);
+          setMessage({
+            text: 'Lỗi khi upload ảnh đại diện: ' + (uploadError.message || 'Upload thất bại'),
+            type: 'error'
+          });
+          return;
+        }
+      }
+
       // Chuẩn bị dữ liệu gửi đi
       const userData = {
         fullName: profile.fullName,
         phone: profile.phone,
         address: profile.address || null,
         dateOfBirth: profile.dateOfBirth || null,
-        avatar: typeof profile.avatar === 'string' ? profile.avatar : null
+        avatarUrl: avatarUrl // Sử dụng URL avatar đã upload hoặc hiện tại
       };
 
+      console.log('UserProfilePage.handleSubmit - Sending user data:', userData);
+
       // Gọi API cập nhật profile
-      const updatedUser = await authService.updateProfile(userId, userData);
+      const result = await authService.updateProfile(userId, userData);
       
-      // Nếu updatedUser là null, có thể đã xảy ra lỗi 401 và đã xử lý redirect
-      if (!updatedUser) {
-        return;
+      if (!result || !result.success) {
+        throw new Error(result?.error || 'Cập nhật thất bại');
       }
 
       // Cập nhật thông tin trong localStorage
       const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-      const newUserData = { ...currentUser, ...updatedUser };
+      const newUserData = { ...currentUser, ...result.data };
       localStorage.setItem('user', JSON.stringify(newUserData));
       
       setUser(newUserData);
+      
+      // Cập nhật avatar preview với URL mới
+      setProfile(prev => ({
+        ...prev,
+        avatarPreview: avatarUrl,
+        avatar: null // Reset avatar file
+      }));
+
       setMessage({
         text: 'Cập nhật thông tin thành công!',
         type: 'success'
@@ -462,7 +500,17 @@ const UserProfilePage = () => {
           <Input 
             type="date" 
             name="dateOfBirth"
-            value={profile.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().split('T')[0] : ''}
+            value={(() => {
+              if (!profile.dateOfBirth) return '';
+              try {
+                const date = new Date(profile.dateOfBirth);
+                if (isNaN(date.getTime())) return '';
+                return date.toISOString().split('T')[0];
+              } catch (error) {
+                console.error('Error parsing dateOfBirth:', error);
+                return '';
+              }
+            })()}
             onChange={handleChange}
           />
         </FormGroup>
