@@ -1,4 +1,5 @@
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 import { handleApiError, logApiError } from '../utils/apiErrorHandler';
 import { safeSetToStorage, safeRemoveFromStorage } from '../utils/localStorage';
 
@@ -63,16 +64,56 @@ export const adminAuth = {
   // Admin login
   login: async (credentials) => {
     try {
-      const response = await apiClient.post(`${API_PREFIX}/admin/login`, credentials);
-      const loginData = response.data.data || response.data;
+      console.log('adminAuth.login - Starting login with credentials:', credentials);
       
-      if (loginData.token) {
-        localStorage.setItem("adminToken", loginData.token);
-        safeSetToStorage("adminUser", loginData.user);
+      const response = await apiClient.post(`${API_PREFIX}/admin/login`, credentials);
+      
+      console.log('adminAuth.login - Raw response:', response);
+      console.log('adminAuth.login - Response data:', response.data);
+      
+      // Backend trả về format: { code: "07", message: "...", data: { token: "..." } }
+      let loginData, token;
+      
+      if (response.data.data) {
+        // Format: { code: "07", message: "...", data: { token: "..." } }
+        loginData = response.data.data;
+        token = loginData.token;
+      } else if (response.data.token) {
+        // Fallback: Format: { token: "..." }
+        token = response.data.token;
+      } else {
+        console.error('adminAuth.login - Unknown response format:', response.data);
+        throw new Error('Format response không được hỗ trợ');
+      }
+      
+      console.log('adminAuth.login - Extracted token:', token);
+      
+      if (token) {
+        console.log('adminAuth.login - Storing admin token in localStorage');
+        localStorage.setItem("adminToken", token);
+        
+        // Decode token để lấy thông tin admin
+        try {
+          const decoded = jwtDecode(token);
+          const adminUser = {
+            id: decoded?.id || "",
+            email: decoded?.sub || decoded?.email || "",
+            role: decoded?.role?.replace("ROLE_", "") || "",
+            name: decoded?.name || ""
+          };
+          safeSetToStorage("adminUser", adminUser);
+          console.log('adminAuth.login - Stored admin user:', adminUser);
+        } catch (decodeError) {
+          console.error('adminAuth.login - Error decoding token:', decodeError);
+        }
+      } else {
+        throw new Error('Không nhận được token từ server');
       }
       
       return response.data;
     } catch (error) {
+      console.error('adminAuth.login - Error:', error);
+      console.error('adminAuth.login - Error response:', error.response);
       logApiError(error, 'adminLogin');
       throw error;
     }
@@ -113,9 +154,30 @@ export const usersApi = {
   // Get all users with pagination
   getAll: async (params = {}) => {
     try {
+      console.log('usersApi.getAll - Fetching users with params:', params);
+      
       const response = await apiClient.get(`${API_PREFIX}/admin/users`, { params });
-      return response.data.data || response.data;
+      console.log('usersApi.getAll - Raw response:', response);
+      console.log('usersApi.getAll - Response data:', response.data);
+      
+      // Backend trả về format: { code: "04", message: "...", data: { content: [...], totalPages: 1, ... } }
+      let usersData;
+      if (response.data.data) {
+        // Format: { code: "04", message: "...", data: { content: [...], totalPages: 1, ... } }
+        usersData = response.data.data;
+      } else if (response.data.content) {
+        // Fallback: Format: { content: [...], totalPages: 1, ... }
+        usersData = response.data;
+      } else {
+        console.error('usersApi.getAll - Unknown response format:', response.data);
+        throw new Error('Format response không được hỗ trợ');
+      }
+      
+      console.log('usersApi.getAll - Extracted users data:', usersData);
+      return usersData;
     } catch (error) {
+      console.error('usersApi.getAll - Error:', error);
+      console.error('usersApi.getAll - Error response:', error.response);
       logApiError(error, 'getAllUsers');
       throw error;
     }
@@ -124,9 +186,16 @@ export const usersApi = {
   // Update user status (active/inactive)
   updateStatus: async (id, active) => {
     try {
+      console.log('usersApi.updateStatus - Updating status for user:', id, 'to:', active);
+      
       const response = await apiClient.patch(`${API_PREFIX}/admin/users/${id}/status`, { active });
+      console.log('usersApi.updateStatus - Response:', response);
+      console.log('usersApi.updateStatus - Response data:', response.data);
+      
       return response.data;
     } catch (error) {
+      console.error('usersApi.updateStatus - Error:', error);
+      console.error('usersApi.updateStatus - Error response:', error.response);
       logApiError(error, 'updateUserStatus');
       throw error;
     }

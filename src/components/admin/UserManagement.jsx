@@ -164,21 +164,29 @@ const UserManagement = () => {
     setLoading(true);
     setError(null);
     try {
+      console.log('UserManagement.fetchUsers - Fetching users for page:', page);
+      
       const response = await usersApi.getAll({ page: page, size: 10 });
+      console.log('UserManagement.fetchUsers - Response:', response);
 
-      const pageData = response.data.data;
+      // Backend trả về format: { content: [...], totalPages: 1, number: 0, ... }
+      const userList = response.content || [];
+      console.log('UserManagement.fetchUsers - User list:', userList);
 
-      const userList = pageData.content || [];
       setUsers(userList);
 
       setPagination({
-        number: pageData.number || 0,
-        totalPages: pageData.totalPages || 1,
+        number: response.number || 0,
+        totalPages: response.totalPages || 1,
+      });
+      
+      console.log('UserManagement.fetchUsers - Pagination set:', {
+        number: response.number || 0,
+        totalPages: response.totalPages || 1,
       });
     } catch (err) {
-      console.error("Lỗi khi fetch users:", err);
+      console.error("UserManagement.fetchUsers - Error:", err);
       setError("Không thể tải danh sách người dùng. Vui lòng thử lại.");
-
       setUsers([]);
     } finally {
       setLoading(false);
@@ -190,7 +198,11 @@ const UserManagement = () => {
 
   const handleToggleStatus = async (userId, currentStatus) => {
     try {
+      console.log('UserManagement.handleToggleStatus - Toggling status for user:', userId, 'from', currentStatus, 'to', !currentStatus);
+      
       await usersApi.updateStatus(userId, !currentStatus);
+      console.log('UserManagement.handleToggleStatus - Status updated successfully');
+      
       // Cập nhật lại trạng thái của user trong state để UI thay đổi ngay lập tức
       setUsers((currentUsers) =>
         currentUsers.map((user) =>
@@ -198,7 +210,8 @@ const UserManagement = () => {
         )
       );
     } catch (err) {
-      alert("Cập nhật trạng thái thất bại!");
+      console.error('UserManagement.handleToggleStatus - Error:', err);
+      alert("Cập nhật trạng thái thất bại! Vui lòng thử lại.");
     }
   };
 
@@ -240,8 +253,8 @@ const UserManagement = () => {
           {users.map((user) => (
             <tr key={user.id}>
               <td>{user.fullName || "Chưa cập nhật"}</td>
-              <td>{user.email}</td>
-              <td>{user.phone}</td>
+              <td>{user.email || "Chưa cập nhật"}</td>
+              <td>{user.phone || "Chưa cập nhật"}</td>
               <td>
                 {user.active ? (
                   <Badge className="active">Đang hoạt động</Badge>

@@ -8,7 +8,6 @@ import { useForm, validationRules } from "../../hooks/useForm";
 import FormField from "../common/FormField";
 import Button from "../common/Button";
 import ErrorMessage from "../common/ErrorMessage";
-import { jwtDecode } from "jwt-decode";
 
 const LoginContainer = styled.div`
   min-height: 100vh;
@@ -130,30 +129,32 @@ const AdminLogin = () => {
     }
 
     try {
+      console.log('AdminLogin.handleSubmit - Starting login with:', formData);
+      
       const response = await adminAuth.login(formData);
-      const responseData = response.data?.data;
-      const token = responseData?.token;
-
-      if (!token) {
+      console.log('AdminLogin.handleSubmit - Response:', response);
+      
+      // adminAuth.login đã xử lý việc lưu token và user vào localStorage
+      // Chỉ cần kiểm tra xem có token không
+      const adminToken = localStorage.getItem("adminToken");
+      const adminUser = localStorage.getItem("adminUser");
+      
+      if (!adminToken) {
         throw new Error("Không nhận được token từ server.");
       }
-
-      const decoded = jwtDecode(token);
-      const roleFromToken = decoded?.role?.replace("ROLE_", "") || "";
-
-      if (roleFromToken !== "ADMIN") {
+      
+      if (!adminUser) {
+        throw new Error("Không nhận được thông tin admin từ server.");
+      }
+      
+      const userData = JSON.parse(adminUser);
+      console.log('AdminLogin.handleSubmit - Admin user data:', userData);
+      
+      if (userData.role !== "ADMIN") {
         throw new Error("Bạn không có quyền truy cập Admin.");
       }
 
-      const adminUser = {
-        id: decoded?.id || "",
-        email: decoded?.sub || "",
-        role: roleFromToken,
-      };
-
-      localStorage.setItem("adminToken", token);
-      localStorage.setItem("adminUser", JSON.stringify(adminUser));
-
+      console.log('AdminLogin.handleSubmit - Login successful, navigating to dashboard');
       navigate("/admin/dashboard");
     } catch (err) {
       const errorMessage =
