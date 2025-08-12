@@ -201,19 +201,18 @@ const HostManagement = () => {
     const currentStatus = host.active; // Lấy trạng thái hiện tại của host
     try {
       // Tái sử dụng API từ usersApi, truyền vào userId của Host
-      await usersApi.updateStatus(host.id, !currentStatus);
-
-      // Cập nhật UI ngay lập tức
-      setHosts((currentHosts) =>
-        currentHosts.map((h) =>
-          h.id === host.id ? { ...h, active: !currentStatus } : h
-        )
-      );
+      await hostApplicationsApi.updateStatus(host.id, !currentStatus);
 
       const action = !currentStatus ? "mở khóa" : "khóa";
       showSuccess(
         "Cập nhật thành công!",
         `Đã ${action} tài khoản của chủ nhà ${host.fullName || host.username}.`
+      );
+
+      setHosts((currentHosts) =>
+        currentHosts.map((h) =>
+          h.id === host.id ? { ...h, active: !currentStatus } : h
+        )
       );
     } catch (err) {
       showError(
