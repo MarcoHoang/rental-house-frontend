@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
+import { Link } from "react-router-dom";
 import { getHouses } from "../api/houseApi";
 import HouseList from "../components/house/HouseList";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import SearchBar from "../components/house/SearchBar";
 import LoadingSpinner from "../components/common/LoadingSpinner";
+
+import { Plus, Home, User } from "lucide-react";
 
 const MainContent = styled.main`
   /* Component chính bọc nội dung, đảm bảo không có style thừa */

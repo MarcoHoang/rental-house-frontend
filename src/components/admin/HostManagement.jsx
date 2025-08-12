@@ -1,424 +1,328 @@
 // src/components/admin/HostManagement.jsx
-import React, { useState, useEffect } from 'react';
-import { 
-  UserIcon, 
-  EnvelopeIcon, 
-  PhoneIcon, 
-  MapPinIcon,
-  DocumentTextIcon,
-  EyeIcon,
-  CheckCircleIcon
-} from '@heroicons/react/24/outline';
-import styled from 'styled-components';
-import { hostApplicationsApi } from '../../api/adminApi';
 
-const Container = styled.div`
-  padding: 1.5rem;
-`;
+import React, { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
+import styled from "styled-components";
+// Sửa lại import: dùng hostApplicationsApi và usersApi
+import { hostApplicationsApi, usersApi } from "../../api/adminApi";
+import {
+  ChevronLeft,
+  ChevronRight,
+  RefreshCw,
+  AlertTriangle,
+  Eye,
+} from "lucide-react";
+import { useToast } from "../common/Toast";
 
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-`;
-
-const Title = styled.h1`
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: #111827;
-  margin: 0;
-`;
-
-const StatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 2rem;
-`;
-
-const StatCard = styled.div`
+// --- STYLED COMPONENTS (Đồng bộ 100% với UserManagement) ---
+const Card = styled.div`
   background: white;
-  padding: 1.5rem;
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  border-left: 4px solid ${props => props.color};
-`;
-
-const StatNumber = styled.div`
-  font-size: 2rem;
-  font-weight: 700;
-  color: ${props => props.color};
-  margin-bottom: 0.5rem;
-`;
-
-const StatLabel = styled.div`
-  font-size: 0.875rem;
-  color: #6b7280;
-  font-weight: 500;
-`;
-
-const HostsTable = styled.div`
-  background: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
   overflow: hidden;
 `;
 
-const TableHeader = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 2fr 1fr 1fr 1fr 1fr;
-  gap: 1rem;
-  padding: 1rem 1.5rem;
-  background-color: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
-  font-weight: 600;
-  color: #374151;
-  font-size: 0.875rem;
-`;
-
-const TableRow = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 2fr 1fr 1fr 1fr 1fr;
-  gap: 1rem;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-  align-items: center;
-  
-  &:hover {
-    background-color: #f9fafb;
+const Table = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  th,
+  td {
+    padding: 1rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
   }
-  
-  &:last-child {
-    border-bottom: none;
+  th {
+    background-color: #f7fafc;
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+  td {
+    font-size: 0.875rem;
+  }
+  tbody tr:hover {
+    background-color: #f7fafc;
   }
 `;
 
-const StatusBadge = styled.span`
+const Badge = styled.span`
   display: inline-flex;
   align-items: center;
-  padding: 0.25rem 0.75rem;
+  padding: 0.375rem 0.75rem;
   border-radius: 9999px;
   font-size: 0.75rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  
-  &.approved {
-    background-color: #d1fae5;
-    color: #065f46;
+  font-weight: 600;
+  &.active {
+    background-color: #c6f6d5;
+    color: #22543d;
+  }
+  &.locked {
+    background-color: #fed7d7;
+    color: #742a2a;
   }
 `;
 
 const ActionButton = styled.button`
-  display: inline-flex;
-  align-items: center;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
+  padding: 0.5rem;
+  font-size: 0.75rem;
   font-weight: 500;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
   cursor: pointer;
   transition: all 0.2s;
-  border: none;
-  margin-right: 0.5rem;
-  
-  &.view {
-    background-color: #3b82f6;
-    color: white;
-    
+  background: white;
+  display: flex;
+  align-items: center;
+  &:hover {
+    background: #f7fafc;
+    border-color: #cbd5e0;
+  }
+  &.lock {
+    color: #c53030;
     &:hover {
-      background-color: #2563eb;
+      background: #fed7d7;
+    }
+  }
+  &.unlock {
+    color: #2f855a;
+    &:hover {
+      background: #c6f6d5;
+    }
+  }
+  &.view {
+    color: #2b6cb0;
+    &:hover {
+      background: #ebf8ff;
     }
   }
 `;
 
-const Modal = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+const ActionContainer = styled.div`
   display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
+  gap: 0.5rem;
 `;
 
-const ModalContent = styled.div`
+const PaginationContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  background: #f7fafc;
+  font-size: 0.875rem;
+`;
+
+const PaginationControls = styled.div`
+  display: flex;
+  gap: 0.5rem;
+`;
+
+const PageButton = styled.button`
+  padding: 0.5rem;
   background: white;
-  border-radius: 0.5rem;
-  width: 90%;
-  max-width: 600px;
-  max-height: 90vh;
-  overflow-y: auto;
-`;
-
-const ModalHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-`;
-
-const ModalTitle = styled.h2`
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #111827;
-  margin: 0;
-`;
-
-const CloseButton = styled.button`
-  background: none;
-  border: none;
-  font-size: 1.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
   cursor: pointer;
-  color: #6b7280;
-  
-  &:hover {
-    color: #374151;
-  }
-`;
-
-const ModalBody = styled.div`
-  padding: 1.5rem;
-`;
-
-const DetailRow = styled.div`
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #f3f4f6;
-  
-  &:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
+  align-items: center;
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
   }
-`;
-
-const DetailLabel = styled.span`
-  font-weight: 600;
-  color: #374151;
-`;
-
-const DetailValue = styled.span`
-  color: #6b7280;
+  &:hover:not(:disabled) {
+    background: #e2e8f0;
+  }
 `;
 
 const LoadingSpinner = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 4rem;
+  .spinner {
+    animation: spin 1s linear infinite;
+    width: 2rem;
+    height: 2rem;
+    color: #3182ce;
+  }
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+const ErrorMessage = styled.div`
   padding: 2rem;
+  text-align: center;
+  color: #c53030;
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 0.5rem;
+  margin: 1rem;
 `;
 
 const HostManagement = () => {
   const [hosts, setHosts] = useState([]);
+  const [pagination, setPagination] = useState({ number: 0, totalPages: 1 });
   const [loading, setLoading] = useState(true);
-  const [selectedHost, setSelectedHost] = useState(null);
-  const [showModal, setShowModal] = useState(false);
+  const [error, setError] = useState(null);
+  const { showSuccess, showError } = useToast();
 
-  useEffect(() => {
-    fetchHosts();
-  }, []);
-
-  const fetchHosts = async () => {
+  const fetchHosts = useCallback(async (page = 0) => {
     try {
       setLoading(true);
-      const data = await hostApplicationsApi.getAllHosts();
-      setHosts(data);
-    } catch (error) {
-      console.error('Error fetching hosts:', error);
+      setError(null);
+      const data = await hostApplicationsApi.getAllHosts({ page, size: 10 });
+      setHosts(data.content || []);
+      setPagination({
+        number: data.number || 0,
+        totalPages: data.totalPages || 1,
+      });
+    } catch (err) {
+      console.error("Error fetching hosts:", err);
+      setError("Không thể tải danh sách chủ nhà. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    fetchHosts(0);
+  }, [fetchHosts]);
+
+  const handleToggleStatus = async (host) => {
+    const currentStatus = host.active; // Lấy trạng thái hiện tại của host
+    try {
+      // Tái sử dụng API từ usersApi, truyền vào userId của Host
+      await usersApi.updateStatus(host.id, !currentStatus);
+
+      // Cập nhật UI ngay lập tức
+      setHosts((currentHosts) =>
+        currentHosts.map((h) =>
+          h.id === host.id ? { ...h, active: !currentStatus } : h
+        )
+      );
+
+      const action = !currentStatus ? "mở khóa" : "khóa";
+      showSuccess(
+        "Cập nhật thành công!",
+        `Đã ${action} tài khoản của chủ nhà ${host.fullName || host.username}.`
+      );
+    } catch (err) {
+      showError(
+        "Cập nhật thất bại!",
+        "Không thể cập nhật trạng thái của chủ nhà."
+      );
+    }
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const handleViewHost = (host) => {
-    setSelectedHost(host);
-    setShowModal(true);
-  };
-
-  const stats = {
-    total: hosts.length,
-    approved: hosts.filter(host => host.approved).length,
-    active: hosts.filter(host => host.approved && host.active !== false).length
+  const handlePageChange = (newPage) => {
+    if (newPage >= 0 && newPage < pagination.totalPages) {
+      fetchHosts(newPage);
+    }
   };
 
   if (loading) {
     return (
-      <Container>
-        <LoadingSpinner>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2">Đang tải...</span>
-        </LoadingSpinner>
-      </Container>
+      <LoadingSpinner>
+        <RefreshCw className="spinner" />
+      </LoadingSpinner>
+    );
+  }
+
+  if (error) {
+    return (
+      <ErrorMessage>
+        <AlertTriangle style={{ marginRight: "0.5rem" }} /> {error}
+      </ErrorMessage>
     );
   }
 
   return (
-    <Container>
-      <Header>
-        <Title>Quản lý chủ nhà</Title>
-      </Header>
-
-      <StatsGrid>
-        <StatCard color="#3b82f6">
-          <StatNumber color="#3b82f6">{stats.total}</StatNumber>
-          <StatLabel>Tổng số chủ nhà</StatLabel>
-        </StatCard>
-        <StatCard color="#10b981">
-          <StatNumber color="#10b981">{stats.approved}</StatNumber>
-          <StatLabel>Đã được duyệt</StatLabel>
-        </StatCard>
-        <StatCard color="#059669">
-          <StatNumber color="#059669">{stats.active}</StatNumber>
-          <StatLabel>Đang hoạt động</StatLabel>
-        </StatCard>
-      </StatsGrid>
-
-      <HostsTable>
-        <TableHeader>
-          <div>ID</div>
-          <div>Thông tin chủ nhà</div>
-          <div>Số CCCD</div>
-          <div>Số điện thoại</div>
-          <div>Ngày duyệt</div>
-          <div>Thao tác</div>
-        </TableHeader>
-
-        {hosts.length === 0 ? (
-          <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>
-            Không có chủ nhà nào
-          </div>
-        ) : (
-          hosts.map((host) => (
-            <TableRow key={host.id}>
-              <div>#{host.id}</div>
-              <div>
-                <div style={{ fontWeight: '500' }}>{host.fullName || host.username}</div>
-                <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                  {host.email}
-                </div>
-              </div>
-              <div>{host.nationalId || 'N/A'}</div>
-              <div>{host.phone || 'N/A'}</div>
-              <div>{formatDate(host.approvedDate)}</div>
-              <div>
-                <ActionButton
-                  className="view"
-                  onClick={() => handleViewHost(host)}
-                >
-                  <EyeIcon className="w-4 h-4 mr-1" />
-                  Xem
-                </ActionButton>
-              </div>
-            </TableRow>
-          ))
-        )}
-      </HostsTable>
-
-      {showModal && selectedHost && (
-        <Modal onClick={() => setShowModal(false)}>
-          <ModalContent onClick={(e) => e.stopPropagation()}>
-            <ModalHeader>
-              <ModalTitle>Chi tiết chủ nhà</ModalTitle>
-              <CloseButton onClick={() => setShowModal(false)}>&times;</CloseButton>
-            </ModalHeader>
-            
-            <ModalBody>
-              <DetailRow>
-                <DetailLabel>ID:</DetailLabel>
-                <DetailValue>#{selectedHost.id}</DetailValue>
-              </DetailRow>
-              <DetailRow>
-                <DetailLabel>Họ tên:</DetailLabel>
-                <DetailValue>{selectedHost.fullName || selectedHost.username}</DetailValue>
-              </DetailRow>
-              <DetailRow>
-                <DetailLabel>Username:</DetailLabel>
-                <DetailValue>{selectedHost.username}</DetailValue>
-              </DetailRow>
-              <DetailRow>
-                <DetailLabel>Email:</DetailLabel>
-                <DetailValue>{selectedHost.email}</DetailValue>
-              </DetailRow>
-              <DetailRow>
-                <DetailLabel>Số điện thoại:</DetailLabel>
-                <DetailValue>{selectedHost.phone || 'N/A'}</DetailValue>
-              </DetailRow>
-              <DetailRow>
-                <DetailLabel>Avatar:</DetailLabel>
-                <DetailValue>
-                  {selectedHost.avatar ? (
-                    <img 
-                      src={selectedHost.avatar} 
-                      alt="Avatar" 
-                      style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
-                    />
-                  ) : (
-                    'Không có'
-                  )}
-                </DetailValue>
-              </DetailRow>
-              <DetailRow>
-                <DetailLabel>Số CCCD/CMT:</DetailLabel>
-                <DetailValue>{selectedHost.nationalId || 'N/A'}</DetailValue>
-              </DetailRow>
-              <DetailRow>
-                <DetailLabel>Giấy tờ sở hữu:</DetailLabel>
-                <DetailValue>
-                  {selectedHost.proofOfOwnershipUrl ? (
-                    <a 
-                      href={selectedHost.proofOfOwnershipUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      style={{ color: '#3b82f6', textDecoration: 'underline' }}
+    <Card>
+      <Table>
+        <thead>
+          <tr>
+            <th>Họ và Tên</th>
+            <th>Email</th>
+            <th>Số điện thoại</th>
+            <th>Trạng thái</th>
+            <th>Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          {hosts.length > 0 ? (
+            hosts.map((host) => (
+              <tr key={host.id}>
+                <td>{host.fullName || "Chưa cập nhật"}</td>
+                <td>{host.email}</td>
+                <td>{host.phone || "Chưa cập nhật"}</td>
+                <td>
+                  <Badge className={host.active ? "active" : "locked"}>
+                    {host.active ? "Đang hoạt động" : "Đã khóa"}
+                  </Badge>
+                </td>
+                <td>
+                  <ActionContainer>
+                    <Link
+                      to={`/admin/user-management/${host.id}`}
+                      title="Xem chi tiết"
                     >
-                      Xem giấy tờ
-                    </a>
-                  ) : (
-                    'N/A'
-                  )}
-                </DetailValue>
-              </DetailRow>
-              <DetailRow>
-                <DetailLabel>Địa chỉ:</DetailLabel>
-                <DetailValue>{selectedHost.address || 'N/A'}</DetailValue>
-              </DetailRow>
-              <DetailRow>
-                <DetailLabel>Ngày duyệt:</DetailLabel>
-                <DetailValue>{formatDate(selectedHost.approvedDate)}</DetailValue>
-              </DetailRow>
-              <DetailRow>
-                <DetailLabel>Trạng thái:</DetailLabel>
-                <DetailValue>
-                  <StatusBadge className="approved">
-                    <CheckCircleIcon className="w-4 h-4 mr-1" />
-                    Đã duyệt
-                  </StatusBadge>
-                </DetailValue>
-              </DetailRow>
-            </ModalBody>
-          </ModalContent>
-        </Modal>
-      )}
-    </Container>
+                      <ActionButton className="view">
+                        <Eye size={16} />
+                      </ActionButton>
+                    </Link>
+                    <ActionButton
+                      title={
+                        host.active ? "Khóa tài khoản" : "Mở khóa tài khoản"
+                      }
+                      className={host.active ? "lock" : "unlock"}
+                      onClick={() => handleToggleStatus(host)}
+                    >
+                      {host.active ? "Khóa" : "Mở khóa"}
+                    </ActionButton>
+                  </ActionContainer>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="5" style={{ textAlign: "center", padding: "2rem" }}>
+                Không có chủ nhà nào.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </Table>
+      <PaginationContainer>
+        <span>
+          Trang <strong>{pagination.number + 1}</strong> trên{" "}
+          <strong>{pagination.totalPages || 1}</strong>
+        </span>
+        <PaginationControls>
+          <PageButton
+            onClick={() => handlePageChange(pagination.number - 1)}
+            disabled={pagination.number === 0}
+          >
+            <ChevronLeft size={16} />
+          </PageButton>
+          <PageButton
+            onClick={() => handlePageChange(pagination.number + 1)}
+            disabled={pagination.number + 1 >= pagination.totalPages}
+          >
+            <ChevronRight size={16} />
+          </PageButton>
+        </PaginationControls>
+      </PaginationContainer>
+    </Card>
   );
 };
 
 export default HostManagement;
-

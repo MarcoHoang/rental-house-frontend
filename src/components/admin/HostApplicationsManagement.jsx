@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  ClockIcon, 
-  CheckCircleIcon, 
-  XCircleIcon, 
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  CheckCircleIcon,
+  XCircleIcon,
   EyeIcon,
-  ExclamationTriangleIcon 
-} from '@heroicons/react/24/outline';
-import styled from 'styled-components';
-import { hostApplicationsApi } from '../../api/adminApi';
-import ConfirmDialog from '../common/ConfirmDialog';
+  ChevronLeftIcon, // Thêm icon cho pagination
+  ChevronRightIcon, // Thêm icon cho pagination
+} from "@heroicons/react/24/outline";
+import styled from "styled-components";
+import { hostApplicationsApi, usersApi } from "../../api/adminApi"; // Tận dụng cả usersApi
+import ConfirmDialog from "../common/ConfirmDialog";
+import { useToast } from "../common/Toast";
 
 const Container = styled.div`
   padding: 1.5rem;
@@ -40,13 +41,13 @@ const StatCard = styled.div`
   padding: 1.5rem;
   border-radius: 0.5rem;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  border-left: 4px solid ${props => props.color};
+  border-left: 4px solid ${(props) => props.color};
 `;
 
 const StatNumber = styled.div`
   font-size: 2rem;
   font-weight: 700;
-  color: ${props => props.color};
+  color: ${(props) => props.color};
   margin-bottom: 0.5rem;
 `;
 
@@ -82,13 +83,35 @@ const TableRow = styled.div`
   padding: 1rem 1.5rem;
   border-bottom: 1px solid #e5e7eb;
   align-items: center;
-  
+
   &:hover {
     background-color: #f9fafb;
   }
-  
+
   &:last-child {
     border-bottom: none;
+  }
+`;
+
+const PaginationContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+`;
+const PaginationControls = styled.div`
+  display: flex;
+  gap: 0.5rem;
+`;
+const PageButton = styled.button`
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
   }
 `;
 
@@ -101,17 +124,17 @@ const StatusBadge = styled.span`
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  
+
   &.pending {
     background-color: #fef3c7;
     color: #92400e;
   }
-  
+
   &.approved {
     background-color: #d1fae5;
     color: #065f46;
   }
-  
+
   &.rejected {
     background-color: #fee2e2;
     color: #991b1b;
@@ -129,34 +152,34 @@ const ActionButton = styled.button`
   transition: all 0.2s;
   border: none;
   margin-right: 0.5rem;
-  
+
   &.view {
     background-color: #3b82f6;
     color: white;
-    
+
     &:hover {
       background-color: #2563eb;
     }
   }
-  
+
   &.approve {
     background-color: #10b981;
     color: white;
-    
+
     &:hover {
       background-color: #059669;
     }
   }
-  
+
   &.reject {
     background-color: #ef4444;
     color: white;
-    
+
     &:hover {
       background-color: #dc2626;
     }
   }
-  
+
   &:disabled {
     background-color: #9ca3af;
     cursor: not-allowed;
@@ -206,7 +229,7 @@ const CloseButton = styled.button`
   font-size: 1.5rem;
   cursor: pointer;
   color: #6b7280;
-  
+
   &:hover {
     color: #374151;
   }
@@ -222,7 +245,7 @@ const DetailRow = styled.div`
   margin-bottom: 1rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid #f3f4f6;
-  
+
   &:last-child {
     border-bottom: none;
     margin-bottom: 0;
@@ -250,7 +273,7 @@ const TextArea = styled.textarea`
   font-size: 0.875rem;
   resize: vertical;
   min-height: 100px;
-  
+
   &:focus {
     outline: none;
     border-color: #3b82f6;
@@ -267,391 +290,199 @@ const LoadingSpinner = styled.div`
 
 const HostApplicationsManagement = () => {
   const [applications, setApplications] = useState([]);
+  const [pagination, setPagination] = useState({ number: 0, totalPages: 1 });
   const [loading, setLoading] = useState(true);
-  const [selectedApplication, setSelectedApplication] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [showRejectForm, setShowRejectForm] = useState(false);
-  const [rejectReason, setRejectReason] = useState('');
-  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    fetchApplications();
-  }, []);
+  const [selectedApp, setSelectedApp] = useState(null);
+  const [modalType, setModalType] = useState(null); // 'view', 'reject'
+  const [rejectReason, setRejectReason] = useState("");
+  const [processingId, setProcessingId] = useState(null);
 
-  const fetchApplications = async () => {
+  const { showSuccess, showError } = useToast();
+  const [confirm, setConfirm] = useState({ isOpen: false });
+
+  // --- DATA FETCHING ---
+  const fetchApplications = useCallback(async (page = 0) => {
     try {
       setLoading(true);
-      const data = await hostApplicationsApi.getAll();
-      setApplications(data);
-    } catch (error) {
-      console.error('Error fetching applications:', error);
+      setError(null);
+      // Sửa lại lời gọi API để lấy các đơn đang chờ và có phân trang
+      const response = await hostApplicationsApi.getPendingRequests({
+        page,
+        size: 10,
+      });
+      setApplications(response.content || []);
+      setPagination({
+        number: response.number || 0,
+        totalPages: response.totalPages || 1,
+      });
+    } catch (err) {
+      console.error("Error fetching applications:", err);
+      setError("Không thể tải danh sách đơn đăng ký.");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const getStatusConfig = (status) => {
-    switch (status?.toUpperCase()) {
-      case 'PENDING':
-        return {
-          label: 'Đang chờ duyệt',
-          className: 'pending',
-          color: '#f59e0b'
-        };
-      case 'APPROVED':
-        return {
-          label: 'Đã được duyệt',
-          className: 'approved',
-          color: '#10b981'
-        };
-      case 'REJECTED':
-        return {
-          label: 'Đã bị từ chối',
-          className: 'rejected',
-          color: '#ef4444'
-        };
-      default:
-        return {
-          label: 'Không xác định',
-          className: 'pending',
-          color: '#6b7280'
-        };
+  useEffect(() => {
+    fetchApplications(0);
+  }, [fetchApplications]);
+
+  // --- HANDLERS ---
+  const handlePageChange = (newPage) => {
+    if (newPage >= 0 && newPage < pagination.totalPages) {
+      fetchApplications(newPage);
     }
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+  const handleApprove = (app) => {
+    setConfirm({
+      isOpen: true,
+      title: "Xác nhận duyệt đơn",
+      message: `Bạn có chắc chắn muốn duyệt đơn của "${app.username}"? Tài khoản này sẽ được cấp quyền Chủ nhà.`,
+      onConfirm: () => performApprove(app.id),
     });
   };
 
-  const handleViewApplication = (application) => {
-    setSelectedApplication(application);
-    setShowModal(true);
-    setShowRejectForm(false);
-    setRejectReason('');
-  };
-
-  const handleApprove = async (application) => {
-    if (!window.confirm(
-      `Bạn có chắc chắn muốn duyệt đơn đăng ký này?\n\n` +
-      `Khi duyệt:\n` +
-      `• User "${application.username}" sẽ được chuyển từ role USER sang HOST\n` +
-      `• User này sẽ được chuyển ra khỏi danh sách quản lý User thường\n` +
-      `• User này sẽ có quyền đăng tin cho thuê nhà`
-    )) {
-      return;
-    }
-
+  const performApprove = async (appId) => {
+    setProcessingId(appId);
     try {
-      setProcessing(true);
-      await hostApplicationsApi.approve(application.id);
-      
-      alert(
-        `✅ Đã duyệt đơn đăng ký thành công!\n\n` +
-        `User "${application.username}" đã được:\n` +
-        `• Chuyển từ role USER sang HOST\n` +
-        `• Có quyền đăng tin cho thuê nhà\n` +
-        `• Chuyển ra khỏi danh sách quản lý User thường`
-      );
-      
-      fetchApplications();
-      setShowModal(false);
-    } catch (error) {
-      console.error('Error approving application:', error);
-      alert('❌ Có lỗi xảy ra khi duyệt đơn đăng ký: ' + (error.message || 'Lỗi không xác định'));
+      await hostApplicationsApi.approve(appId);
+      showSuccess("Thành công", "Đã duyệt đơn đăng ký.");
+      fetchApplications(pagination.number); // Tải lại trang hiện tại
+    } catch (err) {
+      showError("Thất bại", "Có lỗi xảy ra khi duyệt đơn.");
     } finally {
-      setProcessing(false);
+      setProcessingId(null);
+      setConfirm({ isOpen: false });
     }
   };
 
-  const handleReject = async (e) => {
+  const handleReject = (app) => {
+    setSelectedApp(app);
+    setModalType("reject");
+  };
+
+  const performReject = async (e) => {
     e.preventDefault();
-    
     if (!rejectReason.trim()) {
-      alert('Vui lòng nhập lý do từ chối');
+      showError("Lỗi", "Vui lòng nhập lý do từ chối.");
       return;
     }
 
+    setProcessingId(selectedApp.id);
     try {
-      setProcessing(true);
-      await hostApplicationsApi.reject(selectedApplication.id, rejectReason);
-      alert('Đã từ chối đơn đăng ký thành công!');
-      fetchApplications();
-      setShowModal(false);
-    } catch (error) {
-      console.error('Error rejecting application:', error);
-      alert('Có lỗi xảy ra khi từ chối đơn đăng ký');
+      await hostApplicationsApi.reject(selectedApp.id, rejectReason);
+      showSuccess("Thành công", "Đã từ chối đơn đăng ký.");
+      setModalType(null);
+      fetchApplications(pagination.number);
+    } catch (err) {
+      showError("Thất bại", "Có lỗi xảy ra khi từ chối đơn.");
     } finally {
-      setProcessing(false);
+      setProcessingId(null);
     }
   };
 
-  const stats = {
-    total: applications.length,
-    pending: applications.filter(app => app.status === 'PENDING').length,
-    approved: applications.filter(app => app.status === 'APPROVED').length,
-    rejected: applications.filter(app => app.status === 'REJECTED').length
-  };
-
-  if (loading) {
-    return (
-      <Container>
-        <LoadingSpinner>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2">Đang tải...</span>
-        </LoadingSpinner>
-      </Container>
-    );
-  }
+  // --- RENDER ---
+  if (loading) return <div>Đang tải...</div>;
+  if (error) return <div>{error}</div>;
 
   return (
     <Container>
-      <Header>
-        <Title>Quản lý đơn đăng ký làm chủ nhà</Title>
-      </Header>
-
-      <StatsGrid>
-        <StatCard color="#3b82f6">
-          <StatNumber color="#3b82f6">{stats.total}</StatNumber>
-          <StatLabel>Tổng số đơn</StatLabel>
-        </StatCard>
-        <StatCard color="#f59e0b">
-          <StatNumber color="#f59e0b">{stats.pending}</StatNumber>
-          <StatLabel>Đang chờ duyệt</StatLabel>
-        </StatCard>
-        <StatCard color="#10b981">
-          <StatNumber color="#10b981">{stats.approved}</StatNumber>
-          <StatLabel>Đã duyệt</StatLabel>
-        </StatCard>
-        <StatCard color="#ef4444">
-          <StatNumber color="#ef4444">{stats.rejected}</StatNumber>
-          <StatLabel>Đã từ chối</StatLabel>
-        </StatCard>
-      </StatsGrid>
+      <Title>Quản lý đơn đăng ký làm chủ nhà</Title>
 
       <ApplicationsTable>
         <TableHeader>
-          <div>ID</div>
-          <div>Thông tin người dùng</div>
-          <div>Trạng thái</div>
+          <div>User ID</div>
+          <div>Email</div>
           <div>Ngày gửi</div>
-          <div>Ngày xử lý</div>
           <div>Thao tác</div>
         </TableHeader>
 
-        {applications.length === 0 ? (
-          <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>
-            Không có đơn đăng ký nào
-          </div>
-        ) : (
-          applications.map((application) => {
-            const statusConfig = getStatusConfig(application.status);
-            return (
-              <TableRow key={application.id}>
-                <div>#{application.id}</div>
-                <div>
-                  <div style={{ fontWeight: '500' }}>{application.username}</div>
-                  <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                    {application.userEmail}
-                  </div>
-                </div>
-                <div>
-                  <StatusBadge className={statusConfig.className}>
-                    {statusConfig.label}
-                  </StatusBadge>
-                </div>
-                <div>{formatDate(application.requestDate)}</div>
-                <div>{formatDate(application.processedDate)}</div>
-                <div>
-                  <ActionButton
-                    className="view"
-                    onClick={() => handleViewApplication(application)}
-                  >
-                    <EyeIcon className="w-4 h-4 mr-1" />
-                    Xem
-                  </ActionButton>
-                  
-                  {application.status === 'PENDING' && (
-                    <>
-                      <ActionButton
-                        className="approve"
-                        onClick={() => handleApprove(application)}
-                        disabled={processing}
-                      >
-                        <CheckCircleIcon className="w-4 h-4 mr-1" />
-                        Duyệt
-                      </ActionButton>
-                      <ActionButton
-                        className="reject"
-                        onClick={() => {
-                          setSelectedApplication(application);
-                          setShowModal(true);
-                          setShowRejectForm(true);
-                        }}
-                        disabled={processing}
-                      >
-                        <XCircleIcon className="w-4 h-4 mr-1" />
-                        Từ chối
-                      </ActionButton>
-                    </>
-                  )}
-                </div>
-              </TableRow>
-            );
-          })
-        )}
+        {applications.map((app) => (
+          <TableRow key={app.id}>
+            <div>#{app.userId}</div>
+            <div>{app.userEmail}</div>
+            <div>{new Date(app.requestDate).toLocaleDateString("vi-VN")}</div>
+            <div>
+              {/* Nút Xem chi tiết User (tái sử dụng trang cũ) */}
+              {/* <Link to={`/admin/user-management/${app.userId}`}>
+                <ActionButton className="view"><EyeIcon.../></ActionButton>
+              </Link> */}
+
+              <ActionButton
+                className="approve"
+                onClick={() => handleApprove(app)}
+                disabled={processingId === app.id}
+              >
+                Duyệt
+              </ActionButton>
+              <ActionButton
+                className="reject"
+                onClick={() => handleReject(app)}
+                disabled={processingId === app.id}
+              >
+                Từ chối
+              </ActionButton>
+            </div>
+          </TableRow>
+        ))}
       </ApplicationsTable>
 
-      {showModal && selectedApplication && (
-        <Modal onClick={() => setShowModal(false)}>
-          <ModalContent onClick={(e) => e.stopPropagation()}>
+      <PaginationContainer>
+        <span>
+          Trang <strong>{pagination.number + 1}</strong> trên{" "}
+          <strong>{pagination.totalPages}</strong>
+        </span>
+        <PaginationControls>
+          <PageButton
+            onClick={() => handlePageChange(pagination.number - 1)}
+            disabled={pagination.number === 0}
+          >
+            <ChevronLeftIcon width={20} />
+          </PageButton>
+          <PageButton
+            onClick={() => handlePageChange(pagination.number + 1)}
+            disabled={pagination.number + 1 >= pagination.totalPages}
+          >
+            <ChevronRightIcon width={20} />
+          </PageButton>
+        </PaginationControls>
+      </PaginationContainer>
+
+      <ConfirmDialog
+        {...confirm}
+        onClose={() => setConfirm({ isOpen: false })}
+      />
+
+      {modalType === "reject" && (
+        <Modal>
+          <ModalContent>
             <ModalHeader>
-              <ModalTitle>
-                {showRejectForm ? 'Từ chối đơn đăng ký' : 'Chi tiết đơn đăng ký'}
-              </ModalTitle>
-              <CloseButton onClick={() => setShowModal(false)}>&times;</CloseButton>
+              <ModalTitle>Từ chối đơn của "{selectedApp.username}"</ModalTitle>
+              <CloseButton onClick={() => setModalType(null)}>
+                &times;
+              </CloseButton>
             </ModalHeader>
-            
             <ModalBody>
-              {!showRejectForm ? (
-                <>
-                  <DetailRow>
-                    <DetailLabel>ID đơn:</DetailLabel>
-                    <DetailValue>#{selectedApplication.id}</DetailValue>
-                  </DetailRow>
-                  <DetailRow>
-                    <DetailLabel>User ID:</DetailLabel>
-                    <DetailValue>#{selectedApplication.userId}</DetailValue>
-                  </DetailRow>
-                  <DetailRow>
-                    <DetailLabel>Tên người dùng:</DetailLabel>
-                    <DetailValue>{selectedApplication.username}</DetailValue>
-                  </DetailRow>
-                  <DetailRow>
-                    <DetailLabel>Email:</DetailLabel>
-                    <DetailValue>{selectedApplication.userEmail}</DetailValue>
-                  </DetailRow>
-                  <DetailRow>
-                    <DetailLabel>Trạng thái:</DetailLabel>
-                    <DetailValue>
-                      <StatusBadge className={getStatusConfig(selectedApplication.status).className}>
-                        {getStatusConfig(selectedApplication.status).label}
-                      </StatusBadge>
-                    </DetailValue>
-                  </DetailRow>
-                  <DetailRow>
-                    <DetailLabel>Ngày gửi:</DetailLabel>
-                    <DetailValue>{formatDate(selectedApplication.requestDate)}</DetailValue>
-                  </DetailRow>
-                  {selectedApplication.processedDate && (
-                    <DetailRow>
-                      <DetailLabel>Ngày xử lý:</DetailLabel>
-                      <DetailValue>{formatDate(selectedApplication.processedDate)}</DetailValue>
-                    </DetailRow>
-                  )}
-                  {selectedApplication.reason && (
-                    <DetailRow>
-                      <DetailLabel>Lý do:</DetailLabel>
-                      <DetailValue style={{ whiteSpace: 'pre-wrap', maxWidth: '300px' }}>
-                        {selectedApplication.reason}
-                      </DetailValue>
-                    </DetailRow>
-                  )}
-                  
-                  {/* Hiển thị thông tin host nếu có */}
-                  {selectedApplication.nationalId && (
-                    <DetailRow>
-                      <DetailLabel>Số CCCD/CMT:</DetailLabel>
-                      <DetailValue>{selectedApplication.nationalId}</DetailValue>
-                    </DetailRow>
-                  )}
-                  {selectedApplication.address && (
-                    <DetailRow>
-                      <DetailLabel>Địa chỉ:</DetailLabel>
-                      <DetailValue>{selectedApplication.address}</DetailValue>
-                    </DetailRow>
-                  )}
-                  {selectedApplication.phone && (
-                    <DetailRow>
-                      <DetailLabel>Số điện thoại:</DetailLabel>
-                      <DetailValue>{selectedApplication.phone}</DetailValue>
-                    </DetailRow>
-                  )}
-                  {selectedApplication.proofOfOwnershipUrl && (
-                    <DetailRow>
-                      <DetailLabel>Giấy tờ sở hữu:</DetailLabel>
-                      <DetailValue>
-                        <a 
-                          href={selectedApplication.proofOfOwnershipUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          style={{ color: '#3b82f6', textDecoration: 'underline' }}
-                        >
-                          Xem giấy tờ
-                        </a>
-                      </DetailValue>
-                    </DetailRow>
-                  )}
-                  
-                  {selectedApplication.status === 'PENDING' && (
-                    <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.5rem' }}>
-                      <ActionButton
-                        className="approve"
-                        onClick={() => handleApprove(selectedApplication)}
-                        disabled={processing}
-                      >
-                        <CheckCircleIcon className="w-4 h-4 mr-1" />
-                        Duyệt
-                      </ActionButton>
-                      <ActionButton
-                        className="reject"
-                        onClick={() => setShowRejectForm(true)}
-                        disabled={processing}
-                      >
-                        <XCircleIcon className="w-4 h-4 mr-1" />
-                        Từ chối
-                      </ActionButton>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <RejectForm onSubmit={handleReject}>
-                  <div style={{ marginBottom: '1rem' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
-                      Lý do từ chối <span style={{ color: '#ef4444' }}>*</span>
-                    </label>
-                    <TextArea
-                      value={rejectReason}
-                      onChange={(e) => setRejectReason(e.target.value)}
-                      placeholder="Nhập lý do từ chối đơn đăng ký..."
-                      required
-                    />
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                    <ActionButton
-                      type="button"
-                      onClick={() => setShowRejectForm(false)}
-                      disabled={processing}
-                      style={{ backgroundColor: '#6b7280' }}
-                    >
-                      Hủy
-                    </ActionButton>
-                    <ActionButton
-                      type="submit"
-                      className="reject"
-                      disabled={processing}
-                    >
-                      {processing ? 'Đang xử lý...' : 'Từ chối'}
-                    </ActionButton>
-                  </div>
-                </RejectForm>
-              )}
+              <form onSubmit={performReject}>
+                <label>Lý do từ chối:</label>
+                <TextArea
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  required
+                />
+                <ActionButton
+                  type="submit"
+                  className="reject"
+                  disabled={processingId === selectedApp.id}
+                >
+                  {processingId === selectedApp.id
+                    ? "Đang xử lý..."
+                    : "Xác nhận từ chối"}
+                </ActionButton>
+              </form>
             </ModalBody>
           </ModalContent>
         </Modal>
