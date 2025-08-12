@@ -617,6 +617,21 @@ export const hostApplicationsApi = {
       throw error;
     }
   },
+  updateStatus: async (hostId, active) => {
+    try {
+      // === SỬA LẠI URL Ở ĐÂY ===
+      // URL cũ (SAI): `${API_PREFIX}/admin/users/${hostId}/status`
+      // URL mới (ĐÚNG):
+      const response = await apiClient.patch(
+        `${API_PREFIX}/admin/hosts/${hostId}/status`,
+        { active }
+      );
+      return response.data;
+    } catch (error) {
+      logApiError(error, "updateHostStatus");
+      throw error;
+    }
+  },
 };
 
 export default apiClient;
