@@ -17,6 +17,8 @@ import { AUTH_CONFIG } from "./config/auth";
 import { getUserFromStorage } from "./utils/localStorage";
 import AvatarTestPage from "./pages/AvatarTestPage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
+import HouseListPage from "./pages/HouseListPage";
+import HouseDetailPage from "./pages/HouseDetailPage";
 
 // Protected Route Component (đã cải thiện)
 const ProtectedRoute = ({ children, requireHost = false, requireUser = false }) => {
@@ -73,6 +75,26 @@ function App() {
                 <UserHomePage />
               </ProtectedRoute>
             }
+          />
+
+          {/* Danh sách nhà cho thuê */}
+          <Route 
+            path="/houses" 
+            element={
+              <ProtectedRoute>
+                <HouseListPage />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Chi tiết nhà cho thuê */}
+          <Route 
+            path="/houses/:id" 
+            element={
+              <ProtectedRoute>
+                <HouseDetailPage />
+              </ProtectedRoute>
+            } 
           />
 
           {/* Các route yêu cầu đăng nhập (chỉ dành cho user thường) */}
