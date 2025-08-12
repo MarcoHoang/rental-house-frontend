@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import authService from '../api/authService';
 import { AUTH_CONFIG } from '../config/auth';
 import { 
-  getUserFromStorage, 
+  getUserFromStorage,
+  // eslint-disable-next-line no-unused-vars
   safeSetToStorage, 
   clearAuthData as clearAuthDataUtil 
 } from '../utils/localStorage';
