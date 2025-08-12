@@ -7,7 +7,7 @@ import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import SearchBar from "../components/house/SearchBar";
 import LoadingSpinner from "../components/common/LoadingSpinner";
-import { getUserFromStorage } from "../utils/localStorage";
+
 import { Plus, Home, User } from "lucide-react";
 
 const MainContent = styled.main`
@@ -85,10 +85,6 @@ const HomePage = () => {
         setLoading(false);
       }
     };
-
-    // Lấy thông tin user
-    const userData = getUserFromStorage();
-    setUser(userData);
 
     fetchHouses();
   }, []); // Mảng rỗng `[]` đảm bảo useEffect chỉ chạy một lần duy nhất

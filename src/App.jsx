@@ -10,12 +10,6 @@ import HostHomePage from "./pages/HostHomePage";
 import HostDashboardPage from "./pages/host/HostDashboardPage";
 import PostPropertyPage from "./pages/host/PostPropertyPage";
 import HostProfilePage from "./pages/host/HostProfilePage";
-import Register from './components/login-register/Register';
-import Login from './components/login-register/Login';
-import HostLogin from './components/login-register/HostLogin';
-import ForgotPassword from './components/login-register/ForgotPassword';
-import AdminLogin from './components/admin/AdminLogin';
-import HostLayout from './components/layout/HostLayout';
 import Register from "./components/login-register/Register";
 import Login from "./components/login-register/Login";
 import ForgotPassword from "./components/login-register/ForgotPassword";
@@ -79,7 +73,6 @@ function App() {
           <Routes>
           {/* Các route công khai */}
           <Route path="/login" element={<Login />} />
-          <Route path="/host/login" element={<HostLogin />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/admin/login" element={<AdminLogin />} />
