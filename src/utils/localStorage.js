@@ -105,5 +105,15 @@ export const isUserAuthenticated = () => {
 export const isAdminAuthenticated = () => {
   const token = localStorage.getItem('adminToken');
   const adminUser = getAdminUserFromStorage();
-  return !!(token && adminUser && adminUser.role === 'ADMIN');
+  
+  // Kiểm tra nhiều format role khác nhau
+  const userRole = adminUser?.role || adminUser?.roleName;
+  const isAdmin = userRole === 'ADMIN' || userRole === 'ROLE_ADMIN';
+  
+  console.log('isAdminAuthenticated - Token:', !!token);
+  console.log('isAdminAuthenticated - AdminUser:', !!adminUser);
+  console.log('isAdminAuthenticated - UserRole:', userRole);
+  console.log('isAdminAuthenticated - IsAdmin:', isAdmin);
+  
+  return !!(token && adminUser && isAdmin);
 };

@@ -110,33 +110,7 @@ const Spinner = styled.div`
   }
 `;
 
-// Tạo component wrapper để filter props
-const ButtonComponent = React.forwardRef(({ 
-  variant = 'primary',
-  size = 'medium',
-  fullWidth = false,
-  loading = false,
-  hasError,
-  ...props 
-}, ref) => {
-  // Filter out all custom props before passing to StyledButton
-  const { hasError: __, fullWidth: ___, loading: ____, variant: _____, size: ______, ...cleanProps } = props;
-  
-  return (
-    <StyledButton
-      ref={ref}
-      variant={variant}
-      size={size}
-      fullWidth={fullWidth}
-      loading={loading}
-      {...cleanProps}
-    />
-  );
-});
-
-ButtonComponent.displayName = 'ButtonComponent';
-
-const Button = ({
+const Button = React.forwardRef(({
   children,
   variant = 'primary',
   size = 'medium',
@@ -148,7 +122,7 @@ const Button = ({
   type = 'button',
   hasError,
   ...domProps
-}) => {
+}, ref) => {
   // Filter out ALL custom props that shouldn't be passed to DOM
   const {
     hasError: _hasError,
@@ -162,6 +136,7 @@ const Button = ({
 
   return (
     <StyledButton
+      ref={ref}
       variant={variant}
       size={size}
       fullWidth={fullWidth}
@@ -176,6 +151,8 @@ const Button = ({
       {children}
     </StyledButton>
   );
-};
+});
+
+Button.displayName = 'Button';
 
 export default Button;

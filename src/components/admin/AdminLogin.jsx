@@ -136,23 +136,32 @@ const AdminLogin = () => {
       const response = await adminAuth.login(formData);
       console.log("AdminLogin.handleSubmit - Response:", response);
 
-      // adminAuth.login đã xử lý việc lưu token và user vào localStorage
-      // Chỉ cần kiểm tra xem có token không
-      const adminToken = localStorage.getItem("adminToken");
-      const adminUser = localStorage.getItem("adminUser");
-
-      if (!adminToken) {
-        throw new Error("Không nhận được token từ server.");
-      }
-
-      if (!adminUser) {
+      // Kiểm tra response data - cải thiện logic
+      console.log("AdminLogin.handleSubmit - Full response data:", response.data);
+      
+      let userData;
+      
+      // Kiểm tra các format response có thể có
+      if (response.data.user) {
+        userData = response.data.user;
+      } else if (response.data.data && response.data.data.user) {
+        userData = response.data.data.user;
+      } else if (response.data.data) {
+        userData = response.data.data;
+      } else if (response.data) {
+        userData = response.data;
+      } else {
         throw new Error("Không nhận được thông tin admin từ server.");
       }
-
-      const userData = JSON.parse(adminUser);
+      
+      console.log("AdminLogin.handleSubmit - Extracted userData:", userData);
       console.log("AdminLogin.handleSubmit - Admin user data:", userData);
 
-      if (userData.role !== "ADMIN") {
+      // Kiểm tra role - hỗ trợ nhiều format
+      const userRole = userData.role || userData.roleName || userData.authorities?.[0]?.authority;
+      console.log("AdminLogin.handleSubmit - User role:", userRole);
+      
+      if (userRole !== "ADMIN" && userRole !== "ROLE_ADMIN") {
         throw new Error("Bạn không có quyền truy cập Admin.");
       }
 
@@ -164,12 +173,40 @@ const AdminLogin = () => {
       console.log(
         "AdminLogin.handleSubmit - Login successful, navigating to dashboard"
       );
-      navigate("/admin/dashboard");
+      
+      // Thêm delay nhỏ để đảm bảo state được cập nhật
+      setTimeout(() => {
+        console.log("AdminLogin.handleSubmit - Executing navigation");
+        console.log("AdminLogin.handleSubmit - Current URL:", window.location.href);
+        navigate("/admin/dashboard");
+        console.log("AdminLogin.handleSubmit - Navigation executed");
+      }, 100);
     } catch (err) {
-      const errorMessage =
-        err.response?.data?.message ||
-        err.message ||
-        "Đăng nhập thất bại. Vui lòng thử lại.";
+      console.error("AdminLogin.handleSubmit - Error:", err);
+      
+      let errorMessage = "Đăng nhập thất bại. Vui lòng thử lại.";
+      
+      // Xử lý lỗi 500 - Internal Server Error
+      if (err.response?.status === 500) {
+        errorMessage = "Lỗi máy chủ (500). Vui lòng liên hệ quản trị viên hoặc thử lại sau.";
+        console.error("Server Error Details:", err.response.data);
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      } else if (err.request) {
+        errorMessage = "Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại.";
+      }
+      
+      // Log chi tiết lỗi để debug
+      console.error("Error Details:", {
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        data: err.response?.data,
+        message: err.message,
+        code: err.code
+      });
+      
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -185,6 +222,21 @@ const AdminLogin = () => {
           </div>
           <h1>Admin Panel</h1>
           <p>Đăng nhập để quản lý hệ thống</p>
+          {import.meta.env.DEV && (
+            <div style={{ 
+              marginTop: '1rem', 
+              padding: '0.5rem', 
+              backgroundColor: '#f0f9ff', 
+              border: '1px solid #0ea5e9', 
+              borderRadius: '0.5rem',
+              fontSize: '0.75rem',
+              color: '#0369a1'
+            }}>
+              <strong>Test Account:</strong><br/>
+              Email: admin@renthouse.com<br/>
+              Password: admin123
+            </div>
+          )}
         </LoginHeader>
 
         <Form onSubmit={handleSubmit}>

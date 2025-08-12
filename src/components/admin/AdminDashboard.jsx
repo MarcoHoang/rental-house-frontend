@@ -5,6 +5,7 @@ import {
   useNavigate,
   Link,
   useLocation,
+  Navigate,
 } from "react-router-dom";
 import styled from "styled-components";
 import {
@@ -737,6 +738,9 @@ const AdminDashboard = () => {
               path="contracts"
               element={<DevelopingFeaturePage featureName="Quản lý hợp đồng" />}
             />
+            
+            {/* Default route - redirect to dashboard */}
+            <Route path="*" element={<Navigate to="dashboard" replace />} />
           </Routes>
         </Main>
       </MainContent>
