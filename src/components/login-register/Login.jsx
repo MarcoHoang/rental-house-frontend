@@ -117,9 +117,10 @@ const SuccessMessage = styled.div`
 const Login = () => {
   const { login, loading, error } = useAuth();
   const { showSuccess } = useToast();
+
   const [searchParams] = useSearchParams();
   const [roleChangedMessage, setRoleChangedMessage] = useState("");
-  
+
   const { formData, errors, handleChange, handleBlur, validateForm } = useForm(
     {
       email: "",
@@ -135,7 +136,7 @@ const Login = () => {
   useEffect(() => {
     const roleChanged = searchParams.get('roleChanged');
     const sessionExpired = searchParams.get('sessionExpired');
-    
+
     if (roleChanged === 'true') {
       setRoleChangedMessage("Tài khoản của bạn đã được nâng cấp thành chủ nhà! Vui lòng đăng nhập lại để cập nhật quyền truy cập.");
     } else if (sessionExpired === 'true') {
@@ -145,27 +146,20 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     const result = await login(formData.email, formData.password);
-    
+
     if (result.success) {
-      // Kiểm tra xem user có phải là host không
-      const userData = result.data?.user;
-      if (userData?.roleName === 'HOST') {
-        showSuccess(
-          "Đăng nhập thành công!",
-          `Chào mừng bạn quay trở lại, ${userData.fullName || 'Chủ nhà'}! Bạn đã được chuyển đến trang quản lý chủ nhà.`
-        );
-      } else {
-        showSuccess(
-          "Đăng nhập thành công!",
-          `Chào mừng bạn quay trở lại, ${userData?.fullName || 'Người dùng'}!`
-        );
-      }
+      showSuccess(
+        "Đăng nhập thành công!",
+        `Chào mừng bạn quay trở lại, ${
+          result.data?.user?.fullName || "Người dùng"
+        }!`
+      );
     }
   };
 
@@ -187,7 +181,7 @@ const Login = () => {
               {roleChangedMessage}
             </SuccessMessage>
           )}
-          
+
           {error && <ErrorMessage type="error" message={error} />}
 
           <FormField
@@ -216,30 +210,19 @@ const Login = () => {
             icon={Lock}
           />
 
-          <Button
-            type="submit"
-            fullWidth
-            loading={loading}
-            disabled={loading}
-          >
+          <Button type="submit" fullWidth loading={loading} disabled={loading}>
             {loading ? "Đang đăng nhập..." : "Đăng nhập"}
           </Button>
         </Form>
 
         <FooterLinks>
           <p>
-            Chưa có tài khoản?{" "}
-            <Link to="/register">Đăng ký ngay</Link>
+            Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
           </p>
           <Link to="/forgot-password">Quên mật khẩu?</Link>
           <br />
-          <Link to="/host/login">
-            <Building2 size={16} style={{ marginRight: '0.5rem' }} />
-            Đăng nhập chủ nhà
-          </Link>
-          <br />
           <Link to="/">
-            <Home size={16} style={{ marginRight: '0.5rem' }} />
+            <Home size={16} style={{ marginRight: "0.5rem" }} />
             Quay về trang chủ
           </Link>
         </FooterLinks>

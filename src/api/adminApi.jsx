@@ -89,127 +89,56 @@ export const dashboardApi = {
 
 // Host Applications Management
 export const hostApplicationsApi = {
-  // Lấy tất cả đơn đăng ký làm chủ nhà
-  getAll: async (params = {}) => {
-    try {
-      const response = await apiClient.get(`${API_PREFIX}/host-requests`, {
-        params,
-      });
-      
-      // Xử lý response format từ backend
-      let applications;
-      if (response.data.data) {
-        // Format: { code: "00", message: "...", data: [HostRequestDTO] }
-        applications = response.data.data;
-      } else if (Array.isArray(response.data)) {
-        // Fallback: Format: [HostRequestDTO]
-        applications = response.data;
-      } else {
-        throw new Error('Response format không hợp lệ');
-      }
-      
-      return applications;
-    } catch (error) {
-      logApiError(error, "getAllHostApplications");
-      throw error;
-    }
-  },
-
-  // Lấy chi tiết đơn đăng ký
-  getById: async (id) => {
-    try {
-      const response = await apiClient.get(`${API_PREFIX}/host-requests/${id}`);
-      return response.data.data || response.data;
-    } catch (error) {
-      logApiError(error, "getHostApplicationById");
-      throw error;
-    }
-  },
-
-  // Duyệt đơn đăng ký - cập nhật role user từ USER sang HOST
-  approve: async (id) => {
-    try {
-      console.log('hostApplicationsApi.approve - Approving application:', id);
-      
-      // Gọi API approve đơn đăng ký
-      const response = await apiClient.post(`${API_PREFIX}/host-requests/${id}/approve`);
-      
-      console.log('hostApplicationsApi.approve - Response:', response.data);
-      
-      // Backend sẽ tự động:
-      // 1. Cập nhật status của đơn đăng ký thành 'APPROVED'
-      // 2. Cập nhật role của user từ 'USER' sang 'HOST'
-      // 3. Cập nhật processedDate
-      // 4. Tạo bản ghi HostDTO mới
-      
-      return response.data;
-    } catch (error) {
-      console.error('hostApplicationsApi.approve - Error:', error);
-      logApiError(error, "approveHostApplication");
-      throw error;
-    }
-  },
-
-  // Từ chối đơn đăng ký
-  reject: async (id, reason) => {
-    try {
-      console.log('hostApplicationsApi.reject - Rejecting application:', id, 'with reason:', reason);
-      
-      const response = await apiClient.post(`${API_PREFIX}/host-requests/${id}/reject`, {
-        reason: reason
-      });
-      
-      console.log('hostApplicationsApi.reject - Response:', response.data);
-      
-      // Backend sẽ tự động:
-      // 1. Cập nhật status của đơn đăng ký thành 'REJECTED'
-      // 2. Cập nhật reason và processedDate
-      // 3. User vẫn giữ role 'USER'
-      
-      return response.data;
-    } catch (error) {
-      console.error('hostApplicationsApi.reject - Error:', error);
-      logApiError(error, "rejectHostApplication");
-      throw error;
-    }
-  },
-
-  // Lấy danh sách tất cả host đã được approve
   getAllHosts: async (params = {}) => {
     try {
-      const response = await apiClient.get(`${API_PREFIX}/hosts`, {
+      const response = await apiClient.get(`${API_PREFIX}/admin/hosts`, {
         params,
       });
-      
-      // Xử lý response format từ backend
-      let hosts;
-      if (response.data.data) {
-        // Format: { code: "00", message: "...", data: [HostDTO] }
-        hosts = response.data.data;
-      } else if (Array.isArray(response.data)) {
-        // Fallback: Format: [HostDTO]
-        hosts = response.data;
-      } else {
-        throw new Error('Response format không hợp lệ');
-      }
-      
-      return hosts;
+      return response.data.data; // Dữ liệu trả về là một Page object
     } catch (error) {
       logApiError(error, "getAllHosts");
       throw error;
     }
   },
 
-  // Lấy chi tiết thông tin host
-  getHostById: async (id) => {
+  getPendingRequests: async (params = {}) => {
     try {
-      const response = await apiClient.get(`${API_PREFIX}/hosts/${id}`);
-      return response.data.data || response.data;
+      const response = await apiClient.get(
+        `${API_PREFIX}/admin/host-requests`,
+        { params }
+      );
+      return response.data.data; // Dữ liệu trả về là một Page object
     } catch (error) {
-      logApiError(error, "getHostById");
+      logApiError(error, "getPendingRequests");
       throw error;
     }
-  }
+  },
+
+  approve: async (requestId) => {
+    try {
+      const response = await apiClient.post(
+        `${API_PREFIX}/admin/host-requests/${requestId}/approve`
+      );
+      return response.data;
+    } catch (error) {
+      logApiError(error, "approveRequest");
+      throw error;
+    }
+  },
+
+  reject: async (requestId, reason) => {
+    try {
+      // SỬA LẠI URL: Thêm /admin/
+      const response = await apiClient.post(
+        `${API_PREFIX}/admin/host-requests/${requestId}/reject`,
+        { reason }
+      );
+      return response.data;
+    } catch (error) {
+      logApiError(error, "rejectRequest");
+      throw error;
+    }
+  },
 };
 
 export default apiClient;

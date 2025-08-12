@@ -182,28 +182,28 @@ const UserManagement = () => {
     try {
       setLoading(true);
       setError(null);
-      
-      console.log('UserManagement.fetchUsers - Fetching users for page:', page);
-      
+
+      console.log("UserManagement.fetchUsers - Fetching users for page:", page);
+
       // Thêm filter để chỉ lấy user có role USER (không lấy HOST)
       const params = {
         page: page,
         size: 10,
-        roleName: 'USER' // Chỉ lấy user có role USER
+        roleName: "USER", // Chỉ lấy user có role USER
       };
-      
+
       const data = await usersApi.getAll(params);
-      console.log('UserManagement.fetchUsers - Received data:', data);
-      
+      console.log("UserManagement.fetchUsers - Received data:", data);
+
       setUsers(data.content || data);
       setPagination({
         number: data.number || page,
         totalPages: data.totalPages || 1,
-        totalElements: data.totalElements || 0
+        totalElements: data.totalElements || 0,
       });
     } catch (err) {
-      console.error('UserManagement.fetchUsers - Error:', err);
-      setError('Không thể tải danh sách người dùng. Vui lòng thử lại.');
+      console.error("UserManagement.fetchUsers - Error:", err);
+      setError("Không thể tải danh sách người dùng. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
@@ -214,27 +214,38 @@ const UserManagement = () => {
 
   const handleToggleStatus = async (userId, currentStatus) => {
     try {
-      console.log('UserManagement.handleToggleStatus - Toggling status for user:', userId, 'from', currentStatus, 'to', !currentStatus);
-      
+      console.log(
+        "UserManagement.handleToggleStatus - Toggling status for user:",
+        userId,
+        "from",
+        currentStatus,
+        "to",
+        !currentStatus
+      );
+
       await usersApi.updateStatus(userId, !currentStatus);
-      console.log('UserManagement.handleToggleStatus - Status updated successfully');
-      
+      console.log(
+        "UserManagement.handleToggleStatus - Status updated successfully"
+      );
+
       // Cập nhật lại trạng thái của user trong state để UI thay đổi ngay lập tức
       setUsers((currentUsers) =>
         currentUsers.map((user) =>
           user.id === userId ? { ...user, active: !currentStatus } : user
         )
       );
-      
+
       // Hiển thị thông báo thành công
-      const user = users.find(u => u.id === userId);
-      const action = !currentStatus ? 'mở khóa' : 'khóa';
+      const user = users.find((u) => u.id === userId);
+      const action = !currentStatus ? "mở khóa" : "khóa";
       showSuccess(
         "Cập nhật thành công!",
-        `Đã ${action} tài khoản của ${user?.fullName || user?.email || 'người dùng'}`
+        `Đã ${action} tài khoản của ${
+          user?.fullName || user?.email || "người dùng"
+        }`
       );
     } catch (err) {
-      console.error('UserManagement.handleToggleStatus - Error:', err);
+      console.error("UserManagement.handleToggleStatus - Error:", err);
       showError(
         "Cập nhật thất bại!",
         "Không thể cập nhật trạng thái người dùng. Vui lòng thử lại."

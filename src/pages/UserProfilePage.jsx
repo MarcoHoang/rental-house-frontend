@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import styled from 'styled-components';
-import authService from '../api/authService';
-import { useToast } from '../components/common/Toast';
-import { getAvatarUrl } from '../utils/avatarHelper';
-import Avatar from '../components/common/Avatar';
-import HostApplicationStatus from '../components/host/HostApplicationStatus';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import styled from "styled-components";
+import authService from "../api/authService";
+import { useToast } from "../components/common/Toast";
+import { getAvatarUrl } from "../utils/avatarHelper";
+import Avatar from "../components/common/Avatar";
+import HostApplicationStatus from "../components/host/HostApplicationStatus";
 
 const ProfileContainer = styled.div`
   max-width: 800px;
@@ -24,7 +24,7 @@ const Label = styled.label`
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
-  
+
   span {
     color: #ef4444;
   }
@@ -36,12 +36,12 @@ const Input = styled.input`
   border: 1px solid #d1d5db;
   border-radius: 0.375rem;
   font-size: 1rem;
-  
+
   &:disabled {
     background-color: #f3f4f6;
     cursor: not-allowed;
   }
-  
+
   &:focus {
     outline: none;
     border-color: #4f46e5;
@@ -69,7 +69,7 @@ const FileLabel = styled.label`
   border-radius: 0.375rem;
   cursor: pointer;
   transition: background-color 0.2s;
-  
+
   &:hover {
     background-color: #d1d5db;
   }
@@ -84,11 +84,11 @@ const Button = styled.button`
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s;
-  
+
   &:hover {
     background-color: #4338ca;
   }
-  
+
   &:disabled {
     background-color: #9ca3af;
     cursor: not-allowed;
@@ -105,108 +105,116 @@ const UserProfilePage = () => {
   const [user, setUser] = useState(null);
   const [userId, setUserId] = useState(null);
   const [profile, setProfile] = useState({
-    email: '',
-    fullName: '',
-    phone: '',
-    address: '',
-    dateOfBirth: '',
+    email: "",
+    fullName: "",
+    phone: "",
+    address: "",
+    dateOfBirth: "",
     avatar: null,
-    avatarPreview: getAvatarUrl(null)
+    avatarPreview: getAvatarUrl(null),
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [message, setMessage] = useState({ text: '', type: '' });
+  const [message, setMessage] = useState({ text: "", type: "" });
   const navigate = useNavigate();
   const location = useLocation();
   const { showSuccess, showError } = useToast();
 
   // Lấy thông tin user khi component mount
   useEffect(() => {
-    console.log('UserProfilePage mounted or updated');
+    console.log("UserProfilePage mounted or updated");
     let isMounted = true;
-    
+
     const fetchUserProfile = async () => {
-      console.log('Starting to fetch user profile...');
+      console.log("Starting to fetch user profile...");
       if (!isMounted) return;
-      
+
       setIsSubmitting(true);
       try {
         // Kiểm tra xem có đang bật xác thực không
         const ENABLE_AUTH = false; // Lấy từ App.jsx hoặc config
-        
+
         if (ENABLE_AUTH) {
           // Kiểm tra token trước khi gọi API
-          const token = localStorage.getItem('token');
+          const token = localStorage.getItem("token");
           if (!token) {
-            navigate('/login', { 
-              state: { 
-                from: '/profile',
-                error: 'Vui lòng đăng nhập để tiếp tục'
+            navigate("/login", {
+              state: {
+                from: "/profile",
+                error: "Vui lòng đăng nhập để tiếp tục",
               },
-              replace: true 
+              replace: true,
             });
             return;
           }
         }
 
         const userData = await authService.getCurrentUser();
-        console.log('=== DEBUG USER PROFILE PAGE ===');
-        console.log('UserProfilePage - Received user data:', userData);
-        console.log('UserProfilePage - userData.fullName (tên hiển thị):', userData?.fullName);
-        console.log('UserProfilePage - userData.email (email):', userData?.email);
-        console.log('UserProfilePage - userData.username (username):', userData?.username);
-        console.log('=== END DEBUG ===');
-        
+        console.log("=== DEBUG USER PROFILE PAGE ===");
+        console.log("UserProfilePage - Received user data:", userData);
+        console.log(
+          "UserProfilePage - userData.fullName (tên hiển thị):",
+          userData?.fullName
+        );
+        console.log(
+          "UserProfilePage - userData.email (email):",
+          userData?.email
+        );
+        console.log(
+          "UserProfilePage - userData.username (username):",
+          userData?.username
+        );
+        console.log("=== END DEBUG ===");
+
         if (!isMounted) {
-          console.log('Component unmounted, skipping state update');
+          console.log("Component unmounted, skipping state update");
           return;
         }
-        
+
         // Nếu không có dữ liệu user và đang bật xác thực, chuyển hướng
         if (ENABLE_AUTH && !userData) {
-          navigate('/login', { 
-            state: { 
-              from: '/profile',
-              error: 'Vui lòng đăng nhập để tiếp tục'
+          navigate("/login", {
+            state: {
+              from: "/profile",
+              error: "Vui lòng đăng nhập để tiếp tục",
             },
-            replace: true 
+            replace: true,
           });
           return;
         }
-        
+
         // Cập nhật state với dữ liệu người dùng
         setUser(userData);
         setUserId(userData?.id);
-        
-        setProfile(prev => ({
+
+        setProfile((prev) => ({
           ...prev,
-          email: userData?.email || '',
-          fullName: userData?.fullName || '',
-          phone: userData?.phone || '',
-          address: userData?.address || '',
-          dateOfBirth: userData?.birthDate || userData?.dateOfBirth || '', // Hỗ trợ cả birthDate và dateOfBirth
+          email: userData?.email || "",
+          fullName: userData?.fullName || "",
+          phone: userData?.phone || "",
+          address: userData?.address || "",
+          dateOfBirth: userData?.birthDate || userData?.dateOfBirth || "", // Hỗ trợ cả birthDate và dateOfBirth
           avatar: null, // Reset avatar file
-          avatarPreview: getAvatarUrl(userData?.avatarUrl || userData?.avatar) // Sử dụng helper function để xử lý URL
+          avatarPreview: getAvatarUrl(userData?.avatarUrl || userData?.avatar), // Sử dụng helper function để xử lý URL
         }));
-        
       } catch (error) {
         if (!isMounted) return;
-        
+
         const ENABLE_AUTH = false; // Lấy từ App.jsx hoặc config
-        
+
         if (ENABLE_AUTH && error.response?.status === 401) {
           // Chuyển hướng về trang đăng nhập nếu chưa đăng nhập
-          navigate('/login', { 
-            state: { 
-              from: '/profile',
-              error: 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại' 
+          navigate("/login", {
+            state: {
+              from: "/profile",
+              error: "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại",
             },
-            replace: true 
+            replace: true,
           });
         } else {
           setMessage({
-            text: 'Không thể tải thông tin người dùng',
-            type: 'error'
+            text: "Không thể tải thông tin người dùng",
+            type: "error",
           });
         }
       } finally {
@@ -228,54 +236,54 @@ const UserProfilePage = () => {
   const handleGoBack = () => {
     // Kiểm tra xem có phải đang từ trang change-password quay lại không
     const referrer = location.state?.from;
-    
-    if (referrer && referrer !== '/change-password') {
+
+    if (referrer && referrer !== "/change-password") {
       // Nếu có referrer và không phải từ change-password, quay lại trang đó
       navigate(referrer, { replace: true });
     } else {
       // Nếu không có referrer hoặc từ change-password, quay về trang chủ
-      navigate('/', { replace: true });
+      navigate("/", { replace: true });
     }
   };
 
   // Cập nhật thông tin profile khi user thay đổi
   useEffect(() => {
     const ENABLE_AUTH = false; // Lấy từ App.jsx hoặc config
-    
+
     if (user) {
-      setProfile(prev => ({
+      setProfile((prev) => ({
         ...prev,
-        email: user.email || '',
-        fullName: user.fullName || '',
-        phone: user.phone || '',
-        address: user.address || '',
-        dateOfBirth: user.birthDate || user.dateOfBirth || '', // Hỗ trợ cả birthDate và dateOfBirth
-        avatarPreview: getAvatarUrl(user.avatarUrl || user.avatar) // Sử dụng helper function để xử lý URL
+        email: user.email || "",
+        fullName: user.fullName || "",
+        phone: user.phone || "",
+        address: user.address || "",
+        dateOfBirth: user.birthDate || user.dateOfBirth || "", // Hỗ trợ cả birthDate và dateOfBirth
+        avatarPreview: getAvatarUrl(user.avatarUrl || user.avatar), // Sử dụng helper function để xử lý URL
       }));
     } else if (ENABLE_AUTH) {
       // Nếu không có thông tin user và đang bật xác thực, chuyển hướng về trang đăng nhập
-      navigate('/login');
+      navigate("/login");
     }
   }, [user, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
+
     // Debug cho ngày sinh
-    if (name === 'dateOfBirth') {
-      console.log('UserProfilePage.handleChange - dateOfBirth changed:', value);
+    if (name === "dateOfBirth") {
+      console.log("UserProfilePage.handleChange - dateOfBirth changed:", value);
     }
-    
-    setProfile(prev => ({
+
+    setProfile((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
-    
+
     // Clear error when user types
     if (errors[name]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [name]: ''
+        [name]: "",
       }));
     }
   };
@@ -300,36 +308,35 @@ const UserProfilePage = () => {
 
     // Tạo URL tạm để hiển thị preview
     const previewUrl = URL.createObjectURL(file);
-    setProfile(prev => ({
+    setProfile((prev) => ({
       ...prev,
       avatar: file,
-      avatarPreview: previewUrl
+      avatarPreview: previewUrl,
     }));
   };
-
 
   const validateForm = () => {
     const newErrors = {};
     let isValid = true;
 
     if (!profile.fullName.trim()) {
-      newErrors.fullName = 'Vui lòng nhập họ và tên';
+      newErrors.fullName = "Vui lòng nhập họ và tên";
       isValid = false;
     } else if (!/^[\p{L}\s]+$/u.test(profile.fullName)) {
-      newErrors.fullName = 'Họ và tên không được chứa ký tự đặc biệt';
+      newErrors.fullName = "Họ và tên không được chứa ký tự đặc biệt";
       isValid = false;
     }
 
     if (!profile.phone) {
-      newErrors.phone = 'Vui lòng nhập số điện thoại';
+      newErrors.phone = "Vui lòng nhập số điện thoại";
       isValid = false;
     } else if (!/^0\d{9,10}$/.test(profile.phone)) {
-      newErrors.phone = 'Số điện thoại không hợp lệ';
+      newErrors.phone = "Số điện thoại không hợp lệ";
       isValid = false;
     }
 
     if (profile.address && !/^[\p{L}0-9\s,./-]+$/u.test(profile.address)) {
-      newErrors.address = 'Địa chỉ chứa ký tự không hợp lệ';
+      newErrors.address = "Địa chỉ chứa ký tự không hợp lệ";
       isValid = false;
     }
 
@@ -338,12 +345,12 @@ const UserProfilePage = () => {
       const selectedDate = new Date(profile.dateOfBirth);
       const today = new Date();
       today.setHours(23, 59, 59, 999); // Đặt thời gian cuối ngày hôm nay
-      
+
       if (isNaN(selectedDate.getTime())) {
-        newErrors.dateOfBirth = 'Ngày sinh không hợp lệ';
+        newErrors.dateOfBirth = "Ngày sinh không hợp lệ";
         isValid = false;
       } else if (selectedDate > today) {
-        newErrors.dateOfBirth = 'Ngày sinh không được vượt quá ngày hiện tại';
+        newErrors.dateOfBirth = "Ngày sinh không được vượt quá ngày hiện tại";
         isValid = false;
       }
     }
@@ -360,31 +367,38 @@ const UserProfilePage = () => {
     }
 
     setIsSubmitting(true);
-    setMessage({ text: '', type: '' });
+    setMessage({ text: "", type: "" });
 
     try {
       let avatarUrl = profile.avatarPreview; // Giữ avatar hiện tại
 
       // Upload avatar mới nếu có
       if (profile.avatar && profile.avatar instanceof File) {
-        console.log('UserProfilePage.handleSubmit - Uploading new avatar file');
+        console.log("UserProfilePage.handleSubmit - Uploading new avatar file");
         try {
           const uploadResult = await authService.uploadAvatar(profile.avatar);
           if (uploadResult.success && uploadResult.data.fileUrl) {
             avatarUrl = uploadResult.data.fileUrl;
-            console.log('UserProfilePage.handleSubmit - Avatar uploaded successfully:', avatarUrl);
+            console.log(
+              "UserProfilePage.handleSubmit - Avatar uploaded successfully:",
+              avatarUrl
+            );
             showSuccess(
               "Upload avatar thành công!",
               "Ảnh đại diện của bạn đã được cập nhật."
             );
           } else {
-            throw new Error('Upload avatar thất bại');
+            throw new Error("Upload avatar thất bại");
           }
         } catch (uploadError) {
-          console.error('UserProfilePage.handleSubmit - Avatar upload error:', uploadError);
+          console.error(
+            "UserProfilePage.handleSubmit - Avatar upload error:",
+            uploadError
+          );
           showError(
             "Upload avatar thất bại!",
-            'Lỗi khi upload ảnh đại diện: ' + (uploadError.message || 'Upload thất bại')
+            "Lỗi khi upload ảnh đại diện: " +
+              (uploadError.message || "Upload thất bại")
           );
           return;
         }
@@ -396,34 +410,37 @@ const UserProfilePage = () => {
         phone: profile.phone,
         address: profile.address || null,
         dateOfBirth: profile.dateOfBirth || null,
-        avatarUrl: avatarUrl // Sử dụng URL avatar đã upload hoặc hiện tại
+        avatarUrl: avatarUrl, // Sử dụng URL avatar đã upload hoặc hiện tại
       };
 
-      console.log('UserProfilePage.handleSubmit - Sending user data:', userData);
+      console.log(
+        "UserProfilePage.handleSubmit - Sending user data:",
+        userData
+      );
 
       // Gọi API cập nhật profile
       const result = await authService.updateProfile(userId, userData);
-      
+
       if (!result || !result.success) {
-        throw new Error(result?.error || 'Cập nhật thất bại');
+        throw new Error(result?.error || "Cập nhật thất bại");
       }
 
       // Cập nhật thông tin trong localStorage
-      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-      const newUserData = { 
-        ...currentUser, 
+      const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+      const newUserData = {
+        ...currentUser,
         ...result.data,
-        avatarUrl: avatarUrl // Đảm bảo avatar URL mới được lưu
+        avatarUrl: avatarUrl, // Đảm bảo avatar URL mới được lưu
       };
-      localStorage.setItem('user', JSON.stringify(newUserData));
-      
+      localStorage.setItem("user", JSON.stringify(newUserData));
+
       setUser(newUserData);
-      
+
       // Cập nhật avatar preview với URL mới
-      setProfile(prev => ({
+      setProfile((prev) => ({
         ...prev,
         avatarPreview: getAvatarUrl(avatarUrl),
-        avatar: null // Reset avatar file
+        avatar: null, // Reset avatar file
       }));
 
       showSuccess(
@@ -432,15 +449,14 @@ const UserProfilePage = () => {
       );
 
       // Cập nhật lại giao diện
-      window.dispatchEvent(new Event('storage'));
-
+      window.dispatchEvent(new Event("storage"));
     } catch (error) {
-      console.error('Lỗi khi cập nhật thông tin:', error);
+      console.error("Lỗi khi cập nhật thông tin:", error);
       // Chỉ hiển thị thông báo nếu không phải lỗi 401 (đã xử lý trong authService)
       if (error.response?.status !== 401) {
         showError(
           "Cập nhật thất bại!",
-          error.message || 'Có lỗi xảy ra khi cập nhật thông tin'
+          error.message || "Có lỗi xảy ra khi cập nhật thông tin"
         );
       }
     } finally {
@@ -450,45 +466,64 @@ const UserProfilePage = () => {
 
   return (
     <ProfileContainer>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "1.5rem",
+        }}
+      >
         <h1>Hồ sơ cá nhân</h1>
-        <button 
+        <button
           onClick={handleGoBack}
           style={{
-            padding: '0.5rem 1rem',
-            backgroundColor: '#e5e7eb',
-            border: 'none',
-            borderRadius: '0.375rem',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            transition: 'background-color 0.2s'
+            padding: "0.5rem 1rem",
+            backgroundColor: "#e5e7eb",
+            border: "none",
+            borderRadius: "0.375rem",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            transition: "background-color 0.2s",
           }}
-          onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#d1d5db'}
-          onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#e5e7eb'}
+          onMouseOver={(e) =>
+            (e.currentTarget.style.backgroundColor = "#d1d5db")
+          }
+          onMouseOut={(e) =>
+            (e.currentTarget.style.backgroundColor = "#e5e7eb")
+          }
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 5 12 12 5"></polyline>
           </svg>
           Quay lại
         </button>
       </div>
-      
+
       {message.text && (
-        <div className={`message ${message.type}`}>
-          {message.text}
-        </div>
+        <div className={`message ${message.type}`}>{message.text}</div>
       )}
-      
+
       <form onSubmit={handleSubmit}>
         <FormGroup>
           <Label>Ảnh đại diện</Label>
           <AvatarSection>
             <AvatarWrapper>
-              <Avatar 
-                src={profile.avatarPreview} 
+              <Avatar
+                src={profile.avatarPreview}
                 alt="Avatar"
                 size="100px"
                 name={profile.fullName}
@@ -502,7 +537,13 @@ const UserProfilePage = () => {
                 onChange={handleAvatarChange}
               />
               <FileLabel htmlFor="avatar">Chọn ảnh</FileLabel>
-              <p style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.5rem' }}>
+              <p
+                style={{
+                  fontSize: "0.875rem",
+                  color: "#6b7280",
+                  marginTop: "0.5rem",
+                }}
+              >
                 Định dạng: JPG, PNG. Kích thước tối đa: 5MB
               </p>
             </div>
@@ -511,43 +552,45 @@ const UserProfilePage = () => {
 
         <FormGroup>
           <Label>Email</Label>
-          <Input 
-            type="email" 
-            name="email" 
+          <Input
+            type="email"
+            name="email"
             value={profile.email}
             disabled
             placeholder="Email"
-            style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
+            style={{ backgroundColor: "#f3f4f6", cursor: "not-allowed" }}
           />
         </FormGroup>
-        
+
         <FormGroup>
-          <Label>Họ và tên <span>*</span></Label>
-          <Input 
-            type="text" 
-            name="fullName" 
-            value={profile.fullName} 
+          <Label>
+            Họ và tên <span>*</span>
+          </Label>
+          <Input
+            type="text"
+            name="fullName"
+            value={profile.fullName}
             onChange={handleChange}
             placeholder="Nhập họ và tên"
           />
           {errors.fullName && <ErrorText>{errors.fullName}</ErrorText>}
         </FormGroup>
-        
+
         <FormGroup>
           <Label>Ngày sinh</Label>
-          <Input 
-            type="date" 
+          <Input
+            type="date"
             name="dateOfBirth"
-            max={new Date().toISOString().split('T')[0]}
+            max={new Date().toISOString().split("T")[0]}
             value={(() => {
-              if (!profile.dateOfBirth) return '';
+              if (!profile.dateOfBirth) return "";
               try {
                 const date = new Date(profile.dateOfBirth);
-                if (isNaN(date.getTime())) return '';
-                return date.toISOString().split('T')[0];
+                if (isNaN(date.getTime())) return "";
+                return date.toISOString().split("T")[0];
               } catch (error) {
-                console.error('Error parsing dateOfBirth:', error);
-                return '';
+                console.error("Error parsing dateOfBirth:", error);
+                return "";
               }
             })()}
             onChange={handleChange}
@@ -556,7 +599,9 @@ const UserProfilePage = () => {
         </FormGroup>
 
         <FormGroup>
-          <Label htmlFor="phone">Số điện thoại <span>*</span></Label>
+          <Label htmlFor="phone">
+            Số điện thoại <span>*</span>
+          </Label>
           <Input
             type="tel"
             id="phone"
@@ -574,49 +619,50 @@ const UserProfilePage = () => {
             type="text"
             id="address"
             name="address"
-            value={profile.address || ''}
+            value={profile.address || ""}
             onChange={handleChange}
             placeholder="Nhập địa chỉ"
           />
           {errors.address && <ErrorText>{errors.address}</ErrorText>}
         </FormGroup>
 
-        <Button 
-          type="submit" 
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Đang lưu..." : "Lưu thay đổi"}
         </Button>
       </form>
-      
+
       {/* Phần đổi mật khẩu */}
-      <div style={{ 
-        marginTop: '2rem', 
-        paddingTop: '2rem', 
-        borderTop: '1px solid #e5e7eb' 
-      }}>
-        <h3 style={{ marginBottom: '1rem', color: '#374151' }}>
+      <div
+        style={{
+          marginTop: "2rem",
+          paddingTop: "2rem",
+          borderTop: "1px solid #e5e7eb",
+        }}
+      >
+        <h3 style={{ marginBottom: "1rem", color: "#374151" }}>
           Bảo mật tài khoản
         </h3>
-        <p style={{ 
-          fontSize: '0.875rem', 
-          color: '#6b7280', 
-          marginBottom: '1rem' 
-        }}>
+        <p
+          style={{
+            fontSize: "0.875rem",
+            color: "#6b7280",
+            marginBottom: "1rem",
+          }}
+        >
           Đổi mật khẩu để bảo vệ tài khoản của bạn
         </p>
         <Button
           type="button"
           onClick={() => {
             // Truyền thông tin về trang gốc (trang trước Profile)
-            const originalFrom = location.state?.from || '/';
-            navigate('/change-password', { 
-              state: { from: originalFrom } 
+            const originalFrom = location.state?.from || "/";
+            navigate("/change-password", {
+              state: { from: originalFrom },
             });
           }}
           style={{
-            backgroundColor: '#059669',
-            ':hover': { backgroundColor: '#047857' }
+            backgroundColor: "#059669",
+            ":hover": { backgroundColor: "#047857" },
           }}
         >
           Đổi mật khẩu
@@ -624,19 +670,23 @@ const UserProfilePage = () => {
       </div>
 
       {/* Phần trạng thái đơn đăng ký làm chủ nhà */}
-      <div style={{ 
-        marginTop: '2rem', 
-        paddingTop: '2rem', 
-        borderTop: '1px solid #e5e7eb' 
-      }}>
-        <h3 style={{ marginBottom: '1rem', color: '#374151' }}>
+      <div
+        style={{
+          marginTop: "2rem",
+          paddingTop: "2rem",
+          borderTop: "1px solid #e5e7eb",
+        }}
+      >
+        <h3 style={{ marginBottom: "1rem", color: "#374151" }}>
           Đơn đăng ký làm chủ nhà
         </h3>
-        <p style={{ 
-          fontSize: '0.875rem', 
-          color: '#6b7280', 
-          marginBottom: '1rem' 
-        }}>
+        <p
+          style={{
+            fontSize: "0.875rem",
+            color: "#6b7280",
+            marginBottom: "1rem",
+          }}
+        >
           Theo dõi trạng thái đơn đăng ký làm chủ nhà của bạn
         </p>
         <HostApplicationStatus />

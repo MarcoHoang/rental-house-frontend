@@ -28,3 +28,5 @@ body {
     padding-right: 1rem; /* Padding 2 bên để an toàn trên mobile */
   }
 }
+
+/* Xóa bỏ hoàn toàn quy tắc #root vì nó không còn cần thiết và gây ra vấn đề */
