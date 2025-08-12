@@ -136,6 +136,68 @@ export const useAuth = () => {
     }
   }, [navigate, clearAuthData]);
 
+  // Đăng nhập với vai trò host
+  const loginAsHost = useCallback(async (email, password) => {
+    setLoading(true);
+    setError(null);
+    
+    console.log('useAuth.loginAsHost - Starting host login process for:', email);
+    
+    try {
+      const response = await authService.loginAsHost(email, password);
+      console.log('useAuth.loginAsHost - Response from authService:', response);
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Đăng nhập host thất bại');
+      }
+
+      // Lấy host data từ response
+      const { token, user: hostData } = response.data;
+      console.log('useAuth.loginAsHost - Extracted token and host:', { token: !!token, hostData });
+
+      if (token && hostData) {
+        // Cập nhật state
+        console.log('useAuth.loginAsHost - Setting user state:', hostData);
+        setUser(hostData);
+        
+        // Redirect to host dashboard
+        console.log('useAuth.loginAsHost - Redirecting to /host');
+        navigate("/host");
+      } else {
+        throw new Error('Không nhận được thông tin đăng nhập host từ server');
+      }
+
+      return { success: true };
+    } catch (err) {
+      console.error('useAuth.loginAsHost - Error:', err);
+      
+      // Specific error handling for host login
+      let errorMessage = 'Đăng nhập host thất bại';
+      
+      if (err.response?.status === 401) {
+        errorMessage = 'Email hoặc mật khẩu không đúng';
+      } else if (err.response?.status === 403) {
+        errorMessage = 'Tài khoản host đã bị khóa hoặc chưa được phê duyệt';
+      } else if (err.response?.status === 404) {
+        errorMessage = 'Tài khoản host không tồn tại';
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
+      
+      if (err.response?.status === 401) {
+        clearAuthData();
+      }
+      
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  }, [navigate, clearAuthData]);
+
   const register = useCallback(async (userData) => {
     setLoading(true);
     setError(null);
@@ -223,6 +285,7 @@ export const useAuth = () => {
     isAdmin,
     isUser,
     login,
+    loginAsHost,
     register,
     logout,
     updateProfile,

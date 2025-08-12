@@ -354,7 +354,7 @@ const HostHeader = () => {
                                             </p>
                                         </div>
                                         <Link 
-                                            to="/profile" 
+                                            to="/host/profile" 
                                             className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
                                             onClick={() => setShowDropdown(false)}
                                         >
