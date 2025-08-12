@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import authService from '../api/authService';
-import { useToast } from '../components/common/Toast';
-import Avatar from '../components/common/Avatar';
-import { testAvatarUpload } from '../utils/uploadTest';
+import React, { useState } from "react";
+import styled from "styled-components";
+import authService from "../api/authService";
+import { useToast } from "../components/common/Toast";
+import Avatar from "../components/common/Avatar";
+import { testAvatarUpload } from "../utils/uploadTest";
 
 const TestContainer = styled.div`
   max-width: 600px;
@@ -38,11 +38,11 @@ const Button = styled.button`
   border-radius: 0.375rem;
   cursor: pointer;
   margin: 0.5rem 0.5rem 0.5rem 0;
-  
+
   &:hover {
     background-color: #4338ca;
   }
-  
+
   &:disabled {
     background-color: #9ca3af;
     cursor: not-allowed;
@@ -71,38 +71,40 @@ const AvatarTestPage = () => {
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      showError('Lỗi', 'Vui lòng chọn file trước khi upload');
+      showError("Lỗi", "Vui lòng chọn file trước khi upload");
       return;
     }
 
     setIsUploading(true);
     try {
       // Thử test upload trước
-      console.log('=== STARTING UPLOAD TEST ===');
+      console.log("=== STARTING UPLOAD TEST ===");
       const testResult = await testAvatarUpload(selectedFile);
-      
+
       if (testResult) {
-        console.log('Test upload successful:', testResult);
+        console.log("Test upload successful:", testResult);
         // Nếu test thành công, thử upload chính thức
         const result = await authService.uploadAvatar(selectedFile);
-        
+
         if (result.success) {
           setUploadedAvatar(result.data.fileUrl);
           showSuccess(
-            'Upload thành công!',
+            "Upload thành công!",
             `File đã được upload: ${result.data.fileName}`
           );
         } else {
-          throw new Error(result.message || 'Upload thất bại');
+          throw new Error(result.message || "Upload thất bại");
         }
       } else {
-        throw new Error('Test upload thất bại - kiểm tra console để xem chi tiết');
+        throw new Error(
+          "Test upload thất bại - kiểm tra console để xem chi tiết"
+        );
       }
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error("Upload error:", error);
       showError(
-        'Upload thất bại!',
-        error.message || 'Có lỗi xảy ra khi upload file'
+        "Upload thất bại!",
+        error.message || "Có lỗi xảy ra khi upload file"
       );
     } finally {
       setIsUploading(false);
@@ -111,53 +113,49 @@ const AvatarTestPage = () => {
 
   const testAvatars = [
     null,
-    'https://via.placeholder.com/150/cccccc/666666?text=User',
-    'avatar/test.jpg',
-    'http://localhost:8080/api/files/avatar/test.jpg',
-    'https://via.placeholder.com/150',
-    'invalid-url'
+    "https://via.placeholder.com/150/cccccc/666666?text=User",
+    "avatar/test.jpg",
+    "http://localhost:8080/api/files/avatar/test.jpg",
+    "https://via.placeholder.com/150",
+    "invalid-url",
   ];
 
   return (
     <TestContainer>
       <Title>Test Avatar Upload & Display</Title>
-      
+
       <TestSection>
         <h3>Upload Avatar</h3>
-        <FileInput
-          type="file"
-          accept="image/*"
-          onChange={handleFileSelect}
-        />
+        <FileInput type="file" accept="image/*" onChange={handleFileSelect} />
         <Button onClick={handleUpload} disabled={!selectedFile || isUploading}>
-          {isUploading ? 'Đang upload...' : 'Upload Avatar'}
+          {isUploading ? "Đang upload..." : "Upload Avatar"}
         </Button>
-        <Button 
+        <Button
           onClick={async () => {
             if (!selectedFile) {
-              showError('Lỗi', 'Vui lòng chọn file trước khi test');
+              showError("Lỗi", "Vui lòng chọn file trước khi test");
               return;
             }
-            console.log('=== TESTING UPLOAD ONLY ===');
+            console.log("=== TESTING UPLOAD ONLY ===");
             await testAvatarUpload(selectedFile);
           }}
           disabled={!selectedFile}
-          style={{ backgroundColor: '#10b981' }}
+          style={{ backgroundColor: "#10b981" }}
         >
           Test Upload Only
         </Button>
-        
+
         {selectedFile && (
           <div>
             <p>File đã chọn: {selectedFile.name}</p>
             <p>Kích thước: {(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
           </div>
         )}
-        
+
         {uploadedAvatar && (
           <div>
             <p>Avatar đã upload: {uploadedAvatar}</p>
-            <Avatar 
+            <Avatar
               src={uploadedAvatar}
               alt="Uploaded Avatar"
               size="100px"
@@ -170,13 +168,11 @@ const AvatarTestPage = () => {
       <TestSection>
         <h3>Test Avatar Display</h3>
         <p>Test các trường hợp hiển thị avatar khác nhau:</p>
-        
+
         {testAvatars.map((avatar, index) => (
           <AvatarDisplay key={index}>
-            <span style={{ minWidth: '120px' }}>
-              {avatar || 'null'}:
-            </span>
-            <Avatar 
+            <span style={{ minWidth: "120px" }}>{avatar || "null"}:</span>
+            <Avatar
               src={avatar}
               alt={`Test ${index}`}
               size="50px"
@@ -190,7 +186,7 @@ const AvatarTestPage = () => {
         <h3>Test Avatar với tên khác nhau</h3>
         <AvatarDisplay>
           <span>Nguyễn Văn A:</span>
-          <Avatar 
+          <Avatar
             src={null}
             alt="Nguyễn Văn A"
             size="50px"
@@ -199,16 +195,11 @@ const AvatarTestPage = () => {
         </AvatarDisplay>
         <AvatarDisplay>
           <span>John Doe:</span>
-          <Avatar 
-            src={null}
-            alt="John Doe"
-            size="50px"
-            name="John Doe"
-          />
+          <Avatar src={null} alt="John Doe" size="50px" name="John Doe" />
         </AvatarDisplay>
         <AvatarDisplay>
           <span>Maria Garcia:</span>
-          <Avatar 
+          <Avatar
             src={null}
             alt="Maria Garcia"
             size="50px"

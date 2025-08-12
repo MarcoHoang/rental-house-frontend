@@ -55,103 +55,6 @@ const ErrorMessage = styled.div`
   max-width: 600px;
 `;
 
-// Section cho các action buttons
-const ActionSection = styled.section`
-  padding: 2rem;
-  background-color: #f8f9fa;
-  text-align: center;
-`;
-
-const ActionGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-`;
-
-const ActionCard = styled(Link)`
-  background: white;
-  padding: 2rem;
-  border-radius: 1rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  text-decoration: none;
-  color: inherit;
-  transition: all 0.3s ease;
-  border: 2px solid transparent;
-  
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-    border-color: #6a82fb;
-  }
-  
-  .action-icon {
-    width: 4rem;
-    height: 4rem;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 1rem;
-    color: white;
-    font-size: 1.5rem;
-  }
-  
-  .action-title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    color: #343a40;
-  }
-  
-  .action-description {
-    color: #6c757d;
-    line-height: 1.6;
-  }
-`;
-
-const HostWelcomeSection = styled.div`
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 2rem;
-  margin: 2rem;
-  border-radius: 1rem;
-  text-align: center;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-`;
-
-const HostWelcomeTitle = styled.h2`
-  font-size: 2rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
-`;
-
-const HostWelcomeText = styled.p`
-  font-size: 1.1rem;
-  opacity: 0.9;
-  margin-bottom: 1.5rem;
-`;
-
-const HostActionButton = styled(Link)`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: white;
-  color: #667eea;
-  padding: 1rem 2rem;
-  border-radius: 0.5rem;
-  text-decoration: none;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  
-  &:hover {
-    background: #f8f9fa;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-`;
-
 // --- HomePage Component ---
 // Đây là component chính của trang chủ
 
@@ -161,7 +64,6 @@ const HomePage = () => {
   const [houses, setHouses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [user, setUser] = useState(null);
 
   // --- Data Fetching ---
   // Sử dụng useEffect để gọi API (hoặc dữ liệu giả) một lần khi component render
@@ -208,79 +110,6 @@ const HomePage = () => {
     return <HouseList houses={houses} />;
   };
 
-  // Render action section dựa trên role
-  const renderActionSection = () => {
-    if (!user) return null;
-
-    if (user.roleName === 'HOST') {
-      return (
-        <ActionSection>
-          <HostWelcomeSection>
-            <HostWelcomeTitle>
-              Chào mừng trở lại, {user.fullName || 'Chủ nhà'}! 🎉
-            </HostWelcomeTitle>
-            <HostWelcomeText>
-              Bạn đã được approve làm chủ nhà. Bây giờ bạn có thể đăng tin cho thuê nhà và quản lý các tin đăng của mình.
-            </HostWelcomeText>
-            <HostActionButton to="/host/post">
-              <Plus size={20} />
-              Đăng tin mới
-            </HostActionButton>
-          </HostWelcomeSection>
-          
-          <ActionGrid>
-            <ActionCard to="/host/post">
-              <div className="action-icon" style={{ background: '#3b82f6' }}>
-                <Plus size={24} />
-              </div>
-              <div className="action-title">Đăng tin mới</div>
-              <div className="action-description">
-                Thêm tài sản mới vào hệ thống cho thuê của bạn
-              </div>
-            </ActionCard>
-
-            <ActionCard to="/host/properties">
-              <div className="action-icon" style={{ background: '#10b981' }}>
-                <Home size={24} />
-              </div>
-              <div className="action-title">Quản lý tài sản</div>
-              <div className="action-description">
-                Xem và chỉnh sửa thông tin các tài sản đang cho thuê
-              </div>
-            </ActionCard>
-
-            <ActionCard to="/host/bookings">
-              <div className="action-icon" style={{ background: '#f59e0b' }}>
-                <User size={24} />
-              </div>
-              <div className="action-title">Đơn đặt phòng</div>
-              <div className="action-description">
-                Quản lý các đơn đặt phòng và yêu cầu từ khách hàng
-              </div>
-            </ActionCard>
-          </ActionGrid>
-        </ActionSection>
-      );
-    }
-
-    // Nếu là USER thường, hiển thị nút đăng ký làm chủ nhà
-    return (
-      <ActionSection>
-        <ActionGrid>
-          <ActionCard to="/host-application-test">
-            <div className="action-icon" style={{ background: '#8b5cf6' }}>
-              <Home size={24} />
-            </div>
-            <div className="action-title">Đăng ký làm chủ nhà</div>
-            <div className="action-description">
-              Bạn có nhà muốn cho thuê? Đăng ký ngay để trở thành chủ nhà và bắt đầu kiếm thu nhập!
-            </div>
-          </ActionCard>
-        </ActionGrid>
-      </ActionSection>
-    );
-  };
-
   // --- JSX to Render ---
   // Cấu trúc HTML của trang chủ
   return (
@@ -292,8 +121,6 @@ const HomePage = () => {
           <h1>Tìm kiếm ngôi nhà mơ ước của bạn</h1>
           <SearchBar />
         </HeroSection>
-
-        {renderActionSection()}
 
         <FeaturedSection>
           <SectionTitle>Nhà cho thuê nổi bật</SectionTitle>

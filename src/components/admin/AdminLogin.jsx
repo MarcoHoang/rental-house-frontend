@@ -131,27 +131,27 @@ const AdminLogin = () => {
     }
 
     try {
-      console.log('AdminLogin.handleSubmit - Starting login with:', formData);
-      
+      console.log("AdminLogin.handleSubmit - Starting login with:", formData);
+
       const response = await adminAuth.login(formData);
-      console.log('AdminLogin.handleSubmit - Response:', response);
-      
+      console.log("AdminLogin.handleSubmit - Response:", response);
+
       // adminAuth.login đã xử lý việc lưu token và user vào localStorage
       // Chỉ cần kiểm tra xem có token không
       const adminToken = localStorage.getItem("adminToken");
       const adminUser = localStorage.getItem("adminUser");
-      
+
       if (!adminToken) {
         throw new Error("Không nhận được token từ server.");
       }
-      
+
       if (!adminUser) {
         throw new Error("Không nhận được thông tin admin từ server.");
       }
-      
+
       const userData = JSON.parse(adminUser);
-      console.log('AdminLogin.handleSubmit - Admin user data:', userData);
-      
+      console.log("AdminLogin.handleSubmit - Admin user data:", userData);
+
       if (userData.role !== "ADMIN") {
         throw new Error("Bạn không có quyền truy cập Admin.");
       }
@@ -161,7 +161,9 @@ const AdminLogin = () => {
         `Chào mừng Admin ${userData.name || userData.email} quay trở lại!`
       );
 
-      console.log('AdminLogin.handleSubmit - Login successful, navigating to dashboard');
+      console.log(
+        "AdminLogin.handleSubmit - Login successful, navigating to dashboard"
+      );
       navigate("/admin/dashboard");
     } catch (err) {
       const errorMessage =
@@ -217,12 +219,7 @@ const AdminLogin = () => {
             toggleIcon={showPassword ? EyeOff : Eye}
           />
 
-          <Button
-            type="submit"
-            fullWidth
-            loading={loading}
-            disabled={loading}
-          >
+          <Button type="submit" fullWidth loading={loading} disabled={loading}>
             {loading ? "Đang đăng nhập..." : "Đăng nhập Admin"}
           </Button>
         </Form>

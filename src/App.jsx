@@ -1,5 +1,10 @@
 import React from "react";
-import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  Navigate,
+} from "react-router-dom";
 import UserHomePage from "./pages/UserHomePage";
 import HostHomePage from "./pages/HostHomePage";
 import HostDashboardPage from "./pages/host/HostDashboardPage";
@@ -11,6 +16,11 @@ import HostLogin from './components/login-register/HostLogin';
 import ForgotPassword from './components/login-register/ForgotPassword';
 import AdminLogin from './components/admin/AdminLogin';
 import HostLayout from './components/layout/HostLayout';
+import Register from "./components/login-register/Register";
+import Login from "./components/login-register/Login";
+import ForgotPassword from "./components/login-register/ForgotPassword";
+import AdminLogin from "./components/admin/AdminLogin";
+import HostLayout from "./components/layout/HostLayout";
 import UserProfilePage from "./pages/UserProfilePage";
 import AdminPage from "./pages/AdminPage";
 import AdminRoute from "./components/admin/AdminRoute";
@@ -23,7 +33,11 @@ import ChangePasswordPage from "./pages/ChangePasswordPage";
 import HostApplicationTestPage from "./pages/HostApplicationTestPage";
 
 // Protected Route Component (đã cải thiện)
-const ProtectedRoute = ({ children, requireHost = false, requireUser = false }) => {
+const ProtectedRoute = ({
+  children,
+  requireHost = false,
+  requireUser = false,
+}) => {
   const ENABLE_AUTH = AUTH_CONFIG.ENABLE_AUTH;
 
   if (!ENABLE_AUTH) {
@@ -32,32 +46,23 @@ const ProtectedRoute = ({ children, requireHost = false, requireUser = false }) 
 
   // Sử dụng utility function để lấy user data an toàn
   const user = getUserFromStorage() || {};
-  
+
   // Debug logs
-  console.log('ProtectedRoute - User data:', user);
-  console.log('ProtectedRoute - requireHost:', requireHost);
-  console.log('ProtectedRoute - requireUser:', requireUser);
-  console.log('ProtectedRoute - user.roleName:', user.roleName);
+  console.log("ProtectedRoute - User data:", user);
+  console.log("ProtectedRoute - requireHost:", requireHost);
+  console.log("ProtectedRoute - requireUser:", requireUser);
+  console.log("ProtectedRoute - user.roleName:", user.roleName);
 
-  // Nếu yêu cầu HOST role
-  if (requireHost) {
-    if (user.roleName !== 'HOST') {
-      console.log('ProtectedRoute - Redirecting to / (not HOST)');
-      return <Navigate to="/" replace />;
-    }
-    return children;
+  if (requireHost && user.roleName !== "HOST") {
+    console.log("ProtectedRoute - Redirecting to / (not HOST)");
+    return <Navigate to="/" replace />;
   }
 
-  // Nếu yêu cầu USER role (không phải HOST)
-  if (requireUser) {
-    if (user.roleName === 'HOST') {
-      console.log('ProtectedRoute - Redirecting to / (is HOST, but requireUser)');
-      return <Navigate to="/" replace />;
-    }
-    return children;
+  if (requireUser && user.roleName === "HOST") {
+    console.log("ProtectedRoute - Redirecting to /host (is HOST)");
+    return <Navigate to="/host" replace />;
   }
 
-  // Nếu không yêu cầu role cụ thể, cho phép cả USER và HOST truy cập
   return children;
 };
 
@@ -79,80 +84,74 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/admin/login" element={<AdminLogin />} />
 
-          {/* Trang chủ chung cho tất cả người dùng */}
-          <Route 
-            path="/" 
-            element={
-              <ProtectedRoute>
-                <UserHomePage />
-              </ProtectedRoute>
-            }
-          />
+            {/* Trang chủ chung cho tất cả người dùng */}
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <UserHomePage />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Các route yêu cầu đăng nhập (chỉ dành cho user thường) */}
-          <Route 
-            path="/profile" 
-            element={
-              <ProtectedRoute requireUser={true}>
-                <UserProfilePage />
-              </ProtectedRoute>
-            }
-          />
-          
-          {/* Trang đổi mật khẩu */}
-          <Route 
-            path="/change-password" 
-            element={
-              <ProtectedRoute requireUser={true}>
-                <ChangePasswordPage />
-              </ProtectedRoute>
-            }
-          />
+            {/* Các route yêu cầu đăng nhập (chỉ dành cho user thường) */}
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute requireUser={true}>
+                  <UserProfilePage />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Trang test avatar upload */}
-          <Route 
-            path="/avatar-test" 
-            element={<AvatarTestPage />}
-          />
+            {/* Trang đổi mật khẩu */}
+            <Route
+              path="/change-password"
+              element={
+                <ProtectedRoute requireUser={true}>
+                  <ChangePasswordPage />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Trang test đơn đăng ký làm chủ nhà */}
-          <Route 
-            path="/host-application-test" 
-            element={<HostApplicationTestPage />}
-          />
+            {/* Trang test avatar upload */}
+            <Route path="/avatar-test" element={<AvatarTestPage />} />
 
-          {/* Trang admin */}
-          <Route
-            path="/admin/*"
-            element={
-              <AdminRoute>
-                <AdminPage />
-              </AdminRoute>
-            }
-          />
+            {/* Trang test đơn đăng ký làm chủ nhà */}
+            <Route
+              path="/host-application-test"
+              element={<HostApplicationTestPage />}
+            />
 
-          {/* Các route dành cho chủ nhà */}
-          <Route 
-            path="/host" 
-            element={
-              <ProtectedRoute requireHost={true}>
-                <HostLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<HostDashboardPage />} />
-            <Route path="post" element={<PostPropertyPage />} />
-            <Route path="profile" element={<HostProfilePage />} />
-            <Route path="properties" element={<div>Quản lý tài sản (Coming soon)</div>} />
-            <Route path="bookings" element={<div>Quản lý đơn đặt phòng (Coming soon)</div>} />
-          </Route>
+            {/* Trang admin */}
+            <Route
+              path="/admin/*"
+              element={
+                <AdminRoute>
+                  <AdminPage />
+                </AdminRoute>
+              }
+            />
 
-          {/* Chuyển hướng dựa trên vai trò */}
-          <Route path="/redirect" element={<RoleBasedRedirect />} />
+            {/* Các route dành cho chủ nhà */}
+            <Route
+              path="/host"
+              element={
+                <ProtectedRoute requireHost={true}>
+                  <HostLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<HostHomePage />} />
+              <Route path="post" element={<PostPropertyPage />} />
+            </Route>
 
-          {/* Chuyển hướng các đường dẫn không xác định về trang chủ */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+            {/* Chuyển hướng dựa trên vai trò */}
+            <Route path="/redirect" element={<RoleBasedRedirect />} />
+
+            {/* Chuyển hướng các đường dẫn không xác định về trang chủ */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
         </Router>
       </ToastProvider>
     </ErrorBoundary>
