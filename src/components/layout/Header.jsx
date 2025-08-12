@@ -477,23 +477,27 @@ const Header = () => {
                             return;
                         }
                         
-                        const response = await fetch('http://localhost:8080/api/host-applications', {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${token}`
-                            },
-                            body: formData
-                        });
+                        // Import hostApi
+                        const hostApi = (await import('../../api/hostApi')).default;
+                        const result = await hostApi.submitHostApplication(formData);
                         
-                        if (!response.ok) {
-                            throw new Error('Có lỗi xảy ra khi gửi đơn đăng ký');
-                        }
-                        
-                        const RESULT = await response.json();
                         alert('Đã gửi đơn đăng ký trở thành chủ nhà thành công! Chúng tôi sẽ liên hệ với bạn sớm.');
+                        setShowHostRegistration(false);
                     } catch (error) {
                         console.error('Lỗi khi gửi đơn đăng ký:', error);
-                        alert(error.message || 'Có lỗi xảy ra khi gửi đơn đăng ký. Vui lòng thử lại sau.');
+                        
+                        // Hiển thị thông báo lỗi chi tiết hơn
+                        let errorMessage = 'Có lỗi xảy ra khi gửi đơn đăng ký. Vui lòng thử lại sau.';
+                        
+                        if (error.response?.data?.message) {
+                            errorMessage = error.response.data.message;
+                        } else if (error.response?.data?.error) {
+                            errorMessage = error.response.data.error;
+                        } else if (error.message) {
+                            errorMessage = error.message;
+                        }
+                        
+                        alert(`Lỗi: ${errorMessage}`);
                     }
                 }}
             />

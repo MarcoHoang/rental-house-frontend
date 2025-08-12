@@ -17,6 +17,7 @@ import { AUTH_CONFIG } from "./config/auth";
 import { getUserFromStorage } from "./utils/localStorage";
 import AvatarTestPage from "./pages/AvatarTestPage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
+import HostApplicationTestPage from "./pages/HostApplicationTestPage";
 
 // Protected Route Component (đã cải thiện)
 const ProtectedRoute = ({ children, requireHost = false, requireUser = false }) => {
@@ -99,6 +100,12 @@ function App() {
           <Route 
             path="/avatar-test" 
             element={<AvatarTestPage />}
+          />
+
+          {/* Trang test đơn đăng ký làm chủ nhà */}
+          <Route 
+            path="/host-application-test" 
+            element={<HostApplicationTestPage />}
           />
 
           {/* Trang admin */}

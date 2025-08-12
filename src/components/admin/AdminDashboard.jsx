@@ -20,6 +20,8 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import UserManagement from "./UserManagement";
+import HostManagement from "./HostManagement";
+import HostApplicationsManagement from "./HostApplicationsManagement";
 import ConfirmDialog from "../common/ConfirmDialog";
 import { useToast } from "../common/Toast";
 import UserDetailPage from "./UserDetailPage";
@@ -600,6 +602,18 @@ const AdminDashboard = () => {
       icon: Users,
       path: "/admin/user-management",
     },
+    {
+      id: "host-applications",
+      label: "Đơn đăng ký chủ nhà",
+      icon: FileText,
+      path: "/admin/host-applications",
+    },
+    {
+      id: "host-management",
+      label: "Quản lý Chủ nhà",
+      icon: Home,
+      path: "/admin/host-management",
+    },
     { id: "houses", label: "Quản lý nhà", icon: Home, path: "/admin/houses" },
     { id: "tenants", label: "Khách thuê", icon: Users, path: "/admin/tenants" },
     {
@@ -699,6 +713,12 @@ const AdminDashboard = () => {
               path="user-management/:userId"
               element={<UserDetailPage />}
             />
+
+            {/* Route cho Host Applications Management */}
+            <Route path="host-applications" element={<HostApplicationsManagement />} />
+
+            {/* Route cho Host Management */}
+            <Route path="host-management" element={<HostManagement />} />
 
             {/* Route cho các trang khác (ví dụ) */}
             <Route path="houses" element={<HousesContent />} />
