@@ -18,8 +18,11 @@ import {
   Search,
   Filter,
   MoreHorizontal,
+  Briefcase,
 } from "lucide-react";
 import UserManagement from "./UserManagement";
+import HostManagement from "./HostManagement";
+import HostApplicationsManagement from "./HostApplicationsManagement";
 import ConfirmDialog from "../common/ConfirmDialog";
 import { useToast } from "../common/Toast";
 import UserDetailPage from "./UserDetailPage";
@@ -596,30 +599,27 @@ const AdminDashboard = () => {
     },
     {
       id: "user-management",
-      label: "Quản lý User",
+      label: "Quản lý người dùng",
       icon: Users,
       path: "/admin/user-management",
     },
-    { id: "houses", label: "Quản lý nhà", icon: Home, path: "/admin/houses" },
-    { id: "tenants", label: "Khách thuê", icon: Users, path: "/admin/tenants" },
     {
-      id: "contracts",
-      label: "Hợp đồng",
-      icon: FileText,
-      path: "/admin/contracts",
+      id: "host-applications",
+      label: "Duyệt đơn làm chủ nhà", // Rút gọn tên cho đẹp hơn
+      icon: FileText, // Icon giống "Hợp đồng" thể hiện tính giấy tờ
+      path: "/admin/host-applications",
     },
     {
-      id: "revenue",
-      label: "Doanh thu",
-      icon: DollarSign,
-      path: "/admin/revenue",
+      id: "host-management",
+      label: "Quản lý Chủ nhà",
+      icon: Briefcase, // Icon mới, thể hiện đối tác kinh doanh
+      path: "/admin/host-management",
     },
-    {
-      id: "settings",
-      label: "Cài đặt",
-      icon: Settings,
-      path: "/admin/settings",
-    },
+    { id: "houses", label: "Quản lý nhà", icon: Home },
+    { id: "tenants", label: "Khách thuê", icon: Users },
+    { id: "contracts", label: "Hợp đồng", icon: FileText },
+    { id: "revenue", label: "Doanh thu", icon: DollarSign },
+    { id: "settings", label: "Cài đặt", icon: Settings },
   ];
 
   return (
@@ -699,6 +699,15 @@ const AdminDashboard = () => {
               path="user-management/:userId"
               element={<UserDetailPage />}
             />
+
+            {/* Route cho Host Applications Management */}
+            <Route
+              path="host-applications"
+              element={<HostApplicationsManagement />}
+            />
+
+            {/* Route cho Host Management */}
+            <Route path="host-management" element={<HostManagement />} />
 
             {/* Route cho các trang khác (ví dụ) */}
             <Route path="houses" element={<HousesContent />} />

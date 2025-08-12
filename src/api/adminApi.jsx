@@ -565,4 +565,58 @@ export const dashboardApi = {
   },
 };
 
+// Host Applications Management
+export const hostApplicationsApi = {
+  getAllHosts: async (params = {}) => {
+    try {
+      const response = await apiClient.get(`${API_PREFIX}/admin/hosts`, {
+        params,
+      });
+      return response.data.data; // Dữ liệu trả về là một Page object
+    } catch (error) {
+      logApiError(error, "getAllHosts");
+      throw error;
+    }
+  },
+
+  getPendingRequests: async (params = {}) => {
+    try {
+      const response = await apiClient.get(
+        `${API_PREFIX}/admin/host-requests`,
+        { params }
+      );
+      return response.data.data; // Dữ liệu trả về là một Page object
+    } catch (error) {
+      logApiError(error, "getPendingRequests");
+      throw error;
+    }
+  },
+
+  approve: async (requestId) => {
+    try {
+      const response = await apiClient.post(
+        `${API_PREFIX}/admin/host-requests/${requestId}/approve`
+      );
+      return response.data;
+    } catch (error) {
+      logApiError(error, "approveRequest");
+      throw error;
+    }
+  },
+
+  reject: async (requestId, reason) => {
+    try {
+      // SỬA LẠI URL: Thêm /admin/
+      const response = await apiClient.post(
+        `${API_PREFIX}/admin/host-requests/${requestId}/reject`,
+        { reason }
+      );
+      return response.data;
+    } catch (error) {
+      logApiError(error, "rejectRequest");
+      throw error;
+    }
+  },
+};
+
 export default apiClient;

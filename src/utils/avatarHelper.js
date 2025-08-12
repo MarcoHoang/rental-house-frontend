@@ -15,7 +15,7 @@ const API_BASE_URL = 'http://localhost:8080/api';
  */
 export const getAvatarUrl = (fileUrl) => {
   if (!fileUrl) {
-    return 'https://via.placeholder.com/150/cccccc/666666?text=User';
+    return '/default-avatar.png';
   }
 
   // Nếu đã là URL đầy đủ (bắt đầu bằng http), trả về nguyên
@@ -25,21 +25,13 @@ export const getAvatarUrl = (fileUrl) => {
 
   // Nếu là default avatar, trả về placeholder
   if (fileUrl === '/default-avatar.png' || fileUrl === 'default-avatar.png') {
-    return 'https://via.placeholder.com/150/cccccc/666666?text=User';
+    return '/default-avatar.png';
   }
 
-  // Nếu là URL tương đối từ backend (ví dụ: "avatar/filename.jpg")
-  if (fileUrl.startsWith('avatar/')) {
-    return `${API_BASE_URL}/files/${fileUrl}`;
-  }
-
-  // Nếu chỉ là filename, thêm prefix avatar/
-  if (!fileUrl.includes('/')) {
-    return `${API_BASE_URL}/files/avatar/${fileUrl}`;
-  }
-
-  // Trường hợp khác, trả về URL đầy đủ
-  return `${API_BASE_URL}/files/${fileUrl}`;
+  // Tạm thời sử dụng placeholder để tránh lỗi 403
+  // TODO: Cần kiểm tra backend để cho phép truy cập public avatar
+  console.warn('Avatar URL requires authentication, using placeholder:', fileUrl);
+  return '/default-avatar.png';
 };
 
 /**

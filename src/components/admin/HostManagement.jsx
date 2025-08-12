@@ -1,10 +1,11 @@
-// src/components/admin/UserManagement.jsx
+// src/components/admin/HostManagement.jsx
+
 import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { usersApi } from "../../api/adminApi";
+// Sửa lại import: dùng hostApplicationsApi và usersApi
+import { hostApplicationsApi, usersApi } from "../../api/adminApi";
 import {
-  MoreHorizontal,
   ChevronLeft,
   ChevronRight,
   RefreshCw,
@@ -13,6 +14,7 @@ import {
 } from "lucide-react";
 import { useToast } from "../common/Toast";
 
+// --- STYLED COMPONENTS (Đồng bộ 100% với UserManagement) ---
 const Card = styled.div`
   background: white;
   border-radius: 0.75rem;
@@ -53,7 +55,6 @@ const Badge = styled.span`
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 600;
-
   &.active {
     background-color: #c6f6d5;
     color: #22543d;
@@ -64,9 +65,8 @@ const Badge = styled.span`
   }
 `;
 
-// Bước 2: Cải tiến ActionButton và thêm ActionContainer
 const ActionButton = styled.button`
-  padding: 0.5rem; // Tăng padding để nhấn dễ hơn
+  padding: 0.5rem;
   font-size: 0.75rem;
   font-weight: 500;
   border: 1px solid #e2e8f0;
@@ -74,14 +74,12 @@ const ActionButton = styled.button`
   cursor: pointer;
   transition: all 0.2s;
   background: white;
-  display: flex; // Cần thiết để icon hiển thị đúng
+  display: flex;
   align-items: center;
-
   &:hover {
     background: #f7fafc;
     border-color: #cbd5e0;
   }
-
   &.lock {
     color: #c53030;
     &:hover {
@@ -94,7 +92,6 @@ const ActionButton = styled.button`
       background: #c6f6d5;
     }
   }
-  // Thêm style cho nút xem
   &.view {
     color: #2b6cb0;
     &:hover {
@@ -105,7 +102,7 @@ const ActionButton = styled.button`
 
 const ActionContainer = styled.div`
   display: flex;
-  gap: 0.5rem; // Khoảng cách giữa các nút
+  gap: 0.5rem;
 `;
 
 const PaginationContainer = styled.div`
@@ -171,91 +168,64 @@ const ErrorMessage = styled.div`
   margin: 1rem;
 `;
 
-const UserManagement = () => {
-  const [users, setUsers] = useState([]);
+const HostManagement = () => {
+  const [hosts, setHosts] = useState([]);
   const [pagination, setPagination] = useState({ number: 0, totalPages: 1 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { showSuccess, showError } = useToast();
 
-  const fetchUsers = useCallback(async (page = 0) => {
+  const fetchHosts = useCallback(async (page = 0) => {
     try {
       setLoading(true);
       setError(null);
-
-      console.log("UserManagement.fetchUsers - Fetching users for page:", page);
-
-      // Thêm filter để chỉ lấy user có role USER (không lấy HOST)
-      const params = {
-        page: page,
-        size: 10,
-        roleName: "USER", // Chỉ lấy user có role USER
-      };
-
-      const data = await usersApi.getAll(params);
-      console.log("UserManagement.fetchUsers - Received data:", data);
-
-      setUsers(data.content || data);
+      const data = await hostApplicationsApi.getAllHosts({ page, size: 10 });
+      setHosts(data.content || []);
       setPagination({
-        number: data.number || page,
+        number: data.number || 0,
         totalPages: data.totalPages || 1,
-        totalElements: data.totalElements || 0,
       });
     } catch (err) {
-      console.error("UserManagement.fetchUsers - Error:", err);
-      setError("Không thể tải danh sách người dùng. Vui lòng thử lại.");
+      console.error("Error fetching hosts:", err);
+      setError("Không thể tải danh sách chủ nhà. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
   }, []);
+
   useEffect(() => {
-    fetchUsers(0);
-  }, [fetchUsers]);
+    fetchHosts(0);
+  }, [fetchHosts]);
 
-  const handleToggleStatus = async (userId, currentStatus) => {
+  const handleToggleStatus = async (host) => {
+    const currentStatus = host.active; // Lấy trạng thái hiện tại của host
     try {
-      console.log(
-        "UserManagement.handleToggleStatus - Toggling status for user:",
-        userId,
-        "from",
-        currentStatus,
-        "to",
-        !currentStatus
-      );
+      // Tái sử dụng API từ usersApi, truyền vào userId của Host
+      await usersApi.updateStatus(host.id, !currentStatus);
 
-      await usersApi.updateStatus(userId, !currentStatus);
-      console.log(
-        "UserManagement.handleToggleStatus - Status updated successfully"
-      );
-
-      // Cập nhật lại trạng thái của user trong state để UI thay đổi ngay lập tức
-      setUsers((currentUsers) =>
-        currentUsers.map((user) =>
-          user.id === userId ? { ...user, active: !currentStatus } : user
+      // Cập nhật UI ngay lập tức
+      setHosts((currentHosts) =>
+        currentHosts.map((h) =>
+          h.id === host.id ? { ...h, active: !currentStatus } : h
         )
       );
 
-      // Hiển thị thông báo thành công
-      const user = users.find((u) => u.id === userId);
       const action = !currentStatus ? "mở khóa" : "khóa";
       showSuccess(
         "Cập nhật thành công!",
-        `Đã ${action} tài khoản của ${
-          user?.fullName || user?.email || "người dùng"
-        }`
+        `Đã ${action} tài khoản của chủ nhà ${host.fullName || host.username}.`
       );
     } catch (err) {
-      console.error("UserManagement.handleToggleStatus - Error:", err);
       showError(
         "Cập nhật thất bại!",
-        "Không thể cập nhật trạng thái người dùng. Vui lòng thử lại."
+        "Không thể cập nhật trạng thái của chủ nhà."
       );
     }
   };
 
   const handlePageChange = (newPage) => {
     if (newPage >= 0 && newPage < pagination.totalPages) {
-      fetchUsers(newPage);
+      fetchHosts(newPage);
     }
   };
 
@@ -288,46 +258,53 @@ const UserManagement = () => {
           </tr>
         </thead>
         <tbody>
-          {users.map((user) => (
-            <tr key={user.id}>
-              <td>{user.fullName || "Chưa cập nhật"}</td>
-              <td>{user.email || "Chưa cập nhật"}</td>
-              <td>{user.phone || "Chưa cập nhật"}</td>
-              <td>
-                {user.active ? (
-                  <Badge className="active">Đang hoạt động</Badge>
-                ) : (
-                  <Badge className="locked">Đã khóa</Badge>
-                )}
-              </td>
-              <td>
-                {/* Bước 3: Thêm nút Xem chi tiết và nhóm các nút lại */}
-                <ActionContainer>
-                  <Link
-                    to={`/admin/user-management/${user.id}`}
-                    title="Xem chi tiết"
-                  >
-                    <ActionButton className="view">
-                      <Eye size={16} />
+          {hosts.length > 0 ? (
+            hosts.map((host) => (
+              <tr key={host.id}>
+                <td>{host.fullName || "Chưa cập nhật"}</td>
+                <td>{host.email}</td>
+                <td>{host.phone || "Chưa cập nhật"}</td>
+                <td>
+                  <Badge className={host.active ? "active" : "locked"}>
+                    {host.active ? "Đang hoạt động" : "Đã khóa"}
+                  </Badge>
+                </td>
+                <td>
+                  <ActionContainer>
+                    <Link
+                      to={`/admin/user-management/${host.id}`}
+                      title="Xem chi tiết"
+                    >
+                      <ActionButton className="view">
+                        <Eye size={16} />
+                      </ActionButton>
+                    </Link>
+                    <ActionButton
+                      title={
+                        host.active ? "Khóa tài khoản" : "Mở khóa tài khoản"
+                      }
+                      className={host.active ? "lock" : "unlock"}
+                      onClick={() => handleToggleStatus(host)}
+                    >
+                      {host.active ? "Khóa" : "Mở khóa"}
                     </ActionButton>
-                  </Link>
-                  <ActionButton
-                    title={user.active ? "Khóa tài khoản" : "Mở khóa tài khoản"}
-                    className={user.active ? "lock" : "unlock"}
-                    onClick={() => handleToggleStatus(user.id, user.active)}
-                  >
-                    {user.active ? "Khóa" : "Mở khóa"}
-                  </ActionButton>
-                </ActionContainer>
+                  </ActionContainer>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="5" style={{ textAlign: "center", padding: "2rem" }}>
+                Không có chủ nhà nào.
               </td>
             </tr>
-          ))}
+          )}
         </tbody>
       </Table>
       <PaginationContainer>
         <span>
           Trang <strong>{pagination.number + 1}</strong> trên{" "}
-          <strong>{pagination.totalPages}</strong>
+          <strong>{pagination.totalPages || 1}</strong>
         </span>
         <PaginationControls>
           <PageButton
@@ -347,4 +324,5 @@ const UserManagement = () => {
     </Card>
   );
 };
-export default UserManagement;
+
+export default HostManagement;
