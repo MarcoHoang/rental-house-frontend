@@ -18,7 +18,6 @@ import {
   Search,
   Filter,
   MoreHorizontal,
-  Briefcase,
 } from "lucide-react";
 import UserManagement from "./UserManagement";
 import HostManagement from "./HostManagement";
@@ -599,27 +598,42 @@ const AdminDashboard = () => {
     },
     {
       id: "user-management",
-      label: "Quản lý người dùng",
+      label: "Quản lý User",
       icon: Users,
       path: "/admin/user-management",
     },
     {
       id: "host-applications",
-      label: "Duyệt đơn làm chủ nhà", // Rút gọn tên cho đẹp hơn
-      icon: FileText, // Icon giống "Hợp đồng" thể hiện tính giấy tờ
+      label: "Đơn đăng ký chủ nhà",
+      icon: FileText,
       path: "/admin/host-applications",
     },
     {
       id: "host-management",
       label: "Quản lý Chủ nhà",
-      icon: Briefcase, // Icon mới, thể hiện đối tác kinh doanh
+      icon: Home,
       path: "/admin/host-management",
     },
-    { id: "houses", label: "Quản lý nhà", icon: Home },
-    { id: "tenants", label: "Khách thuê", icon: Users },
-    { id: "contracts", label: "Hợp đồng", icon: FileText },
-    { id: "revenue", label: "Doanh thu", icon: DollarSign },
-    { id: "settings", label: "Cài đặt", icon: Settings },
+    { id: "houses", label: "Quản lý nhà", icon: Home, path: "/admin/houses" },
+    { id: "tenants", label: "Khách thuê", icon: Users, path: "/admin/tenants" },
+    {
+      id: "contracts",
+      label: "Hợp đồng",
+      icon: FileText,
+      path: "/admin/contracts",
+    },
+    {
+      id: "revenue",
+      label: "Doanh thu",
+      icon: DollarSign,
+      path: "/admin/revenue",
+    },
+    {
+      id: "settings",
+      label: "Cài đặt",
+      icon: Settings,
+      path: "/admin/settings",
+    },
   ];
 
   return (
