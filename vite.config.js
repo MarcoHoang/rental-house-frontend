@@ -1,17 +1,19 @@
-// vite.config.js
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import path from "path";
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
   server: {
     proxy: {
-      // Chuỗi '/api' là tiền tố bạn muốn chuyển tiếp
       "/api": {
-        target: "http://localhost:8080", // Địa chỉ server backend của bạn
+        target: "http://localhost:8080",
         changeOrigin: true,
-        // (Tùy chọn) Xóa '/api' khỏi đường dẫn khi gửi request
-        // rewrite: (path) => path.replace(/^\/api/, '')
       },
     },
   },
