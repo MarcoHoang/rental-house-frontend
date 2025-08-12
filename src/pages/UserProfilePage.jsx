@@ -5,6 +5,7 @@ import authService from '../api/authService';
 import { useToast } from '../components/common/Toast';
 import { getAvatarUrl } from '../utils/avatarHelper';
 import Avatar from '../components/common/Avatar';
+import HostApplicationStatus from '../components/host/HostApplicationStatus';
 
 const ProfileContainer = styled.div`
   max-width: 800px;
@@ -604,22 +605,41 @@ const UserProfilePage = () => {
         }}>
           Đổi mật khẩu để bảo vệ tài khoản của bạn
         </p>
-                 <Button
-           type="button"
-           onClick={() => {
-             // Truyền thông tin về trang gốc (trang trước Profile)
-             const originalFrom = location.state?.from || '/';
-             navigate('/change-password', { 
-               state: { from: originalFrom } 
-             });
-           }}
-           style={{
-             backgroundColor: '#059669',
-             ':hover': { backgroundColor: '#047857' }
-           }}
-         >
-           Đổi mật khẩu
-         </Button>
+        <Button
+          type="button"
+          onClick={() => {
+            // Truyền thông tin về trang gốc (trang trước Profile)
+            const originalFrom = location.state?.from || '/';
+            navigate('/change-password', { 
+              state: { from: originalFrom } 
+            });
+          }}
+          style={{
+            backgroundColor: '#059669',
+            ':hover': { backgroundColor: '#047857' }
+          }}
+        >
+          Đổi mật khẩu
+        </Button>
+      </div>
+
+      {/* Phần trạng thái đơn đăng ký làm chủ nhà */}
+      <div style={{ 
+        marginTop: '2rem', 
+        paddingTop: '2rem', 
+        borderTop: '1px solid #e5e7eb' 
+      }}>
+        <h3 style={{ marginBottom: '1rem', color: '#374151' }}>
+          Đơn đăng ký làm chủ nhà
+        </h3>
+        <p style={{ 
+          fontSize: '0.875rem', 
+          color: '#6b7280', 
+          marginBottom: '1rem' 
+        }}>
+          Theo dõi trạng thái đơn đăng ký làm chủ nhà của bạn
+        </p>
+        <HostApplicationStatus />
       </div>
     </ProfileContainer>
   );
