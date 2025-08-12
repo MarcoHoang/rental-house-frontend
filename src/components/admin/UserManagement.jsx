@@ -178,34 +178,32 @@ const UserManagement = () => {
   const [error, setError] = useState(null);
   const { showSuccess, showError } = useToast();
 
-  const fetchUsers = useCallback(async (page) => {
-    setLoading(true);
-    setError(null);
+  const fetchUsers = useCallback(async (page = 0) => {
     try {
+      setLoading(true);
+      setError(null);
+
       console.log("UserManagement.fetchUsers - Fetching users for page:", page);
 
-      const response = await usersApi.getAll({ page: page, size: 10 });
-      console.log("UserManagement.fetchUsers - Response:", response);
+      // Thêm filter để chỉ lấy user có role USER (không lấy HOST)
+      const params = {
+        page: page,
+        size: 10,
+        roleName: "USER", // Chỉ lấy user có role USER
+      };
 
-      // Backend trả về format: { content: [...], totalPages: 1, number: 0, ... }
-      const userList = response.content || [];
-      console.log("UserManagement.fetchUsers - User list:", userList);
+      const data = await usersApi.getAll(params);
+      console.log("UserManagement.fetchUsers - Received data:", data);
 
-      setUsers(userList);
-
+      setUsers(data.content || data);
       setPagination({
-        number: response.number || 0,
-        totalPages: response.totalPages || 1,
-      });
-
-      console.log("UserManagement.fetchUsers - Pagination set:", {
-        number: response.number || 0,
-        totalPages: response.totalPages || 1,
+        number: data.number || page,
+        totalPages: data.totalPages || 1,
+        totalElements: data.totalElements || 0,
       });
     } catch (err) {
       console.error("UserManagement.fetchUsers - Error:", err);
       setError("Không thể tải danh sách người dùng. Vui lòng thử lại.");
-      setUsers([]);
     } finally {
       setLoading(false);
     }
