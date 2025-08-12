@@ -14,7 +14,7 @@ const LoginContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1e40af 0%, #3730a3 100%);
   padding: 1rem;
 `;
 
@@ -36,7 +36,7 @@ const LoginCard = styled.div`
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #3182ce, #667eea);
+    background: linear-gradient(90deg, #1e40af, #3730a3);
   }
 `;
 
@@ -50,7 +50,7 @@ const LoginHeader = styled.div`
     justify-content: center;
     width: 4rem;
     height: 4rem;
-    background: linear-gradient(135deg, #3182ce, #667eea);
+    background: linear-gradient(135deg, #1e40af, #3730a3);
     border-radius: 50%;
     margin-bottom: 1rem;
   }
@@ -66,6 +66,19 @@ const LoginHeader = styled.div`
     color: #718096;
     font-size: 0.875rem;
     margin: 0;
+  }
+
+  .host-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #1e40af, #3730a3);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-top: 0.5rem;
   }
 `;
 
@@ -88,14 +101,14 @@ const FooterLinks = styled.div`
   }
 
   a {
-    color: #3182ce;
+    color: #1e40af;
     text-decoration: none;
     font-size: 0.875rem;
     font-weight: 500;
     transition: color 0.2s;
 
     &:hover {
-      color: #2c5aa0;
+      color: #1e3a8a;
       text-decoration: underline;
     }
   }
@@ -114,8 +127,8 @@ const SuccessMessage = styled.div`
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 `;
 
-const Login = () => {
-  const { login, loading, error } = useAuth();
+const HostLogin = () => {
+  const { loginAsHost, loading, error } = useAuth();
   const { showSuccess } = useToast();
   const [searchParams] = useSearchParams();
   const [roleChangedMessage, setRoleChangedMessage] = useState("");
@@ -150,22 +163,13 @@ const Login = () => {
       return;
     }
 
-    const result = await login(formData.email, formData.password);
+    const result = await loginAsHost(formData.email, formData.password);
     
     if (result.success) {
-      // Kiểm tra xem user có phải là host không
-      const userData = result.data?.user;
-      if (userData?.roleName === 'HOST') {
-        showSuccess(
-          "Đăng nhập thành công!",
-          `Chào mừng bạn quay trở lại, ${userData.fullName || 'Chủ nhà'}! Bạn đã được chuyển đến trang quản lý chủ nhà.`
-        );
-      } else {
-        showSuccess(
-          "Đăng nhập thành công!",
-          `Chào mừng bạn quay trở lại, ${userData?.fullName || 'Người dùng'}!`
-        );
-      }
+      showSuccess(
+        "Đăng nhập host thành công!",
+        `Chào mừng bạn quay trở lại, ${result.data?.user?.fullName || 'Chủ nhà'}!`
+      );
     }
   };
 
@@ -174,10 +178,14 @@ const Login = () => {
       <LoginCard>
         <LoginHeader>
           <div className="icon-wrapper">
-            <LogIn color="white" size={32} />
+            <Building2 color="white" size={32} />
           </div>
-          <h1>Đăng nhập tài khoản</h1>
-          <p>Chào mừng bạn quay trở lại!</p>
+          <h1>Đăng nhập tài khoản chủ nhà</h1>
+          <p>Quản lý tài sản và đơn đặt phòng của bạn</p>
+          <div className="host-badge">
+            <Building2 size={16} />
+            Chủ nhà
+          </div>
         </LoginHeader>
 
         <Form onSubmit={handleSubmit}>
@@ -222,20 +230,20 @@ const Login = () => {
             loading={loading}
             disabled={loading}
           >
-            {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+            {loading ? "Đang đăng nhập..." : "Đăng nhập chủ nhà"}
           </Button>
         </Form>
 
         <FooterLinks>
           <p>
-            Chưa có tài khoản?{" "}
+            Chưa có tài khoản chủ nhà?{" "}
             <Link to="/register">Đăng ký ngay</Link>
           </p>
           <Link to="/forgot-password">Quên mật khẩu?</Link>
           <br />
-          <Link to="/host/login">
-            <Building2 size={16} style={{ marginRight: '0.5rem' }} />
-            Đăng nhập chủ nhà
+          <Link to="/login">
+            <LogIn size={16} style={{ marginRight: '0.5rem' }} />
+            Đăng nhập người dùng thường
           </Link>
           <br />
           <Link to="/">
@@ -248,4 +256,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default HostLogin;

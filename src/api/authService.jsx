@@ -20,8 +20,14 @@ api.interceptors.request.use(
     // Thêm token nếu có và đang bật xác thực
     if (AUTH_CONFIG.ENABLE_AUTH) {
       const token = localStorage.getItem('token');
+      console.log('Request interceptor - Token exists:', !!token);
+      console.log('Request interceptor - Token value:', token ? token.substring(0, 20) + '...' : 'null');
+      
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+        console.log('Request interceptor - Added Authorization header');
+      } else {
+        console.warn('Request interceptor - No token found in localStorage');
       }
     }
     
@@ -68,9 +74,165 @@ api.interceptors.response.use(
 );
 
 const authService = {
+    // Đăng nhập với vai trò host (riêng biệt)
+    loginAsHost: async (email, password) => {
+        try {
+            console.log('authService.loginAsHost - Starting host login for:', email);
+            
+            const response = await api.post('/auth/host/login', {
+                email,
+                password
+            });
+
+            console.log('authService.loginAsHost - Raw response:', response);
+            console.log('authService.loginAsHost - Response data:', response.data);
+
+            // Xử lý response format từ backend
+            let loginData, token, hostData;
+            
+            if (response.data.data) {
+                loginData = response.data.data;
+                token = loginData.token || loginData.accessToken;
+                hostData = loginData.host || loginData.user;
+            } else if (response.data.token) {
+                token = response.data.token;
+                hostData = response.data.host || response.data.user;
+            } else if (response.data.accessToken) {
+                token = response.data.accessToken;
+                hostData = response.data.host || response.data.user;
+            } else {
+                console.log('authService.loginAsHost - Unknown response format:', response.data);
+                throw new Error('Format response không được hỗ trợ');
+            }
+
+            console.log('authService.loginAsHost - Extracted token:', token);
+            console.log('authService.loginAsHost - Extracted host data:', hostData);
+
+            // Lưu token
+            if (token) {
+                console.log('authService.loginAsHost - Storing token in localStorage');
+                localStorage.setItem('token', token);
+            } else {
+                throw new Error('Không nhận được token từ server');
+            }
+
+            // Nếu không có host data trong response, thử gọi API để lấy
+            if (!hostData) {
+                console.log('authService.loginAsHost - No host data in response, trying to fetch host profile...');
+                try {
+                    hostData = await authService.getHostProfile();
+                    console.log('authService.loginAsHost - Successfully fetched host data:', hostData);
+                } catch (profileError) {
+                    console.error('authService.loginAsHost - Error fetching host profile:', profileError);
+                    throw new Error('Không thể lấy thông tin host. Vui lòng thử lại.');
+                }
+            }
+
+            // Đảm bảo host data có role HOST
+            if (hostData && !hostData.roleName) {
+                hostData.roleName = 'HOST';
+            }
+
+            // Lưu host data
+            console.log('authService.loginAsHost - Storing host data in localStorage:', hostData);
+            safeSetToStorage('user', hostData);
+            
+            return {
+                success: true,
+                data: {
+                    token,
+                    user: hostData
+                },
+                message: response.data.message || 'Đăng nhập host thành công'
+            };
+            
+        } catch (error) {
+            console.error('authService.loginAsHost - Error:', error);
+            logApiError(error, 'loginAsHost');
+            throw error;
+        }
+    },
+
+    // Lấy thông tin host hiện tại (riêng biệt với user thường)
+    getHostProfile: async () => {
+        try {
+            const token = localStorage.getItem('token');
+            console.log('authService.getHostProfile - Token exists:', !!token);
+            
+            if (!token) {
+                throw new Error('Không tìm thấy token. Vui lòng đăng nhập lại.');
+            }
+
+            // Thử gọi endpoint host profile riêng biệt
+            let response;
+            try {
+                response = await api.get('/hosts/profile');
+                console.log('authService.getHostProfile - Using /hosts/profile endpoint');
+            } catch (error) {
+                // Nếu không có endpoint host riêng, thử endpoint user chung
+                console.log('authService.getHostProfile - Host endpoint not found, trying user endpoint');
+                response = await api.get('/users/profile');
+            }
+            
+            if (!response.data) {
+                throw new Error('Không nhận được dữ liệu từ server');
+            }
+            
+            console.log('authService.getHostProfile - Raw response:', response.data);
+            
+            // Backend trả về format: { code: "00", message: "...", data: HostDTO }
+            let hostData;
+            if (response.data.data) {
+                hostData = response.data.data;
+            } else if (response.data.id) {
+                hostData = response.data;
+            } else {
+                console.error('authService.getHostProfile - Unknown response format:', response.data);
+                throw new Error('Format response không được hỗ trợ');
+            }
+            
+            console.log('=== DEBUG HOST PROFILE DATA ===');
+            console.log('authService.getHostProfile - Extracted host data:', hostData);
+            console.log('=== END DEBUG ===');
+            
+            if (!hostData) {
+                throw new Error('Không nhận được thông tin host từ server');
+            }
+            
+            if (!hostData.id) {
+                throw new Error('Thông tin host không hợp lệ - thiếu ID');
+            }
+
+            // Đảm bảo role là HOST
+            if (!hostData.roleName) {
+                hostData.roleName = 'HOST';
+            }
+            
+            // Lưu thông tin host vào localStorage
+            console.log('authService.getHostProfile - Storing host data in localStorage:', hostData);
+            safeSetToStorage('user', hostData);
+            
+            return hostData;
+            
+        } catch (error) {
+            console.error('authService.getHostProfile - Error:', error);
+            logApiError(error, 'getHostProfile');
+            throw error;
+        }
+    },
+
     // Lấy thông tin user hiện tại
     getCurrentUser: async () => {
         try {
+            // Kiểm tra token trước khi gọi API
+            const token = localStorage.getItem('token');
+            console.log('authService.getCurrentUser - Token exists:', !!token);
+            console.log('authService.getCurrentUser - Token value:', token ? token.substring(0, 20) + '...' : 'null');
+            
+            if (!token) {
+                throw new Error('Không tìm thấy token. Vui lòng đăng nhập lại.');
+            }
+
             const response = await api.get('/users/profile');
             
             if (!response.data) {
@@ -97,6 +259,7 @@ const authService = {
             console.log('authService.getCurrentUser - userData.fullName (tên hiển thị từ backend):', userData.fullName);
             console.log('authService.getCurrentUser - userData.email (email từ backend):', userData.email);
             console.log('authService.getCurrentUser - userData.username (username từ backend):', userData.username);
+            console.log('authService.getCurrentUser - userData.roleName (role từ backend):', userData.roleName);
             console.log('=== END DEBUG ===');
             
             // Kiểm tra xem user data có id không
@@ -125,10 +288,34 @@ const authService = {
             return userData;
             
         } catch (error) {
+            console.error('authService.getCurrentUser - Error:', error);
+            console.error('authService.getCurrentUser - Error response:', error.response);
+            console.error('authService.getCurrentUser - Error status:', error.response?.status);
             logApiError(error, 'getCurrentUser');
             
-            if (error.response?.status === 401) {
+            // Nếu lỗi 401 hoặc 403, clear auth data và redirect
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                console.warn('authService.getCurrentUser - Unauthorized/Forbidden, clearing auth data');
+                console.warn('authService.getCurrentUser - This might be because user role changed to HOST');
                 handleApiError(error, { clearAuthOn401: true });
+                
+                // Thay vì redirect ngay, hãy thông báo cho user biết cần đăng nhập lại
+                // vì role đã thay đổi
+                const currentUser = localStorage.getItem('user');
+                if (currentUser) {
+                    try {
+                        const user = JSON.parse(currentUser);
+                        if (user.roleName === 'USER') {
+                            // Có thể user đã được approve thành host
+                            console.log('authService.getCurrentUser - User role might have changed to HOST, need to login again');
+                        }
+                    } catch (e) {
+                        console.error('authService.getCurrentUser - Error parsing current user:', e);
+                    }
+                }
+                
+                // Redirect to login với thông báo đặc biệt
+                window.location.href = '/login?roleChanged=true';
             }
             
             throw error;
@@ -178,29 +365,49 @@ const authService = {
             // Lưu token trước
             if (token) {
                 console.log('authService.login - Storing token in localStorage');
+                console.log('authService.login - Token to store:', token.substring(0, 20) + '...');
                 localStorage.setItem('token', token);
+                
+                // Kiểm tra xem token có được lưu đúng không
+                const storedToken = localStorage.getItem('token');
+                console.log('authService.login - Stored token verification:', storedToken ? 'SUCCESS' : 'FAILED');
+                console.log('authService.login - Stored token value:', storedToken ? storedToken.substring(0, 20) + '...' : 'null');
             } else {
                 throw new Error('Không nhận được token từ server');
             }
 
-            // Nếu không có user data trong response, gọi API để lấy
+            // Nếu không có user data trong response, thử gọi API để lấy
             if (!user) {
-                console.log('authService.login - No user data in response, fetching user profile...');
+                console.log('authService.login - No user data in response, trying to fetch user profile...');
                 try {
                     user = await authService.getCurrentUser();
-                    console.log('authService.login - Fetched user data:', user);
-                    console.log('authService.login - user.fullName:', user.fullName);
-                    console.log('authService.login - user.email:', user.email);
+                    console.log('authService.login - Successfully fetched user data:', user);
                 } catch (profileError) {
                     console.error('authService.login - Error fetching user profile:', profileError);
-                    throw new Error('Không thể lấy thông tin user từ server. Vui lòng thử lại.');
+                    // Tạo user data cơ bản từ email để tránh lỗi
+                    user = {
+                        id: null,
+                        email: email,
+                        fullName: '',
+                        username: email.split('@')[0],
+                        roleName: 'USER'
+                    };
+                    console.log('authService.login - Created fallback user data:', user);
                 }
+            } else {
+                console.log('authService.login - User data already in response, using it directly');
             }
 
             // Kiểm tra xem user data có id không
-            if (!user || !user.id) {
-                console.error('authService.login - User data missing ID:', user);
-                throw new Error('Thông tin user không hợp lệ. Vui lòng đăng nhập lại.');
+            if (!user) {
+                console.error('authService.login - No user data available');
+                throw new Error('Không thể lấy thông tin user. Vui lòng thử lại.');
+            }
+
+            // Nếu user không có id, tạo id tạm thời
+            if (!user.id) {
+                console.warn('authService.login - User data missing ID, creating temporary ID');
+                user.id = Date.now(); // ID tạm thời
             }
 
             // Kiểm tra xem fullName có phải là email không
