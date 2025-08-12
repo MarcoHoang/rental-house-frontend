@@ -10,6 +10,7 @@ import {
 import LoadingSpinner from "@/components/common/LoadingSpinner.jsx";
 import EditHouseModal from "./EditHouseModal.jsx";
 import AddHouseModal from "./AddHouseModal.jsx";
+import { useToast } from "@/components/common/Toast.jsx";
 
 // ... (Toàn bộ phần còn lại của component giữ nguyên, nó đã được viết đúng)
 // Component nhỏ để hiển thị trạng thái cho đẹp
@@ -51,6 +52,7 @@ const HouseManagement = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false); // Đổi tên để rõ ràng hơn
   const [isAddModalOpen, setIsAddModalOpen] = useState(false); // <<< State mới cho modal thêm
   const [editingHouse, setEditingHouse] = useState(null);
+  const { showSuccess, showError } = useToast();
 
   const handleOpenEditModal = (house) => {
     setEditingHouse(house);
@@ -84,14 +86,14 @@ const HouseManagement = () => {
       setHouses((currentHouses) =>
         currentHouses.map((h) => (h.id === updatedHouse.id ? updatedHouse : h))
       );
-      alert("Cập nhật thông tin nhà thành công!");
+      showSuccess("Cập nhật thành công!", "Thông tin nhà đã được cập nhật thành công.");
       handleCloseEditModal();
     } catch (err) {
       console.error(
         "Lỗi khi cập nhật nhà:",
         err.response ? err.response.data : err.message
       );
-      alert("Có lỗi xảy ra khi cập nhật. Vui lòng kiểm tra lại thông tin.");
+      showError("Lỗi cập nhật!", "Có lỗi xảy ra khi cập nhật. Vui lòng kiểm tra lại thông tin.");
     }
   };
 
@@ -106,7 +108,7 @@ const HouseManagement = () => {
 
       // Sau khi thêm thành công, làm mới danh sách hoặc thêm trực tiếp vào state
       // Để đơn giản, chúng ta sẽ fetch lại danh sách để đảm bảo phân trang đúng
-      alert("Thêm nhà mới thành công!");
+      showSuccess("Thêm nhà thành công!", "Nhà mới đã được thêm vào hệ thống thành công.");
       handleCloseAddModal();
       fetchHouses(); // Tải lại dữ liệu để hiển thị nhà mới
     } catch (err) {
@@ -114,7 +116,7 @@ const HouseManagement = () => {
         "Lỗi khi thêm nhà:",
         err.response ? err.response.data : err.message
       );
-      alert("Có lỗi xảy ra khi thêm nhà mới. Vui lòng kiểm tra lại thông tin.");
+      showError("Lỗi thêm nhà!", "Có lỗi xảy ra khi thêm nhà mới. Vui lòng kiểm tra lại thông tin.");
     }
   };
 
@@ -122,7 +124,7 @@ const HouseManagement = () => {
     if (window.confirm(`Bạn có chắc chắn muốn xóa nhà có ID: ${houseId}?`)) {
       try {
         await adminDeleteHouse(houseId);
-        alert("Xóa nhà thành công!");
+        showSuccess("Xóa nhà thành công!", "Nhà đã được xóa khỏi hệ thống thành công.");
         // Filter nhà đã xóa khỏi danh sách hiện tại
         setHouses((currentHouses) =>
           currentHouses.filter((house) => house.id !== houseId)
@@ -136,7 +138,7 @@ const HouseManagement = () => {
           "Lỗi khi xóa nhà:",
           err.response ? err.response.data : err.message
         );
-        alert("Có lỗi xảy ra khi xóa nhà. Vui lòng thử lại.");
+        showError("Lỗi xóa nhà!", "Có lỗi xảy ra khi xóa nhà. Vui lòng thử lại.");
       }
     }
   };

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../../components/common/Toast';
 
 const PostPropertyPage = () => {
   const [formData, setFormData] = useState({
@@ -15,6 +16,7 @@ const PostPropertyPage = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { showSuccess, showError } = useToast();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -43,11 +45,11 @@ const PostPropertyPage = () => {
       // const response = await propertyService.createProperty(formData);
       
       // Tạm thời hiển thị thông báo thành công
-      alert('Đăng bài thành công!');
+      showSuccess('Đăng bài thành công!', 'Bài đăng của bạn đã được tạo thành công.');
       navigate('/host');
     } catch (error) {
       console.error('Lỗi khi đăng bài:', error);
-      alert('Có lỗi xảy ra khi đăng bài. Vui lòng thử lại sau.');
+      showError('Lỗi đăng bài!', 'Có lỗi xảy ra khi đăng bài. Vui lòng thử lại sau.');
     } finally {
       setIsSubmitting(false);
     }
