@@ -27,6 +27,7 @@ import ConfirmDialog from "../common/ConfirmDialog";
 import { useToast } from "../common/Toast";
 import UserDetailPage from "./UserDetailPage";
 import HostApplicationDetailPage from "./HostApplicationDetailPage";
+import HostDetailPage from "./HostDetailPage";
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -724,6 +725,10 @@ const AdminDashboard = () => {
 
             {/* Route cho Host Management */}
             <Route path="host-management" element={<HostManagement />} />
+            <Route
+              path="host-management/:userId"
+              element={<HostDetailPage />}
+            />
 
             {/* Route cho các trang khác (ví dụ) */}
             <Route path="houses" element={<HousesContent />} />
@@ -763,18 +768,14 @@ const AdminDashboard = () => {
 };
 
 const DashboardContent = () => (
-  // Toàn bộ JSX cho trang Dashboard của bạn đặt ở đây
   <div>
     <p>Nội dung trang tổng quan (Dashboard)...</p>
-    {/* Ví dụ: <StatsGrid>...</StatsGrid> <Card>...</Card> */}
   </div>
 );
 
 const HousesContent = () => (
-  // Toàn bộ JSX cho trang Quản lý nhà của bạn đặt ở đây
   <div>
     <p>Nội dung trang quản lý nhà (Houses)...</p>
-    {/* Ví dụ: <SearchContainer>...</SearchContainer> <Card>...</Card> */}
   </div>
 );
 
