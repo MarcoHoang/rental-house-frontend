@@ -1,6 +1,7 @@
 // src/components/house/SearchBar.jsx
 import React, { useState } from "react";
 import styled from "styled-components";
+import { useToast } from "../common/Toast";
 
 const SearchWrapper = styled.div`
   display: flex;
@@ -39,10 +40,11 @@ const SearchButton = styled.button`
 
 const SearchBar = () => {
   const [query, setQuery] = useState("");
+  const { showSuccess } = useToast();
 
   const handleSearch = () => {
     if (query.trim()) {
-      alert(`Đang tìm kiếm với từ khóa: "${query}"`);
+      showSuccess('Tìm kiếm', `Đang tìm kiếm với từ khóa: "${query}"`);
       // Trong thực tế, bạn sẽ gọi API ở đây hoặc điều hướng đến trang kết quả tìm kiếm
       // Ví dụ: navigate(`/search?q=${query}`);
     }

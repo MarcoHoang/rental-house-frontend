@@ -223,7 +223,7 @@ const Header = () => {
     roleName: "",
   });
 
-  const { showSuccess } = useToast();
+  const { showSuccess, showError } = useToast();
 
   const navigate = useNavigate();
 
@@ -496,7 +496,8 @@ const Header = () => {
             const hostApi = (await import("../../api/hostApi")).default;
             const result = await hostApi.submitHostApplication(formData);
 
-            alert(
+            showSuccess(
+              "Đăng ký thành công!",
               "Đã gửi đơn đăng ký trở thành chủ nhà thành công! Chúng tôi sẽ liên hệ với bạn sớm."
             );
             setShowHostRegistration(false);
@@ -515,7 +516,7 @@ const Header = () => {
               errorMessage = error.message;
             }
 
-            alert(`Lỗi: ${errorMessage}`);
+            showError("Lỗi đăng ký!", errorMessage);
           }
         }}
       />
