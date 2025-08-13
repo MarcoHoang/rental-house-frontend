@@ -710,8 +710,6 @@ const AdminDashboard = () => {
 
             {/* Route cho User Management */}
             <Route path="user-management" element={<UserManagement />} />
-
-            {/* Route cho User Detail Page */}
             <Route
               path="user-management/:userId"
               element={<UserDetailPage />}

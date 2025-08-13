@@ -16,7 +16,7 @@ import ForgotPassword from "./components/login-register/ForgotPassword";
 import AdminLogin from "./components/admin/AdminLogin";
 import HostLayout from "./components/layout/HostLayout";
 import UserProfilePage from "./pages/UserProfilePage";
-import AdminPage from "./pages/AdminPage";
+import AdminDashboard from "./components/admin/AdminDashboard";
 import AdminRoute from "./components/admin/AdminRoute";
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import ToastProvider from "./components/common/Toast";
@@ -42,11 +42,11 @@ const ProtectedRoute = ({
 
   // Sử dụng utility function để lấy user data an toàn
   const user = getUserFromStorage() || {};
-  console.log('User from storage:', JSON.stringify(user, null, 2));
+  console.log("User from storage:", JSON.stringify(user, null, 2));
 
   // Kiểm tra roleName (không phân biệt hoa thường)
   const userRole = user.roleName ? user.roleName.toUpperCase() : null;
-  console.log('User role (uppercase):', userRole);
+  console.log("User role (uppercase):", userRole);
 
   // Debug logs
   console.log("ProtectedRoute - User data:", user);
@@ -56,25 +56,25 @@ const ProtectedRoute = ({
 
   // Kiểm tra yêu cầu HOST
   if (requireHost) {
-    if (userRole === 'HOST') {
-      console.log('User is HOST, allowing access to host route');
+    if (userRole === "HOST") {
+      console.log("User is HOST, allowing access to host route");
       return children;
     } else {
-      console.log('User is not HOST, redirecting to /');
+      console.log("User is not HOST, redirecting to /");
       return <Navigate to="/" replace />;
     }
   }
 
   // Kiểm tra yêu cầu USER thường
   if (requireUser) {
-    if (userRole === 'USER') {
-      console.log('User is regular USER, allowing access to user route');
+    if (userRole === "USER") {
+      console.log("User is regular USER, allowing access to user route");
       return children;
-    } else if (userRole === 'HOST') {
-      console.log('User is HOST, redirecting to /host');
+    } else if (userRole === "HOST") {
+      console.log("User is HOST, redirecting to /host");
       return <Navigate to="/host" replace />;
     } else {
-      console.log('User not authenticated, redirecting to /');
+      console.log("User not authenticated, redirecting to /");
       return <Navigate to="/" replace />;
     }
   }
@@ -143,7 +143,7 @@ function App() {
               path="/admin/*"
               element={
                 <AdminRoute>
-                  <AdminPage />
+                  <AdminDashboard />
                 </AdminRoute>
               }
             />
@@ -161,7 +161,7 @@ function App() {
               <Route
                 path="post"
                 element={
-                  <div style={{ padding: '20px' }}>
+                  <div style={{ padding: "20px" }}>
                     <PostPropertyPage />
                   </div>
                 }

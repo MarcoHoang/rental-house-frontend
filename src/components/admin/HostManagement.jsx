@@ -206,7 +206,7 @@ const HostManagement = () => {
 
     const currentStatus = host.active;
     try {
-      await usersApi.updateStatus(host.id, !currentStatus);
+      await hostApplicationsApi.updateStatus(host.id, !host.active);
 
       showSuccess(
         "Cập nhật thành công!",
@@ -277,10 +277,7 @@ const HostManagement = () => {
                 </td>
                 <td>
                   <ActionContainer>
-                    <Link
-                      to={`/admin/user-management/${host.id}`}
-                      title="Xem chi tiết"
-                    >
+                    <Link to={`/admin/host-management/${host.id}`}>
                       <ActionButton className="view">
                         <Eye size={16} />
                       </ActionButton>

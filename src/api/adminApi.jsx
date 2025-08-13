@@ -2,7 +2,9 @@ import axios from "axios";
 import { logApiError } from "../utils/apiErrorHandler";
 
 // Sử dụng proxy của Vite trong development
-const API_BASE_URL = import.meta.env.DEV ? "" : (import.meta.env.VITE_API_URL || "http://localhost:8080");
+const API_BASE_URL = import.meta.env.DEV
+  ? ""
+  : import.meta.env.VITE_API_URL || "http://localhost:8080";
 const API_PREFIX = import.meta.env.VITE_API_PREFIX || "/api";
 
 const apiClient = axios.create({
@@ -14,7 +16,6 @@ const apiClient = axios.create({
   timeout: 10000,
 });
 
-
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("adminToken");
@@ -24,7 +25,7 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error) => {
-    logApiError(error, 'Request Interceptor');
+    logApiError(error, "Request Interceptor");
     return Promise.reject(error);
   }
 );
@@ -32,17 +33,17 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    logApiError(error, 'Response Interceptor');
-    
+    logApiError(error, "Response Interceptor");
+
     // Xử lý lỗi 401 - token hết hạn
     if (error.response?.status === 401) {
       localStorage.removeItem("adminToken");
       localStorage.removeItem("adminUser");
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         window.location.href = "/admin/login";
       }
     }
-    
+
     return Promise.reject(error);
   }
 );
@@ -50,21 +51,24 @@ apiClient.interceptors.response.use(
 export const adminAuth = {
   login: async (credentials) => {
     try {
-      console.log('adminAuth.login - Sending request to:', `${API_PREFIX}/admin/login`);
-      console.log('adminAuth.login - Credentials:', credentials);
-      
+      console.log(
+        "adminAuth.login - Sending request to:",
+        `${API_PREFIX}/admin/login`
+      );
+      console.log("adminAuth.login - Credentials:", credentials);
+
       // Thử các endpoint khác nhau
       let response;
       let lastError;
-      
+
       // Danh sách các endpoint có thể thử
       const endpoints = [
         `${API_PREFIX}/admin/login`,
         `${API_PREFIX}/auth/admin-login`,
         `${API_PREFIX}/auth/login`,
-        `${API_PREFIX}/login`
+        `${API_PREFIX}/login`,
       ];
-      
+
       for (const endpoint of endpoints) {
         try {
           console.log(`adminAuth.login - Trying endpoint: ${endpoint}`);
@@ -72,60 +76,68 @@ export const adminAuth = {
           console.log(`adminAuth.login - Success with endpoint: ${endpoint}`);
           break;
         } catch (error) {
-          console.log(`adminAuth.login - Failed with endpoint ${endpoint}:`, error.response?.status);
+          console.log(
+            `adminAuth.login - Failed with endpoint ${endpoint}:`,
+            error.response?.status
+          );
           lastError = error;
-          
+
           // Nếu là lỗi 500, thử endpoint tiếp theo
           if (error.response?.status === 500) {
             continue;
           }
-          
+
           // Nếu là lỗi 404, thử endpoint tiếp theo
           if (error.response?.status === 404) {
             continue;
           }
-          
+
           // Nếu là lỗi khác (401, 400, etc.), dừng lại
           break;
         }
       }
-      
+
       // Nếu tất cả endpoint đều thất bại với lỗi 500, sử dụng mock data
       if (!response && lastError?.response?.status === 500) {
-        console.log('adminAuth.login - All endpoints failed with 500, using mock data for testing');
-        if (credentials.email === 'admin@renthouse.com' && credentials.password === 'admin123') {
+        console.log(
+          "adminAuth.login - All endpoints failed with 500, using mock data for testing"
+        );
+        if (
+          credentials.email === "admin@renthouse.com" &&
+          credentials.password === "admin123"
+        ) {
           response = {
             data: {
-              token: 'mock-admin-token-' + Date.now(),
+              token: "mock-admin-token-" + Date.now(),
               user: {
                 id: 1,
-                email: 'admin@renthouse.com',
-                name: 'Admin User',
-                role: 'ADMIN',
-                avatar: null
-              }
-            }
+                email: "admin@renthouse.com",
+                name: "Admin User",
+                role: "ADMIN",
+                avatar: null,
+              },
+            },
           };
         } else {
-          throw new Error('Thông tin đăng nhập không chính xác');
+          throw new Error("Thông tin đăng nhập không chính xác");
         }
       } else if (!response) {
         throw lastError;
       }
-      
-      console.log('adminAuth.login - Response received:', response);
-      
+
+      console.log("adminAuth.login - Response received:", response);
+
       // Lưu token và user info vào localStorage
       // Kiểm tra các format response có thể có
       let token = null;
       let userData = null;
-      
+
       if (response.data.token) {
         token = response.data.token;
       } else if (response.data.data && response.data.data.token) {
         token = response.data.data.token;
       }
-      
+
       if (response.data.user) {
         userData = response.data.user;
       } else if (response.data.data && response.data.data.user) {
@@ -133,22 +145,22 @@ export const adminAuth = {
       } else if (response.data.data) {
         userData = response.data.data;
       }
-      
-      console.log('adminAuth.login - Extracted token:', token);
-      console.log('adminAuth.login - Extracted userData:', userData);
-      
+
+      console.log("adminAuth.login - Extracted token:", token);
+      console.log("adminAuth.login - Extracted userData:", userData);
+
       if (token) {
         localStorage.setItem("adminToken", token);
-        console.log('adminAuth.login - Token saved to localStorage');
+        console.log("adminAuth.login - Token saved to localStorage");
       }
       if (userData) {
         localStorage.setItem("adminUser", JSON.stringify(userData));
-        console.log('adminAuth.login - User data saved to localStorage');
+        console.log("adminAuth.login - User data saved to localStorage");
       }
-      
+
       return response;
     } catch (error) {
-      console.error('adminAuth.login - Detailed error:', {
+      console.error("adminAuth.login - Detailed error:", {
         message: error.message,
         status: error.response?.status,
         statusText: error.response?.statusText,
@@ -156,15 +168,15 @@ export const adminAuth = {
         config: {
           url: error.config?.url,
           method: error.config?.method,
-          data: error.config?.data
-        }
+          data: error.config?.data,
+        },
       });
-      
-      logApiError(error, 'adminAuth.login');
+
+      logApiError(error, "adminAuth.login");
       throw error;
     }
   },
-  
+
   logout: async () => {
     try {
       const response = await apiClient.post(`${API_PREFIX}/admin/logout`);
@@ -172,30 +184,33 @@ export const adminAuth = {
       localStorage.removeItem("adminUser");
       return response;
     } catch (error) {
-      logApiError(error, 'adminAuth.logout');
+      logApiError(error, "adminAuth.logout");
       // Vẫn xóa token ngay cả khi API call thất bại
       localStorage.removeItem("adminToken");
       localStorage.removeItem("adminUser");
       throw error;
     }
   },
-  
+
   getProfile: async () => {
     try {
       const response = await apiClient.get(`${API_PREFIX}/admin/profile`);
       return response;
     } catch (error) {
-      logApiError(error, 'adminAuth.getProfile');
+      logApiError(error, "adminAuth.getProfile");
       throw error;
     }
   },
-  
+
   changePassword: async (passwordData) => {
     try {
-      const response = await apiClient.put(`${API_PREFIX}/admin/change-password`, passwordData);
+      const response = await apiClient.put(
+        `${API_PREFIX}/admin/change-password`,
+        passwordData
+      );
       return response;
     } catch (error) {
-      logApiError(error, 'adminAuth.changePassword');
+      logApiError(error, "adminAuth.changePassword");
       throw error;
     }
   },
@@ -203,7 +218,18 @@ export const adminAuth = {
 
 // User Management
 export const usersApi = {
-  getAll: (params) => apiClient.get(`${API_PREFIX}/users`, { params }),
+  getAll: async (params = {}) => {
+    try {
+      const response = await apiClient.get(`${API_PREFIX}/admin/users`, {
+        params,
+      });
+      // LUÔN LUÔN trả về phần 'data' bên trong ApiResponse
+      return response.data.data;
+    } catch (error) {
+      logApiError(error, "getAllUsers");
+      throw error;
+    }
+  },
   updateStatus: (id, active) =>
     apiClient.patch(`${API_PREFIX}/admin/users/${id}/status`, { active }),
 };

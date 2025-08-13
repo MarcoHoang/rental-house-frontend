@@ -165,7 +165,7 @@ const UserDetailPage = () => {
       setLoading(true);
       setError(null);
       try {
-        const data = await usersApi.getDetailsForAdmin(userId);
+        const data = await usersApi.getById(userId);
         setUser(data);
       } catch (err) {
         setError("Không thể tải thông tin chi tiết người dùng.");
