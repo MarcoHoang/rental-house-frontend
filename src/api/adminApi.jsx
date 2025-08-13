@@ -619,9 +619,6 @@ export const hostApplicationsApi = {
   },
   updateStatus: async (hostId, active) => {
     try {
-      // === SỬA LẠI URL Ở ĐÂY ===
-      // URL cũ (SAI): `${API_PREFIX}/admin/users/${hostId}/status`
-      // URL mới (ĐÚNG):
       const response = await apiClient.patch(
         `${API_PREFIX}/admin/hosts/${hostId}/status`,
         { active }
@@ -629,6 +626,17 @@ export const hostApplicationsApi = {
       return response.data;
     } catch (error) {
       logApiError(error, "updateHostStatus");
+      throw error;
+    }
+  },
+  getRequestDetails: async (requestId) => {
+    try {
+      const response = await apiClient.get(
+        `${API_PREFIX}/admin/host-requests/${requestId}`
+      );
+      return response.data.data;
+    } catch (error) {
+      logApiError(error, "getRequestDetails");
       throw error;
     }
   },

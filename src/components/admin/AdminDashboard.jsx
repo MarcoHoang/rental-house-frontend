@@ -25,6 +25,7 @@ import HostApplicationsManagement from "./HostApplicationsManagement";
 import ConfirmDialog from "../common/ConfirmDialog";
 import { useToast } from "../common/Toast";
 import UserDetailPage from "./UserDetailPage";
+import HostApplicationDetailPage from "./HostApplicationDetailPage";
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -736,6 +737,11 @@ const AdminDashboard = () => {
             <Route
               path="contracts"
               element={<DevelopingFeaturePage featureName="Quản lý hợp đồng" />}
+            />
+
+            <Route
+              path="host-applications/:requestId"
+              element={<HostApplicationDetailPage />}
             />
           </Routes>
         </Main>
