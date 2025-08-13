@@ -36,29 +36,54 @@ const ProtectedRoute = ({
 }) => {
   const ENABLE_AUTH = AUTH_CONFIG.ENABLE_AUTH;
 
+  // Debug log ban đầu
+  console.log('\n=== ProtectedRoute Debug ===');
+  console.log('Path:', window.location.pathname);
+  console.log('ENABLE_AUTH:', ENABLE_AUTH);
+
   if (!ENABLE_AUTH) {
+    console.log('Auth is disabled, allowing access');
     return children;
   }
 
-  // Sử dụng utility function để lấy user data an toàn
+  // Lấy thông tin user
   const user = getUserFromStorage() || {};
+  console.log('User from storage:', JSON.stringify(user, null, 2));
+  
+  // Kiểm tra roleName (không phân biệt hoa thường)
+  const userRole = user.roleName ? user.roleName.toUpperCase() : null;
+  console.log('User role (uppercase):', userRole);
 
   // Debug logs
-  console.log("ProtectedRoute - User data:", user);
-  console.log("ProtectedRoute - requireHost:", requireHost);
-  console.log("ProtectedRoute - requireUser:", requireUser);
-  console.log("ProtectedRoute - user.roleName:", user.roleName);
+  console.log('requireHost:', requireHost);
+  console.log('requireUser:', requireUser);
 
-  if (requireHost && user.roleName !== "HOST") {
-    console.log("ProtectedRoute - Redirecting to / (not HOST)");
-    return <Navigate to="/" replace />;
+  // Kiểm tra yêu cầu HOST
+  if (requireHost) {
+    if (userRole === 'HOST') {
+      console.log('User is HOST, allowing access to host route');
+      return children;
+    } else {
+      console.log('User is not HOST, redirecting to /');
+      return <Navigate to="/" replace />;
+    }
   }
 
-  if (requireUser && user.roleName === "HOST") {
-    console.log("ProtectedRoute - Redirecting to /host (is HOST)");
-    return <Navigate to="/host" replace />;
+  // Kiểm tra yêu cầu USER thường
+  if (requireUser) {
+    if (userRole === 'USER') {
+      console.log('User is regular USER, allowing access to user route');
+      return children;
+    } else if (userRole === 'HOST') {
+      console.log('User is HOST, redirecting to /host');
+      return <Navigate to="/host" replace />;
+    } else {
+      console.log('User not authenticated, redirecting to /');
+      return <Navigate to="/" replace />;
+    }
   }
 
+  console.log('No specific role required, allowing access');
   return children;
 };
 
@@ -138,7 +163,14 @@ function App() {
               }
             >
               <Route index element={<HostHomePage />} />
-              <Route path="post" element={<PostPropertyPage />} />
+              <Route 
+                path="post" 
+                element={
+                  <div style={{ padding: '20px' }}>
+                    <PostPropertyPage />
+                  </div>
+                } 
+              />
             </Route>
 
             {/* Chuyển hướng dựa trên vai trò */}

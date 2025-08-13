@@ -1,55 +1,167 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../components/common/Toast';
+import { FiPlus } from 'react-icons/fi';
+import propertyApi from '../../api/propertyApi';
 
 const PostPropertyPage = () => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    price: '',
     address: '',
-    city: '',
-    district: '',
-    ward: '',
+    price: '',
     area: '',
-    images: []
+    houseType: 'APARTMENT',
+    imageFiles: [],
+    imagePreviews: [],
   });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const { showSuccess, showError } = useToast();
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
   const handleImageChange = (e) => {
-    if (e.target.files) {
+    if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files);
+      const newImagePreviews = files.map(file => URL.createObjectURL(file));
+
       setFormData(prev => ({
         ...prev,
-        images: [...prev.images, ...files]
+        imageFiles: [...prev.imageFiles, ...files],
+        imagePreviews: [...prev.imagePreviews, ...newImagePreviews]
       }));
     }
   };
 
+  // const handleRemoveImage = (index) => {
+  //   setFormData(prev => {
+  //     const newFiles = [...prev.imageFiles];
+  //     const newPreviews = [...prev.imagePreviews];
+  //     newFiles.splice(index, 1);
+  //     newPreviews.splice(index, 1);
+  //     return { ...prev, imageFiles: newFiles, imagePreviews: newPreviews };
+  //   });
+  // };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    
+    // Kiểm tra xem người dùng đã chọn ảnh chưa
+    if (formData.imageFiles.length === 0) {
+      showError('Lỗi', 'Vui lòng chọn ít nhất một ảnh');
+      return;
+    }
+    
+    // Kiểm tra các trường bắt buộc
+    const requiredFields = ['title', 'description', 'address', 'price', 'area', 'houseType'];
+    const missingFields = requiredFields.filter(field => !formData[field]);
+    
+    if (missingFields.length > 0) {
+      showError('Lỗi', 'Vui lòng điền đầy đủ thông tin bắt buộc');
+      return;
+    }
     
     try {
-      // TODO: Gọi API để tạo bài đăng mới
-      // const response = await propertyService.createProperty(formData);
+      setIsSubmitting(true);
       
-      // Tạm thời hiển thị thông báo thành công
-      showSuccess('Đăng bài thành công!', 'Bài đăng của bạn đã được tạo thành công.');
-      navigate('/host');
+      // 1. Upload ảnh lên server trước
+      console.log('Đang tải lên ảnh...');
+      const imageUrls = await propertyApi.uploadHouseImages(formData.imageFiles);
+      console.log('Đã tải lên các ảnh:', imageUrls);
+      
+      // Lấy thông tin người dùng từ localStorage
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user || !user.id) {
+        throw new Error('Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.');
+      }
+      
+      // 2. Tạo dữ liệu bài đăng với các URL ảnh
+      const houseData = {
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        address: formData.address.trim(),
+        price: parseFloat(formData.price) || 0,
+        area: parseFloat(formData.area) || 0,
+        houseType: formData.houseType,
+        latitude: 0,
+        longitude: 0,
+        status: 'PENDING', // Đổi từ ACTIVE sang PENDING nếu cần chờ duyệt
+        hostId: user.id,
+        imageUrls: imageUrls || [] // Đảm bảo luôn là mảng
+      };
+      
+      console.log('Dữ liệu gửi lên server:', JSON.stringify(houseData, null, 2));
+      
+      // 3. Gọi API tạo bài đăng
+      const response = await propertyApi.createHouse(houseData);
+      
+      console.log('Phản hồi từ server:', response);
+      
+      // 4. Thông báo thành công và reset form
+      showSuccess('Thành công', 'Đăng bài thành công! Bài viết đang được kiểm duyệt.');
+      
+      // Reset form
+      setFormData({
+        title: '',
+        description: '',
+        address: '',
+        price: '',
+        area: '',
+        houseType: 'APARTMENT',
+        imageFiles: [],
+        imagePreviews: []
+      });
+      
+      // Chuyển hướng về trang chủ sau 2 giây
+      setTimeout(() => {
+        navigate('/host/my-properties');
+      }, 2000);
+      
     } catch (error) {
       console.error('Lỗi khi đăng bài:', error);
-      showError('Lỗi đăng bài!', 'Có lỗi xảy ra khi đăng bài. Vui lòng thử lại sau.');
+      
+      // Xử lý thông báo lỗi
+      let errorTitle = 'Lỗi';
+      let errorMessage = 'Có lỗi xảy ra khi đăng bài. Vui lòng thử lại sau.';
+      
+      // Nếu có thông báo lỗi từ server
+      if (error.response?.data) {
+        const serverError = error.response.data;
+        
+        // Lỗi validation (400)
+        if (error.response.status === 400) {
+          errorTitle = 'Lỗi dữ liệu';
+          if (serverError.errors) {
+            // Xử lý lỗi validation chi tiết
+            errorMessage = Object.entries(serverError.errors)
+              .map(([field, messages]) => `- ${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+              .join('\n');
+          } else if (serverError.message) {
+            errorMessage = serverError.message;
+          }
+        } 
+        // Lỗi xác thực (401/403)
+        else if (error.response.status === 401 || error.response.status === 403) {
+          errorTitle = 'Lỗi xác thực';
+          errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          navigate('/login');
+          return;
+        }
+      } 
+      // Lỗi mạng
+      else if (error.request) {
+        errorTitle = 'Lỗi kết nối';
+        errorMessage = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại.';
+      }
+      // Lỗi từ client hoặc từ code
+      else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // Hiển thị thông báo lỗi
+      showError(errorTitle, errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -57,193 +169,156 @@ const PostPropertyPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Đăng tin cho thuê mới</h1>
-      
-      <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
-        <div className="bg-white shadow-md rounded-lg p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Thông tin cơ bản</h2>
-          
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="title">
-              Tiêu đề <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="title"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-          
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="description">
-              Mô tả chi tiết <span className="text-red-500">*</span>
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows={5}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="price">
-                Giá cho thuê (VNĐ/tháng) <span className="text-red-500">*</span>
-              </label>
+      <h1 className="text-2xl font-bold mb-6">Đăng tin cho thuê nhà</h1>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Tiêu đề */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Tiêu đề</label>
+          <input
+            type="text"
+            name="title"
+            value={formData.title}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
+            required
+          />
+        </div>
+
+        {/* Mô tả */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Mô tả</label>
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            rows={4}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
+            required
+          />
+        </div>
+
+        {/* Địa chỉ */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Địa chỉ</label>
+          <input
+            type="text"
+            name="address"
+            value={formData.address}
+            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
+            required
+          />
+        </div>
+
+        {/* Giá và diện tích */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Giá (VNĐ/tháng)</label>
+            <div className="relative rounded-md shadow-sm">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <span className="text-gray-500">₫</span>
+              </div>
               <input
-                type="number"
-                id="price"
+                type="double"
                 name="price"
                 value={formData.price}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md p-2 border"
+                placeholder="0.00"
                 required
+                min="0"
               />
             </div>
-            
-            <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="area">
-                Diện tích (m²) <span className="text-red-500">*</span>
-              </label>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Diện tích (m²)</label>
+            <div className="relative rounded-md shadow-sm">
               <input
-                type="number"
-                id="area"
+                type="double"
                 name="area"
                 value={formData.area}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                className="focus:ring-blue-500 focus:border-blue-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md p-2 border"
+                placeholder="0.0"
                 required
+                min="0"
+                step="0.1"
               />
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <span className="text-gray-500">m²</span>
+              </div>
             </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="city">
-                Thành phố <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="city"
-                name="city"
-                value={formData.city}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            
-            <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="district">
-                Quận/Huyện <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="district"
-                name="district"
-                value={formData.district}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            
-            <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="ward">
-                Phường/Xã <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="ward"
-                name="ward"
-                value={formData.ward}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-          </div>
-          
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="address">
-              Địa chỉ chi tiết <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="address"
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-          
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">
-              Hình ảnh <span className="text-red-500">*</span>
-              <span className="text-sm text-gray-500 font-normal ml-2">(Tối thiểu 3 ảnh, tối đa 10 ảnh)</span>
-            </label>
-            
-            <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {formData.images.map((image, index) => (
-                <div key={index} className="relative group">
-                  <img 
-                    src={URL.createObjectURL(image)} 
-                    alt={`Ảnh ${index + 1}`} 
-                    className="w-full h-32 object-cover rounded-lg"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const newImages = [...formData.images];
-                      newImages.splice(index, 1);
-                      setFormData(prev => ({
-                        ...prev,
-                        images: newImages
-                      }));
-                    }}
-                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-              
-              {formData.images.length < 10 && (
-                <label className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-                  <div className="p-4 text-center">
-                    <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    <span className="mt-2 text-sm text-gray-600">Thêm ảnh</span>
-                  </div>
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="hidden"
-                  />
-                </label>
-              )}
-            </div>
-            
-            {formData.images.length < 3 && formData.images.length > 0 && (
-              <p className="mt-1 text-sm text-red-500">Vui lòng tải lên ít nhất 3 ảnh</p>
-            )}
           </div>
         </div>
-        
-        <div className="flex justify-end space-x-4">
+
+        {/* Loại nhà */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Loại nhà</label>
+          <select
+            name="houseType"
+            value={formData.houseType}
+            onChange={(e) => setFormData({ ...formData, houseType: e.target.value })}
+            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border"
+          >
+            <option value="APARTMENT">Chung cư</option>
+            <option value="HOUSE">Nhà riêng</option>
+            <option value="ROOM">Phòng trọ</option>
+          </select>
+        </div>
+
+        {/* Upload ảnh */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Hình ảnh</label>
+          <div className="flex flex-wrap gap-4">
+            {formData.imagePreviews.map((preview, index) => (
+              <div key={index} className="relative group">
+                <img
+                  src={preview}
+                  alt={`Preview ${index}`}
+                  className="h-32 w-32 object-cover rounded-lg shadow-sm border border-gray-200"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newFiles = [...formData.imageFiles];
+                    const newPreviews = [...formData.imagePreviews];
+                    newFiles.splice(index, 1);
+                    newPreviews.splice(index, 1);
+                    setFormData({
+                      ...formData,
+                      imageFiles: newFiles,
+                      imagePreviews: newPreviews
+                    });
+                  }}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                  title="Xóa ảnh"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+            {formData.imagePreviews.length < 10 && (
+              <label className="flex flex-col items-center justify-center h-32 w-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
+                <FiPlus className="h-8 w-8 text-gray-400" />
+                <span className="text-sm text-gray-500 mt-1">Thêm ảnh</span>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+              </label>
+            )}
+          </div>
+          <p className="mt-1 text-xs text-gray-500">Tối đa 10 ảnh (định dạng: JPG, PNG, tối đa 5MB/ảnh)</p>
+        </div>
+
+        {/* Nút hủy và đăng bài */}
+        <div className="flex justify-end space-x-4 pt-6">
           <button
             type="button"
             onClick={() => navigate('/host')}
@@ -253,16 +328,28 @@ const PostPropertyPage = () => {
           </button>
           <button
             type="submit"
-            disabled={isSubmitting || formData.images.length < 3}
-            className={`px-6 py-2 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-              isSubmitting || formData.images.length < 3
+            disabled={isSubmitting || formData.imagePreviews.length < 3}
+            className={`px-6 py-2.5 rounded-md text-white font-medium text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+              isSubmitting || formData.imagePreviews.length < 3
                 ? 'bg-blue-400 cursor-not-allowed'
                 : 'bg-blue-600 hover:bg-blue-700'
             }`}
           >
-            {isSubmitting ? 'Đang đăng...' : 'Đăng tin'}
+            {isSubmitting ? (
+              <span className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Đang xử lý...
+              </span>
+            ) : 'Đăng bài'}
           </button>
         </div>
+        
+        {formData.imagePreviews.length > 0 && formData.imagePreviews.length < 3 && (
+          <p className="mt-2 text-sm text-red-500 text-right">Vui lòng tải lên ít nhất 3 ảnh</p>
+        )}
       </form>
     </div>
   );
