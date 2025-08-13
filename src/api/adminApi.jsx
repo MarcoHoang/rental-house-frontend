@@ -565,7 +565,6 @@ export const dashboardApi = {
   },
 };
 
-// Host Applications Management
 export const hostApplicationsApi = {
   getAllHosts: async (params = {}) => {
     try {
@@ -617,10 +616,10 @@ export const hostApplicationsApi = {
       throw error;
     }
   },
-  updateStatus: async (hostId, active) => {
+  updateStatus: async (userId, active) => {
     try {
       const response = await apiClient.patch(
-        `${API_PREFIX}/admin/hosts/${hostId}/status`,
+        `${API_PREFIX}/admin/hosts/user/${userId}/status`,
         { active }
       );
       return response.data;
@@ -637,6 +636,17 @@ export const hostApplicationsApi = {
       return response.data.data;
     } catch (error) {
       logApiError(error, "getRequestDetails");
+      throw error;
+    }
+  },
+  getHostDetailsByUserId: async (userId) => {
+    try {
+      const response = await apiClient.get(
+        `${API_PREFIX}/admin/hosts/user/${userId}`
+      );
+      return response.data.data;
+    } catch (error) {
+      logApiError(error, "getHostDetailsByUserId");
       throw error;
     }
   },

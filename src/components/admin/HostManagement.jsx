@@ -198,17 +198,24 @@ const HostManagement = () => {
   }, [fetchHosts]);
 
   const handleToggleStatus = async (host) => {
-    const currentStatus = host.active; // Lấy trạng thái hiện tại của host
-    try {
-      // Tái sử dụng API từ usersApi, truyền vào userId của Host
-      await hostApplicationsApi.updateStatus(host.id, !currentStatus);
+    // Kiểm tra để đảm bảo host.id tồn tại
+    if (!host || !host.id) {
+      showError("Lỗi", "Không tìm thấy ID của chủ nhà.");
+      return;
+    }
 
-      const action = !currentStatus ? "mở khóa" : "khóa";
+    const currentStatus = host.active;
+    try {
+      await usersApi.updateStatus(host.id, !currentStatus);
+
       showSuccess(
         "Cập nhật thành công!",
-        `Đã ${action} tài khoản của chủ nhà ${host.fullName || host.username}.`
+        `Đã ${!currentStatus ? "mở khóa" : "khóa"} tài khoản của ${
+          host.fullName || host.username
+        }.`
       );
 
+      // Cập nhật UI ngay lập tức
       setHosts((currentHosts) =>
         currentHosts.map((h) =>
           h.id === host.id ? { ...h, active: !currentStatus } : h
@@ -283,7 +290,7 @@ const HostManagement = () => {
                         host.active ? "Khóa tài khoản" : "Mở khóa tài khoản"
                       }
                       className={host.active ? "lock" : "unlock"}
-                      onClick={() => handleToggleStatus(host)}
+                      onClick={() => handleToggleStatus(host)} // <-- ĐÃ SỬA
                     >
                       {host.active ? "Khóa" : "Mở khóa"}
                     </ActionButton>
