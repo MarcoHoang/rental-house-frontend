@@ -1,4 +1,4 @@
-// src/components/admin/HostApplicationDetailPage.jsx
+// Tạo file mới: src/components/admin/HostApplicationDetailPage.jsx
 
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
@@ -6,17 +6,15 @@ import styled from "styled-components";
 import { hostApplicationsApi } from "../../api/adminApi";
 import { RefreshCw, AlertTriangle, ArrowLeft } from "lucide-react";
 
-// === STYLED COMPONENTS (Đồng bộ với UserDetailPage) ===
+// === STYLED COMPONENTS (Lấy cảm hứng từ UserDetailPage) ===
 const PageWrapper = styled.div`
   padding: 2rem;
 `;
-
 const PageHeader = styled.div`
   display: flex;
   align-items: center;
   margin-bottom: 2rem;
 `;
-
 const BackLink = styled(Link)`
   display: flex;
   align-items: center;
@@ -27,7 +25,6 @@ const BackLink = styled(Link)`
     color: #2c5282;
   }
 `;
-
 const Title = styled.h2`
   font-size: 1.5rem;
   font-weight: 600;
@@ -37,7 +34,6 @@ const Title = styled.h2`
   border-bottom: 1px solid #e2e8f0;
   width: 100%;
 `;
-
 const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(1, 1fr);
@@ -46,42 +42,37 @@ const Grid = styled.div`
     grid-template-columns: repeat(2, 1fr);
   }
 `;
-
 const InfoCard = styled.div`
   background: white;
   border-radius: 0.75rem;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
   padding: 2rem;
 `;
-
 const InfoRow = styled.div`
   display: flex;
   justify-content: space-between;
   padding: 0.875rem 0;
   border-bottom: 1px solid #edf2f7;
-  &:first-child {
-    padding-top: 0;
+  &:first-of-type {
+    padding-top: 1rem;
   }
-  &:last-child {
+  &:last-of-type {
     border-bottom: none;
     padding-bottom: 0;
   }
 `;
-
 const InfoLabel = styled.span`
   font-weight: 500;
   color: #4a5568;
 `;
-
 const InfoValue = styled.span`
   color: #1a202c;
   text-align: right;
   font-weight: 600;
 `;
-
 const ImageViewer = styled.div`
   margin-top: 1rem;
-  border: 1px dashed #cbd5e0;
+  border: 2px dashed #cbd5e0;
   padding: 1rem;
   border-radius: 0.5rem;
   text-align: center;
@@ -146,7 +137,6 @@ const HostApplicationDetailPage = () => {
       </PageHeader>
 
       <Grid>
-        {/* === Card Thông tin người gửi === */}
         <InfoCard>
           <Title>Thông tin người gửi</Title>
           <InfoRow>
@@ -167,7 +157,6 @@ const HostApplicationDetailPage = () => {
           </InfoRow>
         </InfoCard>
 
-        {/* === Card Giấy tờ sở hữu === */}
         <InfoCard>
           <Title>Giấy tờ sở hữu</Title>
           {request.proofOfOwnershipUrl ? (
