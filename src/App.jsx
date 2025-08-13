@@ -71,11 +71,11 @@ function App() {
       <ToastProvider>
         <Router>
           <Routes>
-          {/* Các route công khai */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
+            {/* Các route công khai */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
 
             {/* Trang chủ chung cho tất cả người dùng */}
             <Route
@@ -137,6 +137,7 @@ function App() {
             >
               <Route index element={<HostHomePage />} />
               <Route path="post" element={<PostPropertyPage />} />
+              <Route path="profile" element={<HostProfilePage />} />
             </Route>
 
             {/* Chuyển hướng dựa trên vai trò */}
