@@ -13,144 +13,165 @@ import {
   Shield,
 } from "lucide-react";
 import { useToast } from "../../components/common/Toast";
-import hostApi from "../../api/hostApi"; // API dành riêng cho Host
-import authService from "../../api/authService"; // API chung, dùng để upload ảnh
-
-// --- STYLED COMPONENTS (Giữ nguyên 100% giao diện của bạn) ---
+import hostApi from "../../api/hostApi";
+import authService from "../../api/authService";
 
 const ProfileContainer = styled.div`
   min-height: 100vh;
   background: #f8fafc;
   padding: 2rem;
 `;
+
 const ProfileCard = styled.div`
-  max-width: 800px;
+  max-width: 1100px;
   margin: 0 auto;
   background: white;
-  border-radius: 1rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border-radius: 1.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   overflow: hidden;
+  backdrop-filter: blur(10px);
 `;
+
 const ProfileHeader = styled.div`
-  background: linear-gradient(135deg, #1e40af 0%, #3730a3 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 2rem;
+  padding: 3rem 2rem;
   text-align: center;
   position: relative;
 
   .back-button {
     position: absolute;
-    top: 1rem;
-    left: 1rem;
-    background: rgba(255, 255, 255, 0.2);
+    top: 1.5rem;
+    left: 1.5rem;
+    background: rgba(255, 255, 255, 0.15);
     border: none;
     color: white;
-    padding: 0.5rem;
-    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    transition: background-color 0.2s;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    font-weight: 500;
+    
     &:hover {
-      background: rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.25);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     }
   }
+  
   .host-badge {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
     background: rgba(255, 255, 255, 0.2);
-    padding: 0.5rem 1rem;
+    padding: 0.75rem 1.5rem;
     border-radius: 2rem;
     font-size: 0.875rem;
-    font-weight: 500;
-    margin-top: 1rem;
+    font-weight: 600;
+    margin-top: 1.5rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
   }
+  
   h1 {
-    font-size: 2rem;
-    font-weight: bold;
-    margin: 0 0 0.5rem 0;
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin: 0 0 0.75rem 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
+  
   p {
-    font-size: 1.125rem;
+    font-size: 1.25rem;
     margin: 0;
-    opacity: 0.9;
+    opacity: 0.95;
+    font-weight: 500;
   }
 `;
+
 const AvatarSection = styled.div`
   text-align: center;
-  padding: 2rem;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 3rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 1rem;
+  border: 1px solid #e2e8f0;
+  height: fit-content;
+  max-width: 350px;
+  margin: 0 auto;
+  
   .avatar-container {
     position: relative;
     display: inline-block;
     margin-bottom: 1rem;
   }
+  
   .avatar {
-    width: 120px;
-    height: 120px;
+    width: 160px;
+    height: 160px;
     border-radius: 50%;
     object-fit: cover;
-    border: 4px solid #e2e8f0;
+    border: 3px solid white;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    
+    &:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
   }
+  
   .avatar-upload {
     position: absolute;
-    bottom: 0;
-    right: 0;
-    background: #1e40af;
+    bottom: 8px;
+    right: 8px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    border: none;
-    padding: 0.5rem;
+    border: 2px solid white;
     border-radius: 50%;
+    width: 40px;
+    height: 40px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background-color 0.2s;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    
     &:hover {
-      background: #1e3a8a;
+      transform: scale(1.1);
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
     }
   }
+  
   .avatar-input {
     display: none;
   }
 `;
+
 const ProfileForm = styled.form`
   padding: 2rem;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+  gap: 3rem;
+  max-width: 900px;
+  margin: 0 auto;
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
 `;
-const FormSection = styled.div`
-  grid-column: 1 / -1;
-  border-top: 1px solid #e2e8f0;
-  padding-top: 1.5rem;
-  margin-top: 1rem;
-  h3 {
-    color: #1a202c;
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-`;
+
 const ActionButtons = styled.div`
   grid-column: 1 / -1;
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
-  padding-top: 1.5rem;
-  border-top: 1px solid #e2e8f0;
+  padding-top: 2rem;
   margin-top: 1rem;
 `;
 
-// --- COMPONENT MẪU (BẠN CÓ THỂ THAY BẰNG COMPONENT CỦA MÌNH) ---
 const FormField = ({
   label,
   name,
@@ -198,8 +219,30 @@ const FormField = ({
     )}
   </div>
 );
+
 const Button = styled.button`
-  /* ... */
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  min-width: 120px;
+  justify-content: center;
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  }
 `;
 
 const HostProfilePage = () => {
@@ -224,6 +267,7 @@ const HostProfilePage = () => {
     setLoading(true);
     try {
       const hostData = await hostApi.getMyProfile();
+      
       setFormData({
         fullName: hostData.fullName || "",
         email: hostData.email || "",
@@ -266,12 +310,12 @@ const HostProfilePage = () => {
       let uploadedAvatarUrl = null;
 
       if (formData.avatarFile) {
-        // Tái sử dụng authService để upload avatar, vì nó là chức năng chung
         const uploadResult = await authService.uploadAvatar(
           formData.avatarFile
         );
-        if (uploadResult.success && uploadResult.data.fileUrl) {
-          uploadedAvatarUrl = uploadResult.data.fileUrl;
+        
+        if (uploadResult && uploadResult.fileUrl) {
+          uploadedAvatarUrl = uploadResult.fileUrl;
         } else {
           throw new Error("Upload avatar thất bại");
         }
@@ -282,12 +326,28 @@ const HostProfilePage = () => {
         phone: formData.phone,
         address: formData.address,
         nationalId: formData.nationalId,
-        avatarUrl: uploadedAvatarUrl,
+        avatar: uploadedAvatarUrl,
+        email: formData.email,
       };
 
-      await hostApi.updateMyProfile(profileData);
+      const updatedProfile = await hostApi.updateMyProfile(profileData);
       showSuccess("Thành công!", "Thông tin của bạn đã được cập nhật.");
-      fetchHostProfile();
+      
+      setFormData(prev => ({
+        ...prev,
+        fullName: updatedProfile.fullName || prev.fullName,
+        phone: updatedProfile.phone || prev.phone,
+        address: updatedProfile.address || prev.address,
+        nationalId: updatedProfile.nationalId || prev.nationalId,
+      }));
+      
+      if (uploadedAvatarUrl) {
+        setAvatarPreview(uploadedAvatarUrl);
+        
+        window.dispatchEvent(new CustomEvent('avatarUpdated', {
+          detail: { avatarUrl: uploadedAvatarUrl }
+        }));
+      }
     } catch (err) {
       showError("Cập nhật thất bại!", err.message || "Có lỗi xảy ra.");
     } finally {
@@ -322,7 +382,7 @@ const HostProfilePage = () => {
             <div className="avatar-container">
               <img src={avatarPreview} alt="Avatar" className="avatar" />
               <label className="avatar-upload">
-                <Camera size={20} />
+                <Camera size={16} />
                 <input
                   type="file"
                   className="avatar-input"
@@ -331,59 +391,106 @@ const HostProfilePage = () => {
                 />
               </label>
             </div>
-            <p style={{ color: "#6b7280", fontSize: "0.875rem" }}>
-              Nhấp vào camera để đổi ảnh đại diện
-            </p>
           </AvatarSection>
 
-          <FormSection style={{ gridColumn: "1 / -1", marginTop: 0 }}>
-            <h3>
-              <User size={20} /> Thông tin cá nhân
-            </h3>
-          </FormSection>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div>
+              <h3 style={{ 
+                color: "#1a202c", 
+                fontSize: "1.25rem", 
+                fontWeight: "600", 
+                marginBottom: "1rem",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem"
+              }}>
+                <User size={20} /> Thông tin cá nhân
+              </h3>
+              
+              <div style={{ display: 'grid', gap: '1rem' }}>
+                <FormField
+                  label="Họ và tên"
+                  name="fullName"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  required
+                  icon={User}
+                />
+                <FormField
+                  label="Số điện thoại"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  icon={Phone}
+                />
+                <FormField
+                  label="Địa chỉ"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  icon={MapPin}
+                />
+              </div>
+            </div>
 
-          <FormField
-            label="Họ và tên"
-            name="fullName"
-            value={formData.fullName}
-            onChange={handleChange}
-            required
-            icon={User}
-          />
-          <FormField
-            label="Số điện thoại"
-            name="phone"
-            value={formData.phone}
-            onChange={handleChange}
-            icon={Phone}
-          />
-          <FormField
-            label="Địa chỉ"
-            name="address"
-            value={formData.address}
-            onChange={handleChange}
-            icon={MapPin}
-          />
-
-          <FormSection>
-            <h3>
-              <Shield size={20} /> Thông tin tài khoản
-            </h3>
-            <p style={{ color: "#718096" }}>
-              <strong>Username:</strong> {formData.username} (không thể thay
-              đổi)
-            </p>
-            <p style={{ color: "#718096" }}>
-              <strong>Email:</strong> {formData.email} (không thể thay đổi)
-            </p>
-          </FormSection>
+            <div>
+              <h3 style={{ 
+                color: "#1a202c", 
+                fontSize: "1.25rem", 
+                fontWeight: "600", 
+                marginBottom: "1rem",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem"
+              }}>
+                <Shield size={20} /> Thông tin tài khoản
+              </h3>
+              <div style={{ 
+                background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)', 
+                padding: '1.5rem', 
+                borderRadius: '1rem',
+                border: '1px solid #e2e8f0'
+              }}>
+                <p style={{ 
+                  color: "#4a5568", 
+                  fontSize: "1rem",
+                  fontWeight: "500",
+                  margin: "0",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem"
+                }}>
+                  <Mail size={18} style={{ color: "#667eea" }} />
+                  <strong>Email:</strong> {formData.email} (không thể thay đổi)
+                </p>
+              </div>
+            </div>
+          </div>
 
           <ActionButtons>
-            <Button type="button" onClick={() => navigate("/host")}>
+            <Button 
+              type="button" 
+              onClick={() => navigate("/host")}
+              style={{
+                background: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)',
+                color: '#475569',
+                border: '1px solid #cbd5e0',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+              }}
+            >
+              <ArrowLeft size={16} />
               Hủy
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              <Save size={16} style={{ marginRight: "0.5rem" }} />
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              style={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)'
+              }}
+            >
+              <Save size={16} />
               {isSubmitting ? "Đang lưu..." : "Lưu thay đổi"}
             </Button>
           </ActionButtons>

@@ -78,8 +78,22 @@ const hostApi = {
 
   getMyProfile: async () => {
     try {
+      // Sử dụng endpoint /hosts/my-profile như trong backend
       const response = await api.get("/hosts/my-profile");
-      return response.data.data; // Giả sử dữ liệu nằm trong response.data.data
+
+      // Xử lý response format từ backend: { code: "00", message: "...", data: HostDTO }
+      let hostData;
+      if (response.data.data) {
+        // Format: { code: "00", message: "...", data: HostDTO }
+        hostData = response.data.data;
+      } else if (response.data.id) {
+        // Fallback: Format: HostDTO
+        hostData = response.data;
+      } else {
+        throw new Error('Response format không hợp lệ');
+      }
+      
+      return hostData;
     } catch (error) {
       logApiError(error, "getMyProfile");
       throw error;
@@ -92,8 +106,27 @@ const hostApi = {
    */
   updateMyProfile: async (profileData) => {
     try {
+      // Sử dụng endpoint PUT /api/hosts/my-profile
       const response = await api.put("/hosts/my-profile", profileData);
-      return response.data.data; // Giả sử dữ liệu nằm trong response.data.data
+
+      // Xử lý response format từ backend: { code: "00", message: "...", data: HostDTO }
+      let updatedProfile;
+      if (response.data.data) {
+        // Format: { code: "00", message: "...", data: HostDTO }
+        updatedProfile = response.data.data;
+      } else if (response.data.id) {
+        // Fallback: Format: HostDTO
+        updatedProfile = response.data;
+      } else {
+        throw new Error('Response format không hợp lệ');
+      }
+
+      // Cập nhật user data trong localStorage
+      if (updatedProfile) {
+        localStorage.setItem('user', JSON.stringify(updatedProfile));
+      }
+
+      return updatedProfile;
     } catch (error) {
       logApiError(error, "updateMyProfile");
       throw error;

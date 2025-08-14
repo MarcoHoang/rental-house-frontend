@@ -300,11 +300,23 @@ const HostHeader = () => {
       checkAuth();
     };
 
+    // Lắng nghe sự kiện avatarUpdated từ HostProfilePage
+    const handleAvatarUpdated = (event) => {
+      const { avatarUrl } = event.detail;
+      setUserData(prev => ({
+        ...prev,
+        avatar: getAvatarUrl(avatarUrl)
+      }));
+    };
+
     window.addEventListener("storage", handleStorageChange);
     window.addEventListener("storage", handleCustomStorageEvent);
+    window.addEventListener("avatarUpdated", handleAvatarUpdated);
+    
     return () => {
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("storage", handleCustomStorageEvent);
+      window.removeEventListener("avatarUpdated", handleAvatarUpdated);
     };
   }, [handleLogout]);
 
