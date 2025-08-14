@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { getAvatarUrl, loadAuthenticatedImage, requiresAuthentication, debugImageLoading } from '../../utils/avatarHelper';
+import { getAvatarUrl, loadAuthenticatedImage, requiresAuthentication } from '../../utils/avatarHelper';
 
 const AvatarContainer = styled.div`
   width: ${props => props.size || '40px'};
@@ -81,28 +81,10 @@ const Avatar = ({
   const bgColor = stringToColor(displayName);
   const initials = getInitials(displayName);
 
-  // Debug logging
-  React.useEffect(() => {
-    console.log('=== DEBUG AVATAR COMPONENT ===');
-    console.log('Avatar - Original src:', src);
-    console.log('Avatar - Processed avatarUrl:', avatarUrl);
-    console.log('Avatar - Display name:', displayName);
-    console.log('Avatar - Image error state:', imageError);
-    console.log('Avatar - Image loaded state:', imageLoaded);
-    console.log('Avatar - Authenticated image URL:', authenticatedImageUrl);
-    console.log('Avatar - Loading state:', isLoading);
-    console.log('=== END DEBUG AVATAR COMPONENT ===');
-  }, [src, avatarUrl, displayName, imageError, imageLoaded, authenticatedImageUrl, isLoading]);
-
   // Load authenticated image if needed
   React.useEffect(() => {
     if (avatarUrl && avatarUrl !== '/default-avatar.png' && requiresAuthentication(avatarUrl)) {
       setIsLoading(true);
-      
-      // Debug image loading if in development
-      if (process.env.NODE_ENV === 'development') {
-        debugImageLoading(avatarUrl);
-      }
       
       // This is a backend image URL that needs authentication
       loadAuthenticatedImage(avatarUrl).then(blobUrl => {
@@ -111,13 +93,11 @@ const Avatar = ({
           setAuthenticatedImageUrl(blobUrl);
           setImageError(false);
         } else {
-          console.warn('Failed to load authenticated image, falling back to initials');
           setImageError(true);
           setAuthenticatedImageUrl(null);
         }
       }).catch(error => {
         setIsLoading(false);
-        console.error('Error loading authenticated image:', error);
         setImageError(true);
         setAuthenticatedImageUrl(null);
       });
@@ -137,13 +117,11 @@ const Avatar = ({
   }, [avatarUrl]);
 
   const handleImageLoad = () => {
-    console.log('Avatar - Image loaded successfully');
     setImageLoaded(true);
     setImageError(false);
   };
 
   const handleImageError = () => {
-    console.log('Avatar - Image failed to load');
     setImageError(true);
     setImageLoaded(false);
   };

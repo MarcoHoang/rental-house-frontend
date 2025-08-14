@@ -107,7 +107,7 @@ const PostPropertyPage = () => {
         address: '',
         price: '',
         area: '',
-        houseType: 'APARTMENT',
+        houseType: '',
         imageFiles: [],
         imagePreviews: []
       });

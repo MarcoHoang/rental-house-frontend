@@ -51,28 +51,27 @@ const fileUploadService = {
    */
   uploadAvatar: async (file) => {
     try {
-      console.log('=== DEBUG FILE UPLOAD SERVICE ===');
-      console.log('fileUploadService.uploadAvatar - File:', file);
-      console.log('fileUploadService.uploadAvatar - File name:', file.name);
-      console.log('fileUploadService.uploadAvatar - File size:', file.size);
-      console.log('fileUploadService.uploadAvatar - File type:', file.type);
-
       const formData = new FormData();
       formData.append('file', file);
 
-      console.log('fileUploadService.uploadAvatar - FormData created');
-      console.log('fileUploadService.uploadAvatar - Calling endpoint: /files/upload/avatar');
-
       const response = await fileUploadApi.post('/files/upload/avatar', formData);
 
-      console.log('fileUploadService.uploadAvatar - Response:', response.data);
-
       // Xử lý response theo format của backend
+      let result;
       if (response.data && response.data.data) {
-        return response.data.data;
+        // Format: { code: "00", message: "...", data: FileUploadResponse }
+        result = response.data.data;
+      } else if (response.data && response.data.fileUrl) {
+        // Format: { fileUrl: "...", ... }
+        result = response.data;
+      } else if (typeof response.data === 'string') {
+        // Format: "avatar/filename.jpg"
+        result = { fileUrl: response.data };
+      } else {
+        throw new Error('Response format không hợp lệ');
       }
-      
-      return response.data;
+
+      return result;
     } catch (error) {
       console.error('fileUploadService.uploadAvatar - Error:', error);
       logApiError(error, 'uploadAvatar');
@@ -87,16 +86,12 @@ const fileUploadService = {
    */
   uploadHouseImages: async (files) => {
     try {
-      console.log('fileUploadService.uploadHouseImages - Files:', files);
-
       const formData = new FormData();
       files.forEach(file => {
         formData.append('files', file);
       });
 
       const response = await fileUploadApi.post('/files/upload/house-images', formData);
-
-      console.log('fileUploadService.uploadHouseImages - Response:', response.data);
 
       // Xử lý response theo format của backend
       if (response.data && response.data.data) {

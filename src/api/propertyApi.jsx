@@ -2,22 +2,51 @@ import axios from "axios";
 import { privateApiClient, hostApiClient, publicApiClient } from "./apiClient";
 
 const propertyApi = {
-  // Upload ảnh nhà - sử dụng fileUploadService
+  // Upload ảnh nhà
   uploadHouseImages: async (files) => {
     try {
-      const fileUploadService = (await import('./fileUploadApi')).default;
-      return await fileUploadService.uploadHouseImages(files);
+      const formData = new FormData();
+
+      // Thêm các file ảnh vào formData với key 'files'
+      files.forEach(file => {
+        formData.append('files', file);
+      });
+
+      console.log('Đang upload ảnh...');
+
+      const response = await axios.post(
+          `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/files/upload/house-images`,
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            validateStatus: status => status < 500
+          }
+      );
+
+      console.log('Kết quả upload ảnh:', response.data);
+
+      if (response.status >= 400) {
+        const error = response.data?.message || 'Lỗi khi tải lên ảnh';
+        throw new Error(error);
+      }
+
+      // Trả về danh sách các URL ảnh đã upload
+      return response.data.data.map(item => item.fileUrl);
+
     } catch (error) {
       console.error('Lỗi khi upload ảnh:', error);
       throw error;
     }
   },
-  
+
   // Tạo mới bài đăng nhà
   createHouse: async (houseData) => {
     try {
       console.log('Đang tạo bài đăng mới...', houseData);
-      
+
       // Chuẩn bị dữ liệu theo đúng định dạng API yêu cầu
       const requestData = {
         title: houseData.title,
@@ -49,36 +78,36 @@ const propertyApi = {
 
       console.log('Phản hồi từ API createHouse - Status:', response.status);
       console.log('Dữ liệu phản hồi:', response.data);
-      
+
       if (response.status >= 400) {
         // Nếu có thông báo lỗi từ server
         if (response.data) {
           console.error('Chi tiết lỗi từ server:', response.data);
-          
+
           // Nếu có lỗi validation
           if (response.status === 400 && response.data.errors) {
             const validationErrors = Object.entries(response.data.errors)
-              .map(([field, errors]) => `${field}: ${Array.isArray(errors) ? errors.join(', ') : errors}`)
-              .join('\n');
+                .map(([field, errors]) => `${field}: ${Array.isArray(errors) ? errors.join(', ') : errors}`)
+                .join('\n');
             throw new Error(`Dữ liệu không hợp lệ:\n${validationErrors}`);
           }
-          
+
           // Nếu có thông báo lỗi
           if (response.data.message) {
             throw new Error(response.data.message);
           }
-          
+
           // Nếu có lỗi chung
           if (response.data.error) {
             throw new Error(response.data.error);
           }
         }
-        
+
         throw new Error(`Lỗi ${response.status}: ${response.statusText || 'Yêu cầu không hợp lệ'}`);
       }
-      
+
       return response.data;
-      
+
     } catch (error) {
       console.error('Lỗi khi tạo bài đăng:', {
         message: error.message,
@@ -90,36 +119,36 @@ const propertyApi = {
           data: error.config?.data
         }
       });
-      
+
       // Nếu có thông báo lỗi từ server
       if (error.response?.data) {
         const serverError = error.response.data;
-        
+
         // Kiểm tra các trường hợp lỗi thường gặp
         if (serverError.errors) {
           // Xử lý lỗi validation
           const validationErrors = Object.entries(serverError.errors)
-            .map(([field, messages]) => `${field}: ${messages.join(', ')}`)
-            .join('\n');
+              .map(([field, messages]) => `${field}: ${messages.join(', ')}`)
+              .join('\n');
           throw new Error(`Lỗi dữ liệu:\n${validationErrors}`);
         }
-        
+
         // Nếu có message lỗi từ server
         if (serverError.message) {
           throw new Error(serverError.message);
         }
-        
+
         // Nếu có error từ server
         if (serverError.error) {
           throw new Error(serverError.error);
         }
       }
-      
+
       // Nếu không có thông tin lỗi cụ thể
       if (!error.message.includes('Network Error') && !error.request) {
         throw new Error('Dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin đã nhập.');
       }
-      
+
       throw error;
     }
   },
@@ -136,24 +165,24 @@ const propertyApi = {
     files.forEach(file => {
       formData.append('files', file);
     });
-    
+
     console.log('Đang upload files:', files);
-    
+
     try {
       // Gọi API upload với endpoint đầy đủ /api/files/upload/house-images
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/files/upload/house-images`, 
-        formData, 
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-        }
+          `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/files/upload/house-images`,
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+          }
       );
-      
+
       console.log('Phản hồi từ server:', response);
-      
+
       // Xử lý response theo cấu trúc: { data: { data: [...] } }
       if (response.data && response.data.data) {
         // Trả về mảng các URL ảnh
@@ -166,7 +195,7 @@ const propertyApi = {
           return item.url || item.fileUrl || item.path || '';
         }).filter(url => url); // Lọc bỏ các URL rỗng
       }
-      
+
       console.warn('Không có dữ liệu trong response');
       return [];
     } catch (error) {
@@ -177,7 +206,7 @@ const propertyApi = {
           data: error.response.data,
           headers: error.response.headers
         });
-        
+
         // Nếu là lỗi 401 (Unauthorized)
         if (error.response.status === 401) {
           // Xử lý hết hạn token
@@ -189,7 +218,7 @@ const propertyApi = {
       } else {
         console.error('Lỗi khi thiết lập yêu cầu:', error.message);
       }
-      
+
       throw error;
     }
   },
@@ -199,17 +228,17 @@ const propertyApi = {
     const response = await privateApiClient.get('/api/houses/my-houses');
     return response.data;
   },
-  
+
   // Lấy danh sách bài đăng (cho host) - giữ lại cho tương thích
   getMyProperties: async (params = {}) => {
     try {
       console.log('Fetching properties with params:', params);
-      const response = await hostApiClient.get('/houses/my-houses', { 
+      const response = await hostApiClient.get('/houses/my-houses', {
         params,
         paramsSerializer: params => {
           return Object.keys(params)
-            .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
-            .join('&');
+              .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+              .join('&');
         }
       });
       console.log('Properties fetched successfully:', response.data);
@@ -241,18 +270,18 @@ const propertyApi = {
   getPropertiesByHostId: async (hostId, params = {}) => {
     try {
       console.log('Fetching properties for hostId:', hostId, 'with params:', params);
-      
+
       // Gọi API để lấy tất cả nhà
       const allHousesResponse = await hostApiClient.get('/houses', { params });
-      const allHouses = allHousesResponse.data.content || allHousesResponse.data.data || allHousesResponse.data || [];
-      
+      const allHouses = allHousesResponse.data.data || allHousesResponse.data.content || allHousesResponse.data || [];
+
       console.log('All houses fetched:', allHouses);
-      
+
       // Filter theo hostId
       const filteredHouses = allHouses.filter(house => house.hostId == hostId);
-      
+
       console.log('Filtered houses for hostId:', hostId, filteredHouses);
-      
+
       return {
         content: filteredHouses,
         totalElements: filteredHouses.length,
@@ -262,13 +291,13 @@ const propertyApi = {
       };
     } catch (error) {
       console.error('Error fetching properties for hostId:', hostId, error);
-      
+
       // Trả về mock data nếu API thất bại
       console.warn('Using mock data as fallback');
       return getMockPropertiesForHost(hostId);
     }
   },
-  
+
   // Lấy chi tiết bài đăng
   getPropertyById: async (id) => {
     try {
@@ -294,12 +323,12 @@ const propertyApi = {
       throw error;
     }
   },
-  
+
   // Cập nhật bài đăng
   updateProperty: async (id, propertyData) => {
     try {
       const formData = new FormData();
-      
+
       // Thêm các trường thông tin cơ bản
       if (propertyData.title) formData.append('title', propertyData.title);
       if (propertyData.description) formData.append('description', propertyData.description);
@@ -311,23 +340,23 @@ const propertyApi = {
       if (propertyData.direction) formData.append('direction', propertyData.direction);
       if (propertyData.legalDocuments) formData.append('legalDocuments', propertyData.legalDocuments);
       if (propertyData.furniture) formData.append('furniture', propertyData.furniture);
-      
+
       // Thêm địa chỉ nếu có
       if (propertyData.address) formData.append('address', propertyData.address);
       if (propertyData.city) formData.append('city', propertyData.city);
       if (propertyData.district) formData.append('district', propertyData.district);
       if (propertyData.ward) formData.append('ward', propertyData.ward);
-      
+
       // Thêm thông tin liên hệ nếu có
       if (propertyData.contactName) formData.append('contactName', propertyData.contactName);
       if (propertyData.contactPhone) formData.append('contactPhone', propertyData.contactPhone);
       if (propertyData.contactEmail) formData.append('contactEmail', propertyData.contactEmail);
-      
+
       // Thêm tiện ích nếu có
       if (propertyData.utilities) {
         formData.append('utilities', JSON.stringify(propertyData.utilities));
       }
-      
+
       // Thêm hình ảnh mới nếu có
       if (propertyData.images && propertyData.images.length > 0) {
         propertyData.images.forEach((image) => {
@@ -336,12 +365,12 @@ const propertyApi = {
           }
         });
       }
-      
+
       // Nếu có ảnh bị xóa
       if (propertyData.deletedImageIds && propertyData.deletedImageIds.length > 0) {
         formData.append('deletedImageIds', JSON.stringify(propertyData.deletedImageIds));
       }
-      
+
       const response = await hostApiClient.put(`/houses/${id}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -359,7 +388,7 @@ const propertyApi = {
       throw error;
     }
   },
-  
+
   // Xóa bài đăng
   deleteProperty: async (id) => {
     try {
@@ -376,7 +405,7 @@ const propertyApi = {
       throw error;
     }
   },
-  
+
   // Cập nhật trạng thái bài đăng (active/inactive)
   updatePropertyStatus: async (id, status) => {
     try {
@@ -542,7 +571,7 @@ const propertyApi = {
       if (!response) {
         throw new Error('No response received from any endpoint');
       }
-      
+
       console.log('✅ Public properties fetched successfully:', response.data);
       console.log('✅ Response structure:', {
         hasData: !!response.data,
@@ -592,7 +621,7 @@ const propertyApi = {
       return response.data;
     } catch (error) {
       console.error('❌ Error fetching public properties:', error);
-      
+
       // Log chi tiết lỗi
       if (error.response) {
         console.error('❌ Response status:', error.response.status);

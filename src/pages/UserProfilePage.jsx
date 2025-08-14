@@ -372,38 +372,29 @@ const UserProfilePage = () => {
     try {
       let avatarUrl = profile.avatarPreview; // Giữ avatar hiện tại
 
-      console.log("=== DEBUG AVATAR UPDATE ===");
-      console.log("UserProfilePage.handleSubmit - Current avatarPreview:", profile.avatarPreview);
-      console.log("UserProfilePage.handleSubmit - Has new avatar file:", !!profile.avatar);
-      console.log("UserProfilePage.handleSubmit - Avatar file type:", profile.avatar?.type);
-      console.log("UserProfilePage.handleSubmit - Avatar file size:", profile.avatar?.size);
-
       // Upload avatar mới nếu có
       if (profile.avatar && profile.avatar instanceof File) {
-        console.log("UserProfilePage.handleSubmit - Uploading new avatar file");
         try {
           const uploadResult = await authService.uploadAvatar(profile.avatar);
-          console.log("UserProfilePage.handleSubmit - Upload result:", uploadResult);
           
-          if (uploadResult.success && uploadResult.data.fileUrl) {
-            avatarUrl = uploadResult.data.fileUrl;
-            console.log(
-              "UserProfilePage.handleSubmit - Avatar uploaded successfully:",
-              avatarUrl
+          // Xử lý response format từ fileUploadApi
+          if (uploadResult && uploadResult.fileUrl) {
+            avatarUrl = uploadResult.fileUrl;
+            showSuccess(
+              "Upload avatar thành công!",
+              "Ảnh đại diện của bạn đã được cập nhật."
             );
+          } else if (uploadResult && typeof uploadResult === 'string') {
+            // Nếu response là string URL
+            avatarUrl = uploadResult;
             showSuccess(
               "Upload avatar thành công!",
               "Ảnh đại diện của bạn đã được cập nhật."
             );
           } else {
-            console.error("UserProfilePage.handleSubmit - Upload result invalid:", uploadResult);
             throw new Error("Upload avatar thất bại - response không hợp lệ");
           }
         } catch (uploadError) {
-          console.error(
-            "UserProfilePage.handleSubmit - Avatar upload error:",
-            uploadError
-          );
           showError(
             "Upload avatar thất bại!",
             "Lỗi khi upload ảnh đại diện: " +
@@ -412,8 +403,6 @@ const UserProfilePage = () => {
           return;
         }
       }
-
-      console.log("UserProfilePage.handleSubmit - Final avatarUrl to send:", avatarUrl);
 
       // Chuẩn bị dữ liệu gửi đi
       const userData = {
@@ -424,14 +413,8 @@ const UserProfilePage = () => {
         avatarUrl: avatarUrl, // Sử dụng URL avatar đã upload hoặc hiện tại
       };
 
-      console.log(
-        "UserProfilePage.handleSubmit - Sending user data:",
-        userData
-      );
-
       // Gọi API cập nhật profile
       const result = await authService.updateProfile(userId, userData);
-      console.log("UserProfilePage.handleSubmit - Update profile result:", result);
 
       if (!result || !result.success) {
         throw new Error(result?.error || "Cập nhật thất bại");
@@ -444,22 +427,18 @@ const UserProfilePage = () => {
         ...result.data,
         avatarUrl: avatarUrl, // Đảm bảo avatar URL mới được lưu
       };
-      console.log("UserProfilePage.handleSubmit - New user data to save:", newUserData);
       localStorage.setItem("user", JSON.stringify(newUserData));
 
       setUser(newUserData);
 
       // Cập nhật avatar preview với URL mới
       const newAvatarPreview = getAvatarUrl(avatarUrl);
-      console.log("UserProfilePage.handleSubmit - New avatar preview URL:", newAvatarPreview);
       
       setProfile((prev) => ({
         ...prev,
         avatarPreview: newAvatarPreview,
         avatar: null, // Reset avatar file
       }));
-
-      console.log("=== END DEBUG AVATAR UPDATE ===");
 
       showSuccess(
         "Cập nhật thành công!",

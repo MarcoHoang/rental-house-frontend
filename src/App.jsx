@@ -21,7 +21,6 @@ import ErrorBoundary from "./components/common/ErrorBoundary";
 import ToastProvider from "./components/common/Toast";
 import { AUTH_CONFIG } from "./config/auth";
 import { getUserFromStorage } from "./utils/localStorage";
-import AvatarTestPage from "./pages/AvatarTestPage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
 import HouseListPage from "./pages/HouseListPage";
 import HouseDetailPage from "./pages/HouseDetailPage";
@@ -128,8 +127,7 @@ function App() {
               }
             />
 
-            {/* Trang test avatar upload */}
-            <Route path="/avatar-test" element={<AvatarTestPage />} />
+
 
             {/* Trang test đơn đăng ký làm chủ nhà */}
             <Route
