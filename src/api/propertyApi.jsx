@@ -1,5 +1,5 @@
 import axios from "axios";
-import { privateApiClient, hostApiClient } from "./apiClient";
+import { privateApiClient, hostApiClient, publicApiClient } from "./apiClient";
 
 const propertyApi = {
   // Upload ảnh nhà
@@ -242,6 +242,18 @@ const propertyApi = {
         }
       });
       console.log('Properties fetched successfully:', response.data);
+      
+      // Backend trả về ApiResponse format, cần extract data
+      if (response.data && response.data.data) {
+        return {
+          content: response.data.data,
+          totalElements: response.data.data.length,
+          totalPages: 1,
+          size: response.data.data.length,
+          number: 0
+        };
+      }
+      
       return response.data;
     } catch (error) {
       console.error('Error fetching properties:', error);
@@ -261,7 +273,7 @@ const propertyApi = {
       
       // Gọi API để lấy tất cả nhà
       const allHousesResponse = await hostApiClient.get('/houses', { params });
-      const allHouses = allHousesResponse.data.content || allHousesResponse.data.data || allHousesResponse.data || [];
+      const allHouses = allHousesResponse.data.data || allHousesResponse.data.content || allHousesResponse.data || [];
       
       console.log('All houses fetched:', allHouses);
       
@@ -295,6 +307,12 @@ const propertyApi = {
       console.log(`Fetching property with ID: ${id}`);
       const response = await hostApiClient.get(`/houses/${id}`);
       console.log('Property details fetched successfully:', response.data);
+      
+      // Backend trả về ApiResponse format, cần extract data
+      if (response.data && response.data.data) {
+        return response.data.data;
+      }
+      
       return response.data;
     } catch (error) {
       console.error(`Error fetching property ${id}:`, error);
@@ -359,6 +377,11 @@ const propertyApi = {
         },
       });
       
+      // Backend trả về ApiResponse format, cần extract data
+      if (response.data && response.data.data) {
+        return response.data.data;
+      }
+      
       return response.data;
     } catch (error) {
       console.error(`Error updating property ${id}:`, error);
@@ -370,6 +393,12 @@ const propertyApi = {
   deleteProperty: async (id) => {
     try {
       const response = await hostApiClient.delete(`/houses/${id}`);
+      
+      // Backend trả về ApiResponse format
+      if (response.data && response.data.data) {
+        return response.data.data;
+      }
+      
       return response.data;
     } catch (error) {
       console.error(`Error deleting property ${id}:`, error);
@@ -378,12 +407,92 @@ const propertyApi = {
   },
   
   // Cập nhật trạng thái bài đăng (active/inactive)
-  updatePropertyStatus: async (id, isActive) => {
+  updatePropertyStatus: async (id, status) => {
     try {
-      const response = await hostApiClient.patch(`/houses/${id}/status`, { isActive });
+      const response = await hostApiClient.put(`/houses/${id}/status?status=${status}`);
+      
+      // Backend trả về ApiResponse format, cần extract data
+      if (response.data && response.data.data) {
+        return response.data.data;
+      }
+      
       return response.data;
     } catch (error) {
       console.error(`Error updating status for property ${id}:`, error);
+      throw error;
+    }
+  },
+
+  // Tìm kiếm nhà theo từ khóa
+  searchHouses: async (keyword) => {
+    try {
+      console.log('Searching houses with keyword:', keyword);
+      const response = await publicApiClient.get('/houses/search', {
+        params: { keyword }
+      });
+      
+      console.log('Search results:', response.data);
+      
+      // Backend trả về ApiResponse format, cần extract data
+      if (response.data && response.data.data) {
+        return {
+          content: response.data.data,
+          totalElements: response.data.data.length,
+          totalPages: 1,
+          size: response.data.data.length,
+          number: 0
+        };
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error searching houses:', error);
+      throw error;
+    }
+  },
+
+  // Lấy nhà nổi bật
+  getTopHouses: async () => {
+    try {
+      console.log('Fetching top houses');
+      const response = await publicApiClient.get('/houses/top');
+      
+      console.log('Top houses:', response.data);
+      
+      // Backend trả về ApiResponse format, cần extract data
+      if (response.data && response.data.data) {
+        return {
+          content: response.data.data,
+          totalElements: response.data.data.length,
+          totalPages: 1,
+          size: response.data.data.length,
+          number: 0
+        };
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching top houses:', error);
+      throw error;
+    }
+  },
+
+  // Lấy hình ảnh của nhà
+  getHouseImages: async (id) => {
+    try {
+      console.log(`Fetching images for house ${id}`);
+      const response = await publicApiClient.get(`/houses/${id}/images`);
+      
+      console.log('House images:', response.data);
+      
+      // Backend trả về ApiResponse format, cần extract data
+      if (response.data && response.data.data) {
+        return response.data.data;
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching images for house ${id}:`, error);
       throw error;
     }
   },
@@ -392,26 +501,169 @@ const propertyApi = {
   getPublicProperties: async (params = {}) => {
     try {
       console.log('🔍 Fetching public properties with params:', params);
+      console.log('🔍 Using base URL:', publicApiClient.defaults.baseURL);
       
-      // Gọi API để lấy danh sách nhà công khai
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/houses/public`,
-        { 
+      // Thử nhiều endpoint khác nhau để lấy dữ liệu
+      let response = null;
+      let endpoint = null;
+      
+      // Thử endpoint chính trước
+      try {
+        endpoint = '/houses';
+        console.log('🔍 Trying endpoint:', endpoint);
+        response = await publicApiClient.get(endpoint, { 
           params,
           headers: {
             'Content-Type': 'application/json'
           }
+        });
+        console.log('✅ Success with endpoint:', endpoint);
+      } catch (error) {
+        console.log('❌ Failed with endpoint:', endpoint, error.message);
+        
+        // Thử endpoint khác
+        try {
+          endpoint = '/houses/public';
+          console.log('🔍 Trying endpoint:', endpoint);
+          response = await publicApiClient.get(endpoint, { 
+            params,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+          console.log('✅ Success with endpoint:', endpoint);
+        } catch (error2) {
+          console.log('❌ Failed with endpoint:', endpoint, error2.message);
+          
+          // Thử endpoint cuối cùng
+          try {
+            endpoint = '/houses/all';
+            console.log('🔍 Trying endpoint:', endpoint);
+            response = await publicApiClient.get(endpoint, { 
+              params,
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            });
+            console.log('✅ Success with endpoint:', endpoint);
+          } catch (error3) {
+            console.log('❌ Failed with endpoint:', endpoint, error3.message);
+            
+            // Thử với hostApiClient như một fallback
+            try {
+              endpoint = '/houses (via hostApiClient)';
+              console.log('🔍 Trying with hostApiClient as fallback');
+              response = await hostApiClient.get('/houses', { 
+                params,
+                headers: {
+                  'Content-Type': 'application/json'
+                }
+              });
+              console.log('✅ Success with hostApiClient fallback');
+            } catch (error4) {
+              console.log('❌ All endpoints failed, using mock data');
+              throw new Error('All API endpoints failed');
+            }
+          }
         }
-      );
+      }
+      
+      if (!response) {
+        throw new Error('No response received from any endpoint');
+      }
       
       console.log('✅ Public properties fetched successfully:', response.data);
+      console.log('✅ Response structure:', {
+        hasData: !!response.data,
+        hasDataData: !!response.data?.data,
+        hasContent: !!response.data?.content,
+        dataType: typeof response.data,
+        dataKeys: response.data ? Object.keys(response.data) : 'no data'
+      });
+      
+      // Backend trả về ApiResponse format, cần extract data
+      if (response.data && response.data.data) {
+        console.log('✅ Extracting data from response.data.data');
+        return {
+          content: response.data.data,
+          totalElements: response.data.data.length,
+          totalPages: 1,
+          size: response.data.data.length,
+          number: 0
+        };
+      }
+      
+      // Nếu không có response.data.data, kiểm tra response.data trực tiếp
+      if (response.data && Array.isArray(response.data)) {
+        console.log('✅ Response.data is array, using directly');
+        return {
+          content: response.data,
+          totalElements: response.data.length,
+          totalPages: 1,
+          size: response.data.length,
+          number: 0
+        };
+      }
+      
+      // Nếu có response.data.content
+      if (response.data && response.data.content) {
+        console.log('✅ Extracting data from response.data.content');
+        return {
+          content: response.data.content,
+          totalElements: response.data.content.length,
+          totalPages: response.data.totalPages || 1,
+          size: response.data.size || response.data.content.length,
+          number: response.data.number || 0
+        };
+      }
+      
+      console.log('⚠️ No valid data structure found, returning response.data as is');
       return response.data;
     } catch (error) {
       console.error('❌ Error fetching public properties:', error);
       
-      // Nếu API chưa có, trả về mock data
+      // Log chi tiết lỗi
+      if (error.response) {
+        console.error('❌ Response status:', error.response.status);
+        console.error('❌ Response data:', error.response.data);
+        console.error('❌ Response headers:', error.response.headers);
+        console.error('❌ Response config:', error.response.config);
+      } else if (error.request) {
+        console.error('❌ Request was made but no response received:', error.request);
+        console.error('❌ Request config:', error.config);
+      } else {
+        console.error('❌ Error setting up request:', error.message);
+        console.error('❌ Error stack:', error.stack);
+      }
+      
+      // Nếu API thất bại, trả về mock data
       console.warn('⚠️ Using mock data as fallback');
       return getMockProperties();
+    }
+  },
+
+  // Lấy tất cả nhà (sử dụng hostApiClient - có thể cần đăng nhập)
+  getAllProperties: async (params = {}) => {
+    try {
+      console.log('🔍 Fetching all properties with hostApiClient');
+      const response = await hostApiClient.get('/houses', { params });
+      console.log('✅ All properties fetched successfully:', response.data);
+      
+      // Backend trả về ApiResponse format, cần extract data
+      if (response.data && response.data.data) {
+        return {
+          content: response.data.data,
+          totalElements: response.data.data.length,
+          totalPages: 1,
+          size: response.data.data.length,
+          number: 0
+        };
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error fetching all properties:', error);
+      throw error;
     }
   }
 };
@@ -422,32 +674,80 @@ const getMockProperties = () => {
     content: [
       {
         id: 1,
-        title: "Chung cư cao cấp tại trung tâm",
-        description: "Căn hộ 2 phòng ngủ, view đẹp, tiện nghi đầy đủ",
+        title: "Căn hộ cao cấp 2 phòng ngủ tại Quận 1",
+        description: "Căn hộ cao cấp, view đẹp, tiện nghi đầy đủ, gần trung tâm thành phố",
         address: "123 Nguyễn Huệ, Quận 1, TP.HCM",
         price: 15000000,
         area: 65,
         houseType: "APARTMENT",
-        status: "AVAILABLE",
-        imageUrls: ["https://via.placeholder.com/300x200/4F46E5/FFFFFF?text=Chung+cu"],
+        status: "ACTIVE",
+        imageUrls: ["https://via.placeholder.com/300x200/4F46E5/FFFFFF?text=Can+ho+cao+cap"],
         hostId: 1
       },
       {
         id: 2,
-        title: "Nhà riêng 3 tầng tại quận 7",
-        description: "Nhà riêng 3 tầng, 4 phòng ngủ, sân vườn rộng",
+        title: "Nhà phố 3 tầng tại Quận 7",
+        description: "Nhà phố mới xây, 4 phòng ngủ, sân vườn rộng, phù hợp gia đình",
         address: "456 Lê Văn Việt, Quận 7, TP.HCM",
         price: 25000000,
         area: 120,
         houseType: "HOUSE",
-        status: "AVAILABLE",
-        imageUrls: ["https://via.placeholder.com/300x200/10B981/FFFFFF?text=Nha+rieng"],
+        status: "ACTIVE",
+        imageUrls: ["https://via.placeholder.com/300x200/10B981/FFFFFF?text=Nha+pho+3tang"],
         hostId: 2
+      },
+      {
+        id: 3,
+        title: "Studio 1 phòng tại Quận 3",
+        description: "Studio hiện đại, phù hợp cho sinh viên hoặc người độc thân",
+        address: "789 Võ Văn Tần, Quận 3, TP.HCM",
+        price: 8000000,
+        area: 35,
+        houseType: "STUDIO",
+        status: "ACTIVE",
+        imageUrls: ["https://via.placeholder.com/300x200/F59E0B/FFFFFF?text=Studio+1PN"],
+        hostId: 3
+      },
+      {
+        id: 4,
+        title: "Biệt thự 4 phòng ngủ tại Quận 2",
+        description: "Biệt thự sang trọng, hồ bơi riêng, sân vườn rộng, view sông",
+        address: "321 Mai Chí Thọ, Quận 2, TP.HCM",
+        price: 45000000,
+        area: 200,
+        houseType: "VILLA",
+        status: "ACTIVE",
+        imageUrls: ["https://via.placeholder.com/300x200/8B5CF6/FFFFFF?text=Biet+thu+4PN"],
+        hostId: 4
+      },
+      {
+        id: 5,
+        title: "Căn hộ 3 phòng ngủ tại Quận 4",
+        description: "Căn hộ view sông, gần chợ, trường học, bệnh viện",
+        address: "654 Võ Văn Tần, Quận 4, TP.HCM",
+        price: 18000000,
+        area: 85,
+        houseType: "APARTMENT",
+        status: "ACTIVE",
+        imageUrls: ["https://via.placeholder.com/300x200/EF4444/FFFFFF?text=Can+ho+3PN"],
+        hostId: 5
+      },
+      {
+        id: 6,
+        title: "Nhà trọ cao cấp tại Quận 8",
+        description: "Nhà trọ cao cấp, có điều hòa, nóng lạnh, wifi, an ninh 24/7",
+        address: "987 Hưng Phú, Quận 8, TP.HCM",
+        price: 5000000,
+        area: 25,
+        houseType: "STUDIO",
+        status: "ACTIVE",
+        imageUrls: ["https://via.placeholder.com/300x200/06B6D4/FFFFFF?text=Nha+tro+cao+cap"],
+        hostId: 6
       }
     ],
-    totalElements: 2,
+    totalElements: 6,
     totalPages: 1,
-    size: 10,
+    size: 6,
     number: 0
   };
 };

@@ -9,6 +9,19 @@ const publicApiClient = axios.create({
   baseURL: `${API_BASE_URL}${API_PREFIX}`,
 });
 
+// Gắn interceptor cho publicApiClient để xử lý lỗi
+publicApiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error('Public API Error:', error);
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', error.response.data);
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Client cho các API của Admin (private, cần token)
 const privateApiClient = axios.create({
   baseURL: `${API_BASE_URL}${API_PREFIX}/admin`,

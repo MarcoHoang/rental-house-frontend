@@ -38,15 +38,18 @@ const SearchButton = styled.button`
   }
 `;
 
-const SearchBar = () => {
+const SearchBar = ({ onSearch }) => {
   const [query, setQuery] = useState("");
   const { showSuccess } = useToast();
 
   const handleSearch = () => {
     if (query.trim()) {
       showSuccess('Tìm kiếm', `Đang tìm kiếm với từ khóa: "${query}"`);
-      // Trong thực tế, bạn sẽ gọi API ở đây hoặc điều hướng đến trang kết quả tìm kiếm
-      // Ví dụ: navigate(`/search?q=${query}`);
+      
+      // Gọi callback onSearch nếu được truyền vào
+      if (onSearch && typeof onSearch === 'function') {
+        onSearch(query);
+      }
     }
   };
 
