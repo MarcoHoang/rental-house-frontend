@@ -70,6 +70,7 @@ export const HOUSE_DTO_FIELDS = {
   ID: 'id',
   HOST_ID: 'hostId',
   HOST_NAME: 'hostName',
+  HOST_PHONE: 'hostPhone',
   TITLE: 'title',
   DESCRIPTION: 'description',
   ADDRESS: 'address',
