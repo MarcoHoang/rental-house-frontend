@@ -8,12 +8,73 @@ import Avatar from "../components/common/Avatar";
 import HostApplicationStatus from "../components/host/HostApplicationStatus";
 
 const ProfileContainer = styled.div`
-  max-width: 800px;
-  margin: 2rem auto;
+  max-width: 900px;
+  margin: 0 auto;
   padding: 2rem;
+  background: #f8fafc;
+  min-height: 100vh;
+`;
+
+const ProfileCard = styled.div`
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin-bottom: 2rem;
+`;
+
+const ProfileHeader = styled.div`
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 2rem;
+  text-align: center;
+`;
+
+const ProfileTitle = styled.h1`
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+`;
+
+const ProfileSubtitle = styled.p`
+  font-size: 1rem;
+  opacity: 0.9;
+  margin: 0;
+`;
+
+const ProfileContent = styled.div`
+  padding: 2rem;
+`;
+
+const Section = styled.div`
+  margin-bottom: 2.5rem;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const SectionTitle = styled.h2`
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const SectionDescription = styled.p`
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+`;
+
+const SectionDivider = styled.div`
+  height: 1px;
+  background: linear-gradient(to right, transparent, #e5e7eb, transparent);
+  margin: 2rem 0;
 `;
 
 const FormGroup = styled.div`
@@ -64,41 +125,103 @@ const FileInput = styled.input`
 `;
 
 const FileLabel = styled.label`
-  padding: 0.5rem 1rem;
-  background-color: #e5e7eb;
-  border-radius: 0.375rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  border: 2px solid #d1d5db;
+  border-radius: 0.5rem;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 
   &:hover {
-    background-color: #d1d5db;
+    background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+    border-color: #9ca3af;
+    transform: translateY(-1px);
   }
 `;
 
 const Button = styled.button`
-  padding: 0.75rem 1.5rem;
-  background-color: #4f46e5;
+  padding: 0.875rem 1.75rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  border-radius: 0.375rem;
-  font-weight: 500;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 
   &:hover {
-    background-color: #4338ca;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
   }
 
   &:disabled {
-    background-color: #9ca3af;
+    background: #9ca3af;
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  &.secondary {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    
+    &:hover {
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    }
+  }
+
+  &.outline {
+    background: transparent;
+    border: 2px solid #667eea;
+    color: #667eea;
+    
+    &:hover {
+      background: #667eea;
+      color: white;
+    }
   }
 `;
 
 const ErrorText = styled.p`
   color: #ef4444;
   font-size: 0.875rem;
-  margin-top: 0.25rem;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+`;
+
+const SuccessMessage = styled.div`
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const LoadingSpinner = styled.div`
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 1s ease-in-out infinite;
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
 `;
 
 const UserProfilePage = () => {
@@ -212,10 +335,13 @@ const UserProfilePage = () => {
             replace: true,
           });
         } else {
-          setMessage({
-            text: "Không thể tải thông tin người dùng",
-            type: "error",
-          });
+          // Chỉ hiển thị lỗi nếu không phải lỗi 401 (đã xử lý redirect)
+          if (error.response?.status !== 401) {
+            setMessage({
+              text: "Không thể tải thông tin người dùng. Vui lòng thử lại sau.",
+              type: "error",
+            });
+          }
         }
       } finally {
         if (isMounted) {
@@ -461,233 +587,246 @@ const UserProfilePage = () => {
     }
   };
 
-  return (
-    <ProfileContainer>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "1.5rem",
-        }}
-      >
-        <h1>Hồ sơ cá nhân</h1>
-        <button
-          onClick={handleGoBack}
-          style={{
-            padding: "0.5rem 1rem",
-            backgroundColor: "#e5e7eb",
-            border: "none",
-            borderRadius: "0.375rem",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            transition: "background-color 0.2s",
-          }}
-          onMouseOver={(e) =>
-            (e.currentTarget.style.backgroundColor = "#d1d5db")
-          }
-          onMouseOut={(e) =>
-            (e.currentTarget.style.backgroundColor = "#e5e7eb")
-          }
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
-          </svg>
-          Quay lại
-        </button>
-      </div>
-
-      {message.text && (
-        <div className={`message ${message.type}`}>{message.text}</div>
-      )}
-
-      <form onSubmit={handleSubmit}>
-        <FormGroup>
-          <Label>Ảnh đại diện</Label>
-          <AvatarSection>
-            <AvatarWrapper>
-              <Avatar
-                src={profile.avatarPreview}
-                alt="Avatar"
-                size="100px"
-                name={profile.fullName}
-              />
-            </AvatarWrapper>
-            <div>
-              <FileInput
-                type="file"
-                id="avatar"
-                accept="image/*"
-                onChange={handleAvatarChange}
-              />
-              <FileLabel htmlFor="avatar">Chọn ảnh</FileLabel>
-              <p
-                style={{
-                  fontSize: "0.875rem",
-                  color: "#6b7280",
-                  marginTop: "0.5rem",
-                }}
-              >
-                Định dạng: JPG, PNG. Kích thước tối đa: 5MB
+  // Hiển thị loading state
+  if (isSubmitting && !user) {
+    return (
+      <ProfileContainer>
+        <ProfileCard>
+          <ProfileHeader>
+            <ProfileTitle>Hồ sơ cá nhân</ProfileTitle>
+            <ProfileSubtitle>Đang tải thông tin...</ProfileSubtitle>
+          </ProfileHeader>
+          <ProfileContent>
+            <div style={{ textAlign: 'center', padding: '3rem' }}>
+              <LoadingSpinner />
+              <p style={{ marginTop: '1rem', color: '#6b7280' }}>
+                Đang tải thông tin hồ sơ...
               </p>
             </div>
-          </AvatarSection>
-        </FormGroup>
+          </ProfileContent>
+        </ProfileCard>
+      </ProfileContainer>
+    );
+  }
 
-        <FormGroup>
-          <Label>Email</Label>
-          <Input
-            type="email"
-            name="email"
-            value={profile.email}
-            disabled
-            placeholder="Email"
-            style={{ backgroundColor: "#f3f4f6", cursor: "not-allowed" }}
-          />
-        </FormGroup>
+  return (
+    <ProfileContainer>
+      <ProfileCard>
+        <ProfileHeader>
+          <div style={{ position: 'relative' }}>
+            <Button
+              type="button"
+              className="outline"
+              onClick={handleGoBack}
+              style={{
+                position: 'absolute',
+                top: '-1rem',
+                left: '-1rem',
+                padding: '0.5rem',
+                minWidth: 'auto',
+                background: 'rgba(255, 255, 255, 0.2)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                color: 'white',
+                fontSize: '0.75rem'
+              }}
+            >
+              ←
+            </Button>
+            <ProfileTitle>Hồ sơ cá nhân</ProfileTitle>
+            <ProfileSubtitle>
+              Quản lý thông tin cá nhân và bảo mật tài khoản
+            </ProfileSubtitle>
+          </div>
+        </ProfileHeader>
 
-        <FormGroup>
-          <Label>
-            Họ và tên <span>*</span>
-          </Label>
-          <Input
-            type="text"
-            name="fullName"
-            value={profile.fullName}
-            onChange={handleChange}
-            placeholder="Nhập họ và tên"
-          />
-          {errors.fullName && <ErrorText>{errors.fullName}</ErrorText>}
-        </FormGroup>
+        <ProfileContent>
+          {/* Thông báo thành công */}
+          {message.type === "success" && (
+            <SuccessMessage>
+              ✅ {message.text}
+            </SuccessMessage>
+          )}
 
-        <FormGroup>
-          <Label>Ngày sinh</Label>
-          <Input
-            type="date"
-            name="dateOfBirth"
-            max={new Date().toISOString().split("T")[0]}
-            value={(() => {
-              if (!profile.dateOfBirth) return "";
-              try {
-                const date = new Date(profile.dateOfBirth);
-                if (isNaN(date.getTime())) return "";
-                return date.toISOString().split("T")[0];
-              } catch (error) {
-                console.error("Error parsing dateOfBirth:", error);
-                return "";
-              }
-            })()}
-            onChange={handleChange}
-          />
-          {errors.dateOfBirth && <ErrorText>{errors.dateOfBirth}</ErrorText>}
-        </FormGroup>
+          {/* Thông báo lỗi */}
+          {message.type === "error" && (
+            <ErrorText>
+              ❌ {message.text}
+            </ErrorText>
+          )}
 
-        <FormGroup>
-          <Label htmlFor="phone">
-            Số điện thoại <span>*</span>
-          </Label>
-          <Input
-            type="tel"
-            id="phone"
-            name="phone"
-            value={profile.phone}
-            onChange={handleChange}
-            placeholder="Nhập số điện thoại"
-          />
-          {errors.phone && <ErrorText>{errors.phone}</ErrorText>}
-        </FormGroup>
+          {/* Phần thông tin cá nhân */}
+          <Section>
+            <SectionTitle>
+              👤 Thông tin cá nhân
+            </SectionTitle>
+            <SectionDescription>
+              Cập nhật thông tin cá nhân của bạn để có trải nghiệm tốt nhất
+            </SectionDescription>
 
-        <FormGroup>
-          <Label htmlFor="address">Địa chỉ</Label>
-          <Input
-            type="text"
-            id="address"
-            name="address"
-            value={profile.address || ""}
-            onChange={handleChange}
-            placeholder="Nhập địa chỉ"
-          />
-          {errors.address && <ErrorText>{errors.address}</ErrorText>}
-        </FormGroup>
+            <form onSubmit={handleSubmit}>
+              <FormGroup>
+                <Label>Ảnh đại diện</Label>
+                <AvatarSection>
+                  <AvatarWrapper>
+                    <Avatar
+                      src={profile.avatarPreview}
+                      alt="Avatar"
+                      size="100px"
+                      name={profile.fullName}
+                    />
+                  </AvatarWrapper>
+                  <div>
+                    <FileInput
+                      type="file"
+                      id="avatar"
+                      accept="image/*"
+                      onChange={handleAvatarChange}
+                    />
+                    <FileLabel htmlFor="avatar">📷 Chọn ảnh</FileLabel>
+                    <p
+                      style={{
+                        fontSize: "0.875rem",
+                        color: "#6b7280",
+                        marginTop: "0.5rem",
+                      }}
+                    >
+                      Định dạng: JPG, PNG. Kích thước tối đa: 5MB
+                    </p>
+                  </div>
+                </AvatarSection>
+              </FormGroup>
 
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Đang lưu..." : "Lưu thay đổi"}
-        </Button>
-      </form>
+              <FormGroup>
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  name="email"
+                  value={profile.email}
+                  disabled
+                  placeholder="Email"
+                  style={{ backgroundColor: "#f3f4f6", cursor: "not-allowed" }}
+                />
+              </FormGroup>
 
-      {/* Phần đổi mật khẩu */}
-      <div
-        style={{
-          marginTop: "2rem",
-          paddingTop: "2rem",
-          borderTop: "1px solid #e5e7eb",
-        }}
-      >
-        <h3 style={{ marginBottom: "1rem", color: "#374151" }}>
-          Bảo mật tài khoản
-        </h3>
-        <p
-          style={{
-            fontSize: "0.875rem",
-            color: "#6b7280",
-            marginBottom: "1rem",
-          }}
-        >
-          Đổi mật khẩu để bảo vệ tài khoản của bạn
-        </p>
-        <Button
-          type="button"
-          onClick={() => {
-            // Truyền thông tin về trang gốc (trang trước Profile)
-            const originalFrom = location.state?.from || "/";
-            navigate("/change-password", {
-              state: { from: originalFrom },
-            });
-          }}
-          style={{
-            backgroundColor: "#059669",
-            ":hover": { backgroundColor: "#047857" },
-          }}
-        >
-          Đổi mật khẩu
-        </Button>
-      </div>
+              <FormGroup>
+                <Label>
+                  Họ và tên <span>*</span>
+                </Label>
+                <Input
+                  type="text"
+                  name="fullName"
+                  value={profile.fullName}
+                  onChange={handleChange}
+                  placeholder="Nhập họ và tên"
+                />
+                {errors.fullName && <ErrorText>⚠️ {errors.fullName}</ErrorText>}
+              </FormGroup>
 
-      {/* Phần trạng thái đơn đăng ký làm chủ nhà */}
-      <div
-        style={{
-          marginTop: "2rem",
-          paddingTop: "2rem",
-          borderTop: "1px solid #e5e7eb",
-        }}
-      >
-        <h3 style={{ marginBottom: "1rem", color: "#374151" }}>
-          Đơn đăng ký làm chủ nhà
-        </h3>
-        <p
-          style={{
-            fontSize: "0.875rem",
-            color: "#6b7280",
-            marginBottom: "1rem",
-          }}
-        >
-          Theo dõi trạng thái đơn đăng ký làm chủ nhà của bạn
-        </p>
-        <HostApplicationStatus />
-      </div>
+              <FormGroup>
+                <Label>Ngày sinh</Label>
+                <Input
+                  type="date"
+                  name="dateOfBirth"
+                  max={new Date().toISOString().split("T")[0]}
+                  value={(() => {
+                    if (!profile.dateOfBirth) return "";
+                    try {
+                      const date = new Date(profile.dateOfBirth);
+                      if (isNaN(date.getTime())) return "";
+                      return date.toISOString().split("T")[0];
+                    } catch (error) {
+                      console.error("Error parsing dateOfBirth:", error);
+                      return "";
+                    }
+                  })()}
+                  onChange={handleChange}
+                />
+                {errors.dateOfBirth && <ErrorText>⚠️ {errors.dateOfBirth}</ErrorText>}
+              </FormGroup>
+
+              <FormGroup>
+                <Label htmlFor="phone">
+                  Số điện thoại <span>*</span>
+                </Label>
+                <Input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  value={profile.phone}
+                  onChange={handleChange}
+                  placeholder="Nhập số điện thoại"
+                />
+                {errors.phone && <ErrorText>⚠️ {errors.phone}</ErrorText>}
+              </FormGroup>
+
+              <FormGroup>
+                <Label htmlFor="address">Địa chỉ</Label>
+                <Input
+                  type="text"
+                  id="address"
+                  name="address"
+                  value={profile.address || ""}
+                  onChange={handleChange}
+                  placeholder="Nhập địa chỉ"
+                />
+                {errors.address && <ErrorText>⚠️ {errors.address}</ErrorText>}
+              </FormGroup>
+
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <LoadingSpinner />
+                    Đang lưu...
+                  </>
+                ) : (
+                  <>
+                    💾 Lưu thay đổi
+                  </>
+                )}
+              </Button>
+            </form>
+          </Section>
+
+          <SectionDivider />
+
+          {/* Phần bảo mật tài khoản */}
+          <Section>
+            <SectionTitle>
+              🔒 Bảo mật tài khoản
+            </SectionTitle>
+            <SectionDescription>
+              Đổi mật khẩu để bảo vệ tài khoản của bạn khỏi các rủi ro bảo mật
+            </SectionDescription>
+            
+            <Button
+              type="button"
+              className="secondary"
+              onClick={() => {
+                const originalFrom = location.state?.from || "/";
+                navigate("/change-password", {
+                  state: { from: originalFrom },
+                });
+              }}
+            >
+              🔑 Đổi mật khẩu
+            </Button>
+          </Section>
+
+          <SectionDivider />
+
+          {/* Phần đơn đăng ký làm chủ nhà */}
+          <Section>
+            <SectionTitle>
+              🏠 Đơn đăng ký làm chủ nhà
+            </SectionTitle>
+            <SectionDescription>
+              Theo dõi trạng thái đơn đăng ký làm chủ nhà của bạn và cập nhật thông tin khi cần thiết
+            </SectionDescription>
+            
+            <HostApplicationStatus />
+          </Section>
+        </ProfileContent>
+      </ProfileCard>
     </ProfileContainer>
   );
 };

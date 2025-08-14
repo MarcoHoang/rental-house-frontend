@@ -81,19 +81,22 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete }) => {
             <span className="text-sm line-clamp-1">{address || 'Chưa có địa chỉ'}</span>
           </div>
           
-          {area && (
-            <div className="flex items-center gap-2 text-gray-600">
-              <Home size={16} />
-              <span className="text-sm">{formatArea(area)}</span>
-            </div>
-          )}
-          
-          {houseType && (
-            <div className="flex items-center gap-2 text-gray-600">
-              <Home size={16} />
-              <span className="text-sm">{getHouseTypeLabel(houseType)}</span>
-            </div>
-          )}
+          <div className="flex items-center justify-between text-sm text-gray-600">
+            {area && (
+              <div className="flex items-center gap-2">
+                <Home size={16} />
+                <span>{formatArea(area)}</span>
+              </div>
+            )}
+            
+            {houseType && (
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                  {getHouseTypeLabel(houseType)}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Giá tiền */}
@@ -104,17 +107,21 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete }) => {
           </h4>
         </div>
 
-        {/* Nút hành động nếu showActions = true */}
+        {/* Nút xem chi tiết - luôn hiển thị cho người dùng */}
+        <div className="pt-3 border-t border-gray-100">
+          <Link
+            to={`/houses/${id}`}
+            state={{ from: window.location.pathname }}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+          >
+            <Eye size={16} />
+            Xem chi tiết
+          </Link>
+        </div>
+
+        {/* Nút hành động quản lý nếu showActions = true */}
         {showActions && (
           <div className="flex gap-2 pt-3 border-t border-gray-100">
-            <Link
-              to={`/houses/${id}`}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
-            >
-              <Eye size={16} />
-              Xem chi tiết
-            </Link>
-            
             <button
               onClick={() => onEdit && onEdit(house)}
               className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors"

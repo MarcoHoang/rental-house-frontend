@@ -241,6 +241,35 @@ const HomePage = () => {
         <HeroSection>
           <h1>Tìm kiếm ngôi nhà mơ ước của bạn</h1>
           <SearchBar onSearch={handleSearch} />
+          <div style={{ marginTop: '2rem' }}>
+            <Link 
+              to="/all-houses" 
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem 1.5rem',
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                color: 'white',
+                textDecoration: 'none',
+                borderRadius: '0.5rem',
+                fontWeight: '600',
+                transition: 'all 0.2s',
+                border: '2px solid rgba(255, 255, 255, 0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
+                e.target.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+                e.target.style.transform = 'translateY(0)';
+              }}
+            >
+              <Home size={20} />
+              Xem tất cả nhà cho thuê
+            </Link>
+          </div>
         </HeroSection>
 
         <FeaturedSection>

@@ -25,7 +25,7 @@ import { getUserFromStorage } from "./utils/localStorage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
 import HouseListPage from "./pages/HouseListPage";
 import HouseDetailPage from "./pages/HouseDetailPage";
-
+import AllHousesPage from "./pages/AllHousesPage";
 
 // Protected Route Component (đã cải thiện)
 const ProtectedRoute = ({
@@ -97,6 +97,12 @@ function App() {
               element={<HouseDetailPage />}
             />
 
+            {/* Trang tất cả nhà cho thuê - công khai */}
+            <Route
+              path="/all-houses"
+              element={<AllHousesPage />}
+            />
+
             {/* Các route yêu cầu đăng nhập (chỉ dành cho user thường) */}
             <Route
               path="/profile"
@@ -117,10 +123,6 @@ function App() {
               }
             />
 
-
-
-            {/* Trang test đơn đăng ký làm chủ nhà */}
-            
 
             {/* Trang admin */}
             <Route
