@@ -79,6 +79,7 @@ export const formatHouseForDisplay = (house) => {
     id: house.id,
     hostId: house.hostId,
     hostName: house.hostName,
+    hostPhone: house.hostPhone,
     title: house.title || '',
     description: house.description || '',
     address: house.address || '',
