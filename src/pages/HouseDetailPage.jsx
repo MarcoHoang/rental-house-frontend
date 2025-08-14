@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, MapPin, DollarSign, Home, Calendar, User, Phone, Mail } from 'lucide-react';
 import styled from 'styled-components';
 import propertyApi from '../api/propertyApi';
@@ -178,6 +178,7 @@ const DescriptionSection = styled.div`
 const HouseDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [house, setHouse] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -206,7 +207,24 @@ const HouseDetailPage = () => {
         setError(null);
       } catch (err) {
         console.error('Error fetching house details:', err);
-        setError('Không thể tải thông tin nhà. Vui lòng thử lại sau.');
+        
+        // Log chi tiết lỗi để debug
+        if (err.response) {
+          console.error('Response status:', err.response.status);
+          console.error('Response data:', err.response.data);
+        } else if (err.request) {
+          console.error('Request error:', err.request);
+        } else {
+          console.error('Error message:', err.message);
+        }
+        
+        if (err.response?.status === 404) {
+          setError('Không tìm thấy nhà với ID này. Vui lòng kiểm tra lại.');
+        } else if (err.response?.status === 500) {
+          setError('Lỗi server. Vui lòng thử lại sau.');
+        } else {
+          setError('Không thể tải thông tin nhà. Vui lòng thử lại sau.');
+        }
       } finally {
         setLoading(false);
       }
@@ -280,9 +298,18 @@ const HouseDetailPage = () => {
   const images = getImages();
   const mainImage = images[selectedImage] || "https://via.placeholder.com/600x400/6B7280/FFFFFF?text=Không+có+ảnh";
 
+  const handleBackClick = () => {
+    // Kiểm tra xem người dùng đến từ trang nào
+    if (location.state?.from === 'all-houses') {
+      navigate('/all-houses');
+    } else {
+      navigate(-1);
+    }
+  };
+
   return (
     <Container>
-      <BackButton onClick={() => navigate(-1)}>
+      <BackButton onClick={handleBackClick}>
         <ArrowLeft size={16} />
         Quay lại
       </BackButton>
@@ -333,6 +360,21 @@ const HouseDetailPage = () => {
         </div>
 
         <InfoSection>
+          {/* Thông báo cho người dùng thường */}
+          {user?.roleName !== 'ADMIN' && user?.roleName !== 'HOST' && (
+            <div style={{ 
+              marginBottom: '1.5rem', 
+              padding: '0.75rem', 
+              backgroundColor: '#fef3c7', 
+              border: '1px solid #fbbf24', 
+              borderRadius: '0.5rem',
+              fontSize: '0.875rem',
+              color: '#92400e'
+            }}>
+              ℹ️ <strong>Lưu ý:</strong> Một số thông tin kỹ thuật đã được ẩn để bảo vệ quyền riêng tư của chủ nhà.
+            </div>
+          )}
+          
           <PriceSection>
             <Price>{formatPrice(house.price)}</Price>
             <PriceLabel>Giá thuê mỗi tháng</PriceLabel>
@@ -343,7 +385,11 @@ const HouseDetailPage = () => {
               <Home size={20} className="icon" />
               <div className="content">
                 <div className="label">Loại nhà</div>
-                <div className="value">{getHouseTypeLabel(house.houseType)}</div>
+                <div className="value">
+                  <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                    {getHouseTypeLabel(house.houseType)}
+                  </span>
+                </div>
               </div>
             </InfoItem>
 
@@ -355,12 +401,31 @@ const HouseDetailPage = () => {
               </div>
             </InfoItem>
 
-            {house.hostName && (
+            {/* Chỉ hiển thị thông tin chủ nhà cho ADMIN và HOST */}
+            {house.hostName && (user?.roleName === 'ADMIN' || (user?.roleName === 'HOST' && user?.id === house.hostId)) && (
               <InfoItem>
                 <User size={20} className="icon" />
                 <div className="content">
                   <div className="label">Chủ nhà</div>
-                  <div className="value">{house.hostName}</div>
+                  <div className="value">
+                    <div style={{ marginBottom: '0.25rem' }}>
+                      <strong>{house.hostName}</strong>
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                      ID: #{house.hostId} • Đã xác minh ✅
+                    </div>
+                  </div>
+                </div>
+              </InfoItem>
+            )}
+
+            {/* Chỉ hiển thị ID chủ nhà cho ADMIN và HOST (chủ nhà của chính nhà đó) */}
+            {house.hostId && (user?.roleName === 'ADMIN' || (user?.roleName === 'HOST' && user?.id === house.hostId)) && (
+              <InfoItem>
+                <User size={20} className="icon" />
+                <div className="content">
+                  <div className="label">ID Chủ nhà</div>
+                  <div className="value">#{house.hostId}</div>
                 </div>
               </InfoItem>
             )}
@@ -371,6 +436,24 @@ const HouseDetailPage = () => {
                 <div className="content">
                   <div className="label">Số điện thoại</div>
                   <div className="value">{house.hostPhone}</div>
+                </div>
+              </InfoItem>
+            )}
+
+            {/* Thông tin chủ nhà cho người dùng thường */}
+            {house.hostName && user?.roleName !== 'ADMIN' && user?.roleName !== 'HOST' && (
+              <InfoItem>
+                <User size={20} className="icon" />
+                <div className="content">
+                  <div className="label">Chủ nhà</div>
+                  <div className="value">
+                    <div style={{ marginBottom: '0.5rem' }}>
+                      <strong>{house.hostName}</strong>
+                    </div>
+                    <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                      Chủ nhà đã được xác minh ✅
+                    </div>
+                  </div>
                 </div>
               </InfoItem>
             )}
@@ -386,9 +469,81 @@ const HouseDetailPage = () => {
                 </div>
               </InfoItem>
             )}
+
+            {/* Thông tin trạng thái nhà */}
+            {house.status && (
+              <InfoItem>
+                <Home size={20} className="icon" />
+                <div className="content">
+                  <div className="label">Trạng thái</div>
+                  <div className="value">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getHouseStatusColor(house.status)}`}>
+                      {getHouseStatusLabel(house.status)}
+                    </span>
+                  </div>
+                </div>
+              </InfoItem>
+            )}
           </InfoGrid>
 
-          {/* Bỏ phần ContactSection vì không còn nút "Liên hệ ngay" */}
+          {/* Nút liên hệ chủ nhà */}
+          {house.hostPhone && (
+            <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid #e5e7eb' }}>
+              {/* Thông báo cho người dùng thường */}
+              {user?.roleName !== 'ADMIN' && user?.roleName !== 'HOST' && (
+                <div style={{ 
+                  marginBottom: '1rem', 
+                  padding: '0.75rem', 
+                  backgroundColor: '#f0f9ff', 
+                  border: '1px solid #bae6fd', 
+                  borderRadius: '0.5rem',
+                  fontSize: '0.875rem',
+                  color: '#0369a1'
+                }}>
+                  💡 <strong>Mẹo:</strong> Gọi điện trực tiếp để được tư vấn chi tiết và đặt lịch xem nhà!
+                </div>
+              )}
+              
+              <button
+                onClick={() => window.open(`tel:${house.hostPhone}`, '_self')}
+                style={{
+                  width: '100%',
+                  padding: '1rem',
+                  backgroundColor: '#059669',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#047857'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#059669'}
+              >
+                <Phone size={20} />
+                {user?.roleName === 'ADMIN' ? 'Gọi điện cho chủ nhà' : 
+                 user?.roleName === 'HOST' && user?.id === house.hostId ? 'Số điện thoại của bạn' :
+                 'Gọi điện cho chủ nhà'}
+              </button>
+              
+              {/* Thông tin bổ sung cho người dùng thường */}
+              {user?.roleName !== 'ADMIN' && user?.roleName !== 'HOST' && (
+                <div style={{ 
+                  marginTop: '0.75rem', 
+                  fontSize: '0.75rem', 
+                  color: '#6b7280',
+                  textAlign: 'center'
+                }}>
+                  ⏰ Thời gian tư vấn: 8:00 - 22:00 hàng ngày
+                </div>
+              )}
+            </div>
+          )}
         </InfoSection>
       </MainContent>
     </Container>

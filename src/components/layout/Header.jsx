@@ -414,6 +414,7 @@ const Header = () => {
                 Quản lý chủ nhà
               </NavLink>
             )}
+            <NavLink to="/all-houses">Tất cả nhà</NavLink>
             <NavLink to="/cho-thue-can-ho">Căn hộ</NavLink>
             <NavLink to="/cho-thue-nha-pho">Nhà phố</NavLink>
             <NavLink to="/blog">Blog</NavLink>
