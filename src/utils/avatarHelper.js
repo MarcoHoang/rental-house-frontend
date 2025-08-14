@@ -6,7 +6,9 @@
  * Cần chuyển thành: "http://localhost:8080/api/files/avatar/filename.jpg"
  */
 
-const API_BASE_URL = 'http://localhost:8080/api';
+const API_BASE_URL = import.meta.env.DEV 
+  ? 'http://localhost:8080/api' 
+  : (import.meta.env.VITE_API_URL || 'http://localhost:8080') + '/api';
 
 /**
  * Chuyển đổi fileUrl từ backend thành URL đầy đủ để hiển thị
@@ -24,7 +26,7 @@ export const getAvatarUrl = (fileUrl) => {
   }
 
   // Nếu là default avatar, trả về placeholder
-  if (fileUrl === '/default-avatar.png' || fileUrl === 'default-avatar.png') {
+  if (fileUrl === '/default-avatar.png' || fileUrl === 'default-avatar.png' || fileUrl === '/images/default-avatar.png') {
     return '/default-avatar.png';
   }
 

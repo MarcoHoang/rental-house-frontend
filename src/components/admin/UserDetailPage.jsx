@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import styled from "styled-components";
 import { usersApi } from "../../api/adminApi";
-import { RefreshCw, AlertTriangle, ArrowLeft } from "lucide-react";
+import { RefreshCw, AlertTriangle, ArrowLeft, User } from "lucide-react";
 
 // === STYLED COMPONENTS (có thể tách ra file riêng nếu muốn) ===
 const PageWrapper = styled.div`
@@ -55,12 +55,38 @@ const MainInfoCard = styled.div`
 `;
 
 const Avatar = styled.img`
-  width: 8rem;
-  height: 8rem;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   object-fit: cover;
+  background-color: #f7fafc;
+`;
+
+const AvatarContainer = styled.div`
+  position: relative;
+  width: 8rem;
+  height: 8rem;
   margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
   border: 4px solid #e2e8f0;
+  background-color: #f7fafc;
+  overflow: hidden;
+`;
+
+const AvatarFallback = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 2rem;
+  font-weight: bold;
+  text-transform: uppercase;
 `;
 
 const InfoRow = styled.div`
@@ -146,15 +172,19 @@ const LoadingContainer = styled.div`
   justify-content: center;
   padding: 4rem;
   color: #4a5568;
-  
+
   .spinner {
     animation: spin 1s linear infinite;
     margin-right: 0.5rem;
   }
-  
+
   @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 `;
 
@@ -194,20 +224,62 @@ const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString("vi-VN");
 };
 
+// Helper để xử lý avatar URL
+const getAvatarImageUrl = (avatarUrl) => {
+  console.log("Processing avatar URL:", avatarUrl);
+  
+  if (!avatarUrl || avatarUrl === "/images/default-avatar.png") {
+    console.log("Avatar URL is null or default, returning null");
+    return null;
+  }
+
+  // Nếu đã là URL đầy đủ từ backend (ví dụ: http://localhost:8080/api/files/avatar/filename.jpg)
+  if (avatarUrl.startsWith("http://") || avatarUrl.startsWith("https://")) {
+    console.log("Avatar URL is already full URL:", avatarUrl);
+    return avatarUrl;
+  }
+
+  // Nếu là filename đơn giản (ví dụ: "user123.jpg")
+  if (!avatarUrl.includes("/")) {
+    const url = `http://localhost:8080/api/files/avatar/${avatarUrl}`;
+    console.log("Avatar URL is simple filename, generated URL:", url);
+    return url;
+  }
+
+  // Nếu có dạng "avatar/filename.jpg"
+  if (avatarUrl.startsWith("avatar/")) {
+    const url = `http://localhost:8080/api/files/${avatarUrl}`;
+    console.log("Avatar URL starts with avatar/, generated URL:", url);
+    return url;
+  }
+
+  // Trường hợp khác, thử trực tiếp
+  const url = `http://localhost:8080/api/files/avatar/${avatarUrl}`;
+  console.log("Avatar URL fallback, generated URL:", url);
+  return url;
+};
+
+
+
 const UserDetailPage = () => {
   const { userId } = useParams();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [avatarError, setAvatarError] = useState(false);
 
   useEffect(() => {
     const fetchUserDetails = async () => {
       setLoading(true);
-      setError(null);
-      try {
+              setError(null);
+        setAvatarError(false);
+        try {
         const data = await usersApi.getById(userId);
+        console.log("User data from backend:", data);
+        console.log("Avatar URL from backend:", data.avatarUrl);
         setUser(data);
       } catch (err) {
+        console.error("Error fetching user:", err);
         setError("Không thể tải thông tin chi tiết người dùng.");
       } finally {
         setLoading(false);
@@ -268,21 +340,45 @@ const UserDetailPage = () => {
           <ArrowLeft size={20} />
           <span style={{ marginLeft: "0.5rem" }}>Quay lại danh sách</span>
         </BackLink>
-        <Title>Chi tiết người dùng: {user.fullName || user.username || user.email}</Title>
+        <Title>
+          Chi tiết người dùng: {user.fullName || user.username || user.email}
+        </Title>
       </PageHeader>
       <Grid>
         <MainInfoCard>
-          <Avatar
-            src={user.avatarUrl || "/images/default-avatar.png"}
-            alt="Avatar"
-          />
+          <AvatarContainer>
+            {!avatarError && user.avatarUrl && user.avatarUrl !== "/images/default-avatar.png" ? (
+              <Avatar
+                src={user.avatarUrl}
+                alt={`Avatar của ${
+                  user.fullName || user.username || user.email
+                }`}
+                onError={(e) => {
+                  console.log("Avatar load error:", e.target.src);
+                  setAvatarError(true);
+                }}
+                onLoad={() => {
+                  console.log("Avatar loaded successfully:", user.avatarUrl);
+                  setAvatarError(false);
+                }}
+              />
+            ) : (
+              <AvatarFallback>
+                {user.fullName
+                  ? user.fullName.charAt(0)
+                  : user.username
+                  ? user.username.charAt(0)
+                  : user.email.charAt(0)}
+              </AvatarFallback>
+            )}
+          </AvatarContainer>
           <Title style={{ margin: "0 0 1.5rem 0" }}>
             {user.fullName || "Chưa cập nhật"}
           </Title>
 
           <InfoRow>
-            <InfoLabel>Username</InfoLabel>
-            <InfoValue>{user.username || "Chưa cập nhật"}</InfoValue>
+            <InfoLabel>Họ và tên</InfoLabel>
+            <InfoValue>{user.fullName || "Chưa cập nhật"}</InfoValue>
           </InfoRow>
           <InfoRow>
             <InfoLabel>Email</InfoLabel>
@@ -298,7 +394,9 @@ const UserDetailPage = () => {
           </InfoRow>
           <InfoRow>
             <InfoLabel>Ngày sinh</InfoLabel>
-            <InfoValue>{user.birthDate ? formatDate(user.birthDate) : "Chưa cập nhật"}</InfoValue>
+            <InfoValue>
+              {user.birthDate ? formatDate(user.birthDate) : "Chưa cập nhật"}
+            </InfoValue>
           </InfoRow>
           <InfoRow>
             <InfoLabel>Trạng thái</InfoLabel>
@@ -313,6 +411,12 @@ const UserDetailPage = () => {
           <InfoRow>
             <InfoLabel>Tổng chi tiêu</InfoLabel>
             <InfoValue>{formatCurrency(user.totalSpent || 0)}</InfoValue>
+          </InfoRow>
+          <InfoRow>
+            <InfoLabel>Avatar Status</InfoLabel>
+            <InfoValue style={{ fontSize: '0.75rem' }}>
+              {!avatarError && user.avatarUrl && user.avatarUrl !== "/images/default-avatar.png" ? '✅ Có ảnh' : '❌ Không có ảnh'}
+            </InfoValue>
           </InfoRow>
         </MainInfoCard>
 
@@ -332,9 +436,19 @@ const UserDetailPage = () => {
                 {user.rentalHistory.map((rental, index) => (
                   <tr key={rental.houseId || index}>
                     <td>{rental.houseName || "Không xác định"}</td>
-                    <td>{rental.checkinDate ? formatDate(rental.checkinDate) : "N/A"}</td>
-                    <td>{rental.checkoutDate ? formatDate(rental.checkoutDate) : "N/A"}</td>
-                    <td>{rental.price ? formatCurrency(rental.price) : "N/A"}</td>
+                    <td>
+                      {rental.checkinDate
+                        ? formatDate(rental.checkinDate)
+                        : "N/A"}
+                    </td>
+                    <td>
+                      {rental.checkoutDate
+                        ? formatDate(rental.checkoutDate)
+                        : "N/A"}
+                    </td>
+                    <td>
+                      {rental.price ? formatCurrency(rental.price) : "N/A"}
+                    </td>
                   </tr>
                 ))}
               </tbody>
