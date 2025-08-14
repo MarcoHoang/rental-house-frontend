@@ -141,7 +141,7 @@ const HostApplicationDetailPage = () => {
           <Title>Thông tin người gửi</Title>
           <InfoRow>
             <InfoLabel>Họ và Tên</InfoLabel>
-            <InfoValue>{request.fullName || request.username}</InfoValue>
+            <InfoValue>{request.fullName || "Chưa cập nhật"}</InfoValue>
           </InfoRow>
           <InfoRow>
             <InfoLabel>Email</InfoLabel>
@@ -149,11 +149,25 @@ const HostApplicationDetailPage = () => {
           </InfoRow>
           <InfoRow>
             <InfoLabel>Số điện thoại</InfoLabel>
-            <InfoValue>{request.phone || "Chưa cung cấp"}</InfoValue>
+            <InfoValue>{request.phone || "Chưa cập nhật"}</InfoValue>
           </InfoRow>
           <InfoRow>
             <InfoLabel>Số CCCD/CMT</InfoLabel>
-            <InfoValue>{request.nationalId || "Chưa cung cấp"}</InfoValue>
+            <InfoValue>{request.nationalId || "Chưa cập nhật"}</InfoValue>
+          </InfoRow>
+          <InfoRow>
+            <InfoLabel>Trạng thái</InfoLabel>
+            <InfoValue>
+              {request.status === 'PENDING' && '⏳ Chờ duyệt'}
+              {request.status === 'APPROVED' && '✅ Đã duyệt'}
+              {request.status === 'REJECTED' && '❌ Đã từ chối'}
+            </InfoValue>
+          </InfoRow>
+          <InfoRow>
+            <InfoLabel>Ngày gửi đơn</InfoLabel>
+            <InfoValue>
+              {request.requestDate ? new Date(request.requestDate).toLocaleDateString('vi-VN') : 'N/A'}
+            </InfoValue>
           </InfoRow>
         </InfoCard>
 

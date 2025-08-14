@@ -230,6 +230,16 @@ export const usersApi = {
       throw error;
     }
   },
+  getById: async (userId) => {
+    try {
+      const response = await apiClient.get(`${API_PREFIX}/admin/users/${userId}`);
+      // Trả về phần 'data' bên trong ApiResponse
+      return response.data.data;
+    } catch (error) {
+      logApiError(error, "getUserById");
+      throw error;
+    }
+  },
   updateStatus: (id, active) =>
     apiClient.patch(`${API_PREFIX}/admin/users/${id}/status`, { active }),
 };

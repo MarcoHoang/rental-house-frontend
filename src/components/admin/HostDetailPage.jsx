@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import styled from "styled-components";
 import { hostApplicationsApi } from "../../api/adminApi";
-import { RefreshCw, AlertTriangle, ArrowLeft } from "lucide-react";
+import { RefreshCw, AlertTriangle, ArrowLeft, User } from "lucide-react";
 
 // === STYLED COMPONENTS (Đồng bộ 100% với UserDetailPage) ===
 const PageWrapper = styled.div`
@@ -54,12 +54,38 @@ const MainInfoCard = styled.div`
 `;
 
 const Avatar = styled.img`
-  width: 8rem;
-  height: 8rem;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   object-fit: cover;
+  background-color: #f7fafc;
+`;
+
+const AvatarContainer = styled.div`
+  position: relative;
+  width: 8rem;
+  height: 8rem;
   margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
   border: 4px solid #e2e8f0;
+  background-color: #f7fafc;
+  overflow: hidden;
+`;
+
+const AvatarFallback = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 2rem;
+  font-weight: bold;
+  text-transform: uppercase;
 `;
 
 const InfoRow = styled.div`
@@ -155,15 +181,20 @@ const HostDetailPage = () => {
   const [host, setHost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [avatarError, setAvatarError] = useState(false);
 
   useEffect(() => {
     const fetchHostDetails = async () => {
       if (!userId) return;
       setLoading(true);
+      setAvatarError(false);
       try {
         const data = await hostApplicationsApi.getHostDetailsByUserId(userId);
+        console.log("Host data from backend:", data);
+        console.log("Houses data:", data.houses);
         setHost(data);
       } catch (err) {
+        console.error("Error fetching host details:", err);
         setError("Không thể tải thông tin chi tiết chủ nhà.");
       } finally {
         setLoading(false);
@@ -214,17 +245,31 @@ const HostDetailPage = () => {
       </PageHeader>
       <Grid>
         <MainInfoCard>
-          <Avatar
-            src={host.avatarUrl || "/images/default-avatar.png"}
-            alt="Avatar"
-          />
+          <AvatarContainer>
+            {!avatarError && host.avatarUrl && host.avatarUrl !== "/images/default-avatar.png" ? (
+              <Avatar
+                src={host.avatarUrl}
+                alt={`Avatar của ${host.fullName || host.username || host.email}`}
+                onError={() => setAvatarError(true)}
+                onLoad={() => setAvatarError(false)}
+              />
+            ) : (
+              <AvatarFallback>
+                {host.fullName
+                  ? host.fullName.charAt(0)
+                  : host.username
+                  ? host.username.charAt(0)
+                  : host.email.charAt(0)}
+              </AvatarFallback>
+            )}
+          </AvatarContainer>
           <Title as="h2" style={{ margin: "0 0 1.5rem 0", border: "none" }}>
             {host.fullName || "Chưa cập nhật"}
           </Title>
 
           <InfoRow>
-            <InfoLabel>Username</InfoLabel>
-            <InfoValue>{host.username}</InfoValue>
+            <InfoLabel>Họ và tên</InfoLabel>
+            <InfoValue>{host.fullName || "Chưa cập nhật"}</InfoValue>
           </InfoRow>
           <InfoRow>
             <InfoLabel>Email</InfoLabel>
@@ -252,6 +297,14 @@ const HostDetailPage = () => {
             <InfoLabel>Tổng doanh thu</InfoLabel>
             <InfoValue>{formatCurrency(host.totalRevenue)}</InfoValue>
           </InfoRow>
+          <InfoRow>
+            <InfoLabel>Số nhà đang cho thuê</InfoLabel>
+            <InfoValue>{host.houses?.length || 0} nhà</InfoValue>
+          </InfoRow>
+          <InfoRow>
+            <InfoLabel>Số CCCD/CMT</InfoLabel>
+            <InfoValue>{host.nationalId || "Chưa cập nhật"}</InfoValue>
+          </InfoRow>
         </MainInfoCard>
 
         <HousesCard>
@@ -264,14 +317,22 @@ const HostDetailPage = () => {
                 <tr>
                   <th>Tên nhà</th>
                   <th>Địa chỉ</th>
+                  <th>Loại nhà</th>
+                  <th>Trạng thái</th>
                   <th>Giá / tháng</th>
                 </tr>
               </thead>
               <tbody>
                 {host.houses.map((house) => (
                   <tr key={house.id}>
-                    <td>{house.title}</td>
-                    <td>{house.address}</td>
+                    <td>{house.title || "Không có tên"}</td>
+                    <td>{house.address || "Chưa cập nhật"}</td>
+                    <td>{house.houseType || "Không xác định"}</td>
+                    <td>
+                      {house.status === 'AVAILABLE' && '🟢 Có sẵn'}
+                      {house.status === 'RENTED' && '🔴 Đã thuê'}
+                      {house.status === 'INACTIVE' && '⚫ Không hoạt động'}
+                    </td>
                     <td>{formatCurrency(house.price)}</td>
                   </tr>
                 ))}
