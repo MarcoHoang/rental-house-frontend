@@ -106,3 +106,76 @@ export const testAvatarUpload = async (file) => {
   console.log('\n=== ALL TESTS COMPLETED ===');
   return null;
 };
+
+// Test function để kiểm tra backend endpoints
+export const testBackendEndpoints = async () => {
+  const baseUrl = 'http://localhost:8080/api';
+  
+  console.log('=== TESTING BACKEND ENDPOINTS ===');
+  
+  // Test 1: Houses endpoint
+  try {
+    console.log('Test 1: Testing /api/houses endpoint...');
+    const response = await fetch(`${baseUrl}/houses`);
+    console.log('Houses endpoint status:', response.status);
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Houses endpoint data:', data);
+    }
+  } catch (error) {
+    console.error('Houses endpoint error:', error);
+  }
+  
+  // Test 2: Files endpoint
+  try {
+    console.log('Test 2: Testing /api/files endpoint...');
+    const response = await fetch(`${baseUrl}/files`);
+    console.log('Files endpoint status:', response.status);
+    if (response.ok) {
+      const data = await response.text();
+      console.log('Files endpoint response:', data);
+    }
+  } catch (error) {
+    console.error('Files endpoint error:', error);
+  }
+  
+  // Test 3: Avatar endpoint
+  try {
+    console.log('Test 3: Testing avatar access...');
+    const avatarUrl = `${baseUrl}/files/avatar/test.jpg`;
+    const response = await fetch(avatarUrl);
+    console.log('Avatar endpoint status:', response.status);
+    console.log('Avatar endpoint headers:', response.headers);
+  } catch (error) {
+    console.error('Avatar endpoint error:', error);
+  }
+  
+  console.log('=== END TESTING ===');
+};
+
+// Test function để kiểm tra authentication
+export const testAuthentication = async () => {
+  const token = localStorage.getItem('token');
+  console.log('=== TESTING AUTHENTICATION ===');
+  console.log('Token exists:', !!token);
+  console.log('Token length:', token?.length);
+  
+  if (token) {
+    try {
+      const response = await fetch('http://localhost:8080/api/auth/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      console.log('Auth test status:', response.status);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Auth test data:', data);
+      }
+    } catch (error) {
+      console.error('Auth test error:', error);
+    }
+  }
+  
+  console.log('=== END AUTHENTICATION TEST ===');
+};

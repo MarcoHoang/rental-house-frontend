@@ -105,13 +105,17 @@ export const validationRules = {
     if (!value) return 'Họ và tên là bắt buộc';
     if (value.length < 2) return 'Họ và tên phải có ít nhất 2 ký tự';
     if (value.length > 100) return 'Họ và tên không được vượt quá 100 ký tự';
+    // Cho phép chữ cái tiếng Việt, dấu cách và dấu gạch ngang
+    if (!/^[\p{L}\s-]+$/u.test(value)) return 'Họ và tên chỉ được chứa chữ cái, khoảng trắng và dấu gạch ngang';
     return '';
   },
   
   phone: (value) => {
     if (!value) return 'Số điện thoại là bắt buộc';
-    if (!/^[0-9]+$/.test(value)) return 'Số điện thoại chỉ được chứa các chữ số từ 0-9';
-    if (value.length < 9 || value.length > 12) return 'Số điện thoại phải có từ 9 đến 12 số';
+    // Loại bỏ khoảng trắng và dấu gạch ngang trước khi validate
+    const cleanPhone = value.replace(/[\s-]/g, '');
+    if (!/^[0-9]+$/.test(cleanPhone)) return 'Số điện thoại chỉ được chứa các chữ số từ 0-9';
+    if (cleanPhone.length < 9 || cleanPhone.length > 12) return 'Số điện thoại phải có từ 9 đến 12 số';
     return '';
   },
   
@@ -119,14 +123,24 @@ export const validationRules = {
     if (!value) return 'Tên người dùng là bắt buộc';
     if (value.length < 2) return 'Tên người dùng phải có ít nhất 2 ký tự';
     if (value.length > 100) return 'Tên người dùng không được vượt quá 100 ký tự';
-    // Kiểm tra ký tự đặc biệt
-    if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(value)) return 'Tên người dùng chỉ được chứa chữ cái và khoảng trắng';
+    // Cho phép chữ cái tiếng Việt, dấu cách và dấu gạch ngang
+    if (!/^[\p{L}\s-]+$/u.test(value)) return 'Tên người dùng chỉ được chứa chữ cái, khoảng trắng và dấu gạch ngang';
     return '';
   },
   
   address: (value) => {
     // Address là optional, nhưng nếu có thì validate
     if (value && value.length > 200) return 'Địa chỉ không được vượt quá 200 ký tự';
+    // Cho phép chữ cái, số, dấu cách, dấu phẩy, dấu chấm, dấu gạch ngang
+    if (value && !/^[\p{L}0-9\s,.-]+$/u.test(value)) return 'Địa chỉ chứa ký tự không hợp lệ';
+    return '';
+  },
+  
+  nationalId: (value) => {
+    if (!value) return 'Số căn cước công dân/CMT là bắt buộc';
+    const cleanId = value.replace(/[\s-]/g, '');
+    if (!/^[0-9]+$/.test(cleanId)) return 'Số căn cước/CMT chỉ được chứa các chữ số từ 0-9';
+    if (cleanId.length < 9 || cleanId.length > 12) return 'Số căn cước/CMT phải có từ 9 đến 12 số';
     return '';
   },
   

@@ -28,10 +28,14 @@ export const getAvatarUrl = (fileUrl) => {
     return '/default-avatar.png';
   }
 
-  // Tạm thời sử dụng placeholder để tránh lỗi 403
-  // TODO: Cần kiểm tra backend để cho phép truy cập public avatar
-  console.warn('Avatar URL requires authentication, using placeholder:', fileUrl);
-  return '/default-avatar.png';
+  // Nếu là URL tương đối từ backend (ví dụ: "avatar/filename.jpg")
+  // Chuyển thành URL đầy đủ
+  if (fileUrl.includes('/') && !fileUrl.startsWith('http')) {
+    return `${API_BASE_URL}/files/${fileUrl}`;
+  }
+
+  // Nếu chỉ là filename (ví dụ: "filename.jpg"), thêm prefix avatar
+  return `${API_BASE_URL}/files/avatar/${fileUrl}`;
 };
 
 /**
@@ -111,38 +115,57 @@ export const debugImageLoading = async (imageUrl) => {
 export const loadAuthenticatedImage = async (imageUrl) => {
   try {
     // Không load authenticated image cho placeholder
-    if (imageUrl.includes('via.placeholder.com')) {
+    if (imageUrl.includes('via.placeholder.com') || imageUrl === '/default-avatar.png') {
       return imageUrl;
     }
 
+    // Kiểm tra token validity trước
     const token = localStorage.getItem('token');
-    if (!token) {
-      console.warn('No authentication token found for image loading');
-      return null;
-    }
-
-    // Thử load với authentication trước
-    try {
-      const response = await fetch(imageUrl, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const blob = await response.blob();
-        return URL.createObjectURL(blob);
+    const isTokenValid = token && (() => {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const currentTime = Date.now() / 1000;
+        return payload.exp > currentTime;
+      } catch (error) {
+        return false;
       }
-    } catch (authError) {
-      console.warn('Failed to load with authentication, trying without:', authError);
+    })();
+    
+    // Thử load với authentication trước
+    if (isTokenValid) {
+      try {
+        const response = await fetch(imageUrl, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const blob = await response.blob();
+          return URL.createObjectURL(blob);
+        } else if (response.status === 403) {
+          console.warn('Access forbidden (403) for image:', imageUrl);
+          return null;
+        } else if (response.status === 404) {
+          console.warn('Image not found (404):', imageUrl);
+          return null;
+        }
+      } catch (authError) {
+        console.warn('Failed to load with authentication:', authError);
+      }
+    } else {
+      console.warn('Token is invalid or expired, skipping authenticated load');
     }
 
-    // Nếu authentication thất bại, thử load không có authentication (cho public images)
+    // Nếu không có token hoặc authentication thất bại, thử load không có authentication
     try {
       const response = await fetch(imageUrl);
       if (response.ok) {
         const blob = await response.blob();
         return URL.createObjectURL(blob);
+      } else if (response.status === 403) {
+        console.warn('Access forbidden (403) for image without auth:', imageUrl);
+        return null;
       }
     } catch (publicError) {
       console.warn('Failed to load without authentication:', publicError);
@@ -167,11 +190,12 @@ export const requiresAuthentication = (url) => {
     return false;
   }
 
-  return url && (
-    url.includes('/api/files/') || 
-    url.includes('localhost:8080') ||
-    url.startsWith('avatar/')
-  );
+  // Cần authentication cho backend URLs
+  if (url.includes('localhost:8080') || url.includes('/api/files/')) {
+    return true;
+  }
+
+  return false;
 };
 
 /**
@@ -202,4 +226,60 @@ export const getAvatarFilename = (url) => {
   }
   
   return url;
+};
+
+/**
+ * Kiểm tra token có hợp lệ không
+ * @returns {boolean}
+ */
+export const isTokenValid = () => {
+  const token = localStorage.getItem('token');
+  if (!token) return false;
+  
+  try {
+    // Decode JWT token để kiểm tra expiration
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const currentTime = Date.now() / 1000;
+    
+    return payload.exp > currentTime;
+  } catch (error) {
+    console.error('Error parsing token:', error);
+    return false;
+  }
+};
+
+/**
+ * Refresh token nếu cần
+ * @returns {Promise<boolean>}
+ */
+export const refreshTokenIfNeeded = async () => {
+  if (isTokenValid()) {
+    return true;
+  }
+  
+  try {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (!refreshToken) {
+      return false;
+    }
+    
+    const response = await fetch('http://localhost:8080/api/auth/refresh', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ refreshToken })
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('refreshToken', data.refreshToken);
+      return true;
+    }
+  } catch (error) {
+    console.error('Error refreshing token:', error);
+  }
+  
+  return false;
 };

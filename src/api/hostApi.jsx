@@ -52,35 +52,26 @@ api.interceptors.response.use(
 );
 
 const hostApi = {
-  // Upload file
+  // Upload file chung - sử dụng fileUploadService
   uploadFile: async (file, uploadType) => {
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("uploadType", uploadType);
-
-      const response = await api.post("/files/upload", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      // Xử lý response format từ backend
-      let result;
-      if (response.data.data) {
-        // Format: { code: "00", message: "...", data: FileUploadResponse }
-        result = response.data.data;
-      } else if (response.data.fileUrl) {
-        // Fallback: Format: FileUploadResponse
-        result = response.data;
-      } else {
-        throw new Error("Response format không hợp lệ");
-      }
-
-      return result;
+      const fileUploadService = (await import('./fileUploadApi')).default;
+      return await fileUploadService.uploadFile(file, uploadType);
     } catch (error) {
       console.error("hostApi.uploadFile - Error:", error);
       logApiError(error, "uploadFile");
+      throw error;
+    }
+  },
+
+  // Upload proof of ownership - sử dụng fileUploadService
+  uploadProofOfOwnership: async (file) => {
+    try {
+      const fileUploadService = (await import('./fileUploadApi')).default;
+      return await fileUploadService.uploadProofOfOwnership(file);
+    } catch (error) {
+      console.error("hostApi.uploadProofOfOwnership - Error:", error);
+      logApiError(error, "uploadProofOfOwnership");
       throw error;
     }
   },
@@ -182,9 +173,8 @@ const hostApi = {
       if (proofOfOwnership) {
         console.log("Uploading proof of ownership...");
         try {
-          const proofResponse = await hostApi.uploadFile(
-            proofOfOwnership,
-            "proof-of-ownership"
+          const proofResponse = await hostApi.uploadProofOfOwnership(
+            proofOfOwnership
           );
           proofOfOwnershipUrl = proofResponse.fileUrl;
           console.log("Proof of ownership uploaded:", proofOfOwnershipUrl);
