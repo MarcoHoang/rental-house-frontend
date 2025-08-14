@@ -140,6 +140,46 @@ const NoHistory = styled.div`
   color: #718096;
 `;
 
+const LoadingContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  color: #4a5568;
+  
+  .spinner {
+    animation: spin 1s linear infinite;
+    margin-right: 0.5rem;
+  }
+  
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+`;
+
+const ErrorContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  color: #e53e3e;
+  background-color: #fed7d7;
+  border-radius: 0.5rem;
+  margin: 2rem;
+`;
+
+const NotFoundContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  color: #718096;
+  background-color: #f7fafc;
+  border-radius: 0.5rem;
+  margin: 2rem;
+`;
+
 // Helper để format tiền tệ
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat("vi-VN", {
@@ -179,22 +219,46 @@ const UserDetailPage = () => {
 
   if (loading) {
     return (
-      <div>
-        <RefreshCw className="spinner" /> Đang tải...
-      </div>
+      <PageWrapper>
+        <LoadingContainer>
+          <RefreshCw className="spinner" size={24} />
+          <span>Đang tải thông tin người dùng...</span>
+        </LoadingContainer>
+      </PageWrapper>
     );
   }
 
   if (error) {
     return (
-      <div>
-        <AlertTriangle /> {error}
-      </div>
+      <PageWrapper>
+        <PageHeader>
+          <BackLink to="/admin/user-management">
+            <ArrowLeft size={20} />
+            <span style={{ marginLeft: "0.5rem" }}>Quay lại danh sách</span>
+          </BackLink>
+        </PageHeader>
+        <ErrorContainer>
+          <AlertTriangle size={24} style={{ marginRight: "0.5rem" }} />
+          <span>{error}</span>
+        </ErrorContainer>
+      </PageWrapper>
     );
   }
 
   if (!user) {
-    return <div>Không tìm thấy người dùng.</div>;
+    return (
+      <PageWrapper>
+        <PageHeader>
+          <BackLink to="/admin/user-management">
+            <ArrowLeft size={20} />
+            <span style={{ marginLeft: "0.5rem" }}>Quay lại danh sách</span>
+          </BackLink>
+        </PageHeader>
+        <NotFoundContainer>
+          <span>Không tìm thấy thông tin người dùng.</span>
+        </NotFoundContainer>
+      </PageWrapper>
+    );
   }
 
   return (
@@ -204,6 +268,7 @@ const UserDetailPage = () => {
           <ArrowLeft size={20} />
           <span style={{ marginLeft: "0.5rem" }}>Quay lại danh sách</span>
         </BackLink>
+        <Title>Chi tiết người dùng: {user.fullName || user.username || user.email}</Title>
       </PageHeader>
       <Grid>
         <MainInfoCard>
@@ -217,7 +282,7 @@ const UserDetailPage = () => {
 
           <InfoRow>
             <InfoLabel>Username</InfoLabel>
-            <InfoValue>{user.username}</InfoValue>
+            <InfoValue>{user.username || "Chưa cập nhật"}</InfoValue>
           </InfoRow>
           <InfoRow>
             <InfoLabel>Email</InfoLabel>
@@ -226,6 +291,14 @@ const UserDetailPage = () => {
           <InfoRow>
             <InfoLabel>Số điện thoại</InfoLabel>
             <InfoValue>{user.phone || "Chưa cập nhật"}</InfoValue>
+          </InfoRow>
+          <InfoRow>
+            <InfoLabel>Địa chỉ</InfoLabel>
+            <InfoValue>{user.address || "Chưa cập nhật"}</InfoValue>
+          </InfoRow>
+          <InfoRow>
+            <InfoLabel>Ngày sinh</InfoLabel>
+            <InfoValue>{user.birthDate ? formatDate(user.birthDate) : "Chưa cập nhật"}</InfoValue>
           </InfoRow>
           <InfoRow>
             <InfoLabel>Trạng thái</InfoLabel>
@@ -257,11 +330,11 @@ const UserDetailPage = () => {
               </thead>
               <tbody>
                 {user.rentalHistory.map((rental, index) => (
-                  <tr key={index}>
-                    <td>{rental.houseName}</td>
-                    <td>{formatDate(rental.checkinDate)}</td>
-                    <td>{formatDate(rental.checkoutDate)}</td>
-                    <td>{formatCurrency(rental.price)}</td>
+                  <tr key={rental.houseId || index}>
+                    <td>{rental.houseName || "Không xác định"}</td>
+                    <td>{rental.checkinDate ? formatDate(rental.checkinDate) : "N/A"}</td>
+                    <td>{rental.checkoutDate ? formatDate(rental.checkoutDate) : "N/A"}</td>
+                    <td>{rental.price ? formatCurrency(rental.price) : "N/A"}</td>
                   </tr>
                 ))}
               </tbody>
