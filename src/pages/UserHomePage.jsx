@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
-import { getHouses } from "../api/houseApi";
+import propertyApi from "../api/propertyApi";
 import HouseList from "../components/house/HouseList";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
@@ -71,8 +71,10 @@ const HomePage = () => {
     const fetchHouses = async () => {
       try {
         setLoading(true); // Bắt đầu tải, bật spinner
-        const response = await getHouses(); // Gọi hàm lấy dữ liệu
-        setHouses(response.data); // Cập nhật state với dữ liệu nhận được
+        const response = await propertyApi.getPublicProperties(); // Gọi API lấy bài đăng công khai
+        console.log('🏠 API Response:', response);
+        console.log('🏠 Houses data:', response.content || response.data || []);
+        setHouses(response.content || response.data || []); // Cập nhật state với dữ liệu nhận được
         setError(null); // Xóa bất kỳ lỗi nào trước đó
       } catch (err) {
         // Nếu có lỗi, cập nhật state lỗi

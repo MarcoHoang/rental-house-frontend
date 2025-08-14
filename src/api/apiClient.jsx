@@ -14,6 +14,11 @@ const privateApiClient = axios.create({
   baseURL: `${API_BASE_URL}${API_PREFIX}/admin`,
 });
 
+// Client cho các API của Host (private, cần token)
+const hostApiClient = axios.create({
+  baseURL: `${API_BASE_URL}${API_PREFIX}`,
+});
+
 // Gắn token vào mỗi request của admin
 privateApiClient.interceptors.request.use(
   (config) => {
@@ -26,7 +31,19 @@ privateApiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Xử lý tự động khi token hết hạn (401 Unauthorized)
+// Gắn token vào mỗi request của host
+hostApiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Xử lý tự động khi token hết hạn (401 Unauthorized) - Admin
 privateApiClient.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -38,4 +55,16 @@ privateApiClient.interceptors.response.use(
   }
 );
 
-export { publicApiClient, privateApiClient };
+// Xử lý tự động khi token hết hạn (401 Unauthorized) - Host
+hostApiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem("token");
+      window.location.href = "/login"; // Chuyển về trang login
+    }
+    return Promise.reject(error);
+  }
+);
+
+export { publicApiClient, privateApiClient, hostApiClient };

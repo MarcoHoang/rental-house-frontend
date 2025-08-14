@@ -2,7 +2,7 @@
 import React from "react";
 import HouseCard from "./HouseCard";
 
-const HouseList = ({ houses }) => {
+const HouseList = ({ houses, showActions = false, onEdit, onDelete }) => {
   // Logic không thay đổi
   if (!houses || houses.length === 0) {
     return (
@@ -16,7 +16,13 @@ const HouseList = ({ houses }) => {
     // Thay thế <ListWrapper> bằng các lớp grid của Tailwind
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
       {houses.map((house) => (
-        <HouseCard key={house.id} house={house} />
+        <HouseCard 
+          key={house.id} 
+          house={house} 
+          showActions={showActions}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
       ))}
     </div>
   );

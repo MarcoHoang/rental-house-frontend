@@ -85,7 +85,7 @@ const PostPropertyPage = () => {
         houseType: formData.houseType,
         latitude: 0,
         longitude: 0,
-        status: 'PENDING', // Đổi từ ACTIVE sang PENDING nếu cần chờ duyệt
+        status: 'ACTIVE', // Bài đăng sẽ hiển thị ngay lập tức
         hostId: user.id,
         imageUrls: imageUrls || [] // Đảm bảo luôn là mảng
       };
@@ -98,7 +98,7 @@ const PostPropertyPage = () => {
       console.log('Phản hồi từ server:', response);
       
       // 4. Thông báo thành công và reset form
-      showSuccess('Thành công', 'Đăng bài thành công! Bài viết đang được kiểm duyệt.');
+      showSuccess('Thành công', 'Đăng bài thành công! Bài viết đã được hiển thị trên trang chủ.');
       
       // Reset form
       setFormData({

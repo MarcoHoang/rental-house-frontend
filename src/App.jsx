@@ -6,7 +6,6 @@ import {
   Navigate,
 } from "react-router-dom";
 import UserHomePage from "./pages/UserHomePage";
-import HostHomePage from "./pages/HostHomePage";
 import HostDashboardPage from "./pages/host/HostDashboardPage";
 import PostPropertyPage from "./pages/host/PostPropertyPage";
 import HostProfilePage from "./pages/host/HostProfilePage";
@@ -157,12 +156,36 @@ function App() {
                 </ProtectedRoute>
               }
             >
-              <Route index element={<HostHomePage />} />
+              <Route index element={<HostDashboardPage />} />
               <Route
                 path="post"
                 element={
                   <div style={{ padding: "20px" }}>
                     <PostPropertyPage />
+                  </div>
+                }
+              />
+              <Route
+                path="properties"
+                element={
+                  <div style={{ padding: "20px" }}>
+                    <HostDashboardPage />
+                  </div>
+                }
+              />
+              <Route
+                path="bookings"
+                element={
+                  <div style={{ padding: "20px" }}>
+                    <HostDashboardPage />
+                  </div>
+                }
+              />
+              <Route
+                path="profile"
+                element={
+                  <div style={{ padding: "20px" }}>
+                    <HostProfilePage />
                   </div>
                 }
               />

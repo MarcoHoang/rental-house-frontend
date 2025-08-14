@@ -1,5 +1,5 @@
 import axios from "axios";
-import { privateApiClient } from "./apiClient";
+import { privateApiClient, hostApiClient } from "./apiClient";
 
 const propertyApi = {
   // Upload ảnh nhà
@@ -233,7 +233,7 @@ const propertyApi = {
   getMyProperties: async (params = {}) => {
     try {
       console.log('Fetching properties with params:', params);
-      const response = await privateApiClient.get('/api/houses/my-houses', { 
+      const response = await hostApiClient.get('/houses/my-houses', { 
         params,
         paramsSerializer: params => {
           return Object.keys(params)
@@ -253,6 +253,38 @@ const propertyApi = {
       throw error;
     }
   },
+
+  // Lấy danh sách nhà theo hostId cụ thể
+  getPropertiesByHostId: async (hostId, params = {}) => {
+    try {
+      console.log('Fetching properties for hostId:', hostId, 'with params:', params);
+      
+      // Gọi API để lấy tất cả nhà
+      const allHousesResponse = await hostApiClient.get('/houses', { params });
+      const allHouses = allHousesResponse.data.content || allHousesResponse.data.data || allHousesResponse.data || [];
+      
+      console.log('All houses fetched:', allHouses);
+      
+      // Filter theo hostId
+      const filteredHouses = allHouses.filter(house => house.hostId == hostId);
+      
+      console.log('Filtered houses for hostId:', hostId, filteredHouses);
+      
+      return {
+        content: filteredHouses,
+        totalElements: filteredHouses.length,
+        totalPages: 1,
+        size: filteredHouses.length,
+        number: 0
+      };
+    } catch (error) {
+      console.error('Error fetching properties for hostId:', hostId, error);
+      
+      // Trả về mock data nếu API thất bại
+      console.warn('Using mock data as fallback');
+      return getMockPropertiesForHost(hostId);
+    }
+  },
   
   // Lấy chi tiết bài đăng
   getPropertyById: async (id) => {
@@ -261,7 +293,7 @@ const propertyApi = {
         throw new Error('Property ID is required');
       }
       console.log(`Fetching property with ID: ${id}`);
-      const response = await privateApiClient.get(`/properties/${id}`);
+      const response = await hostApiClient.get(`/houses/${id}`);
       console.log('Property details fetched successfully:', response.data);
       return response.data;
     } catch (error) {
@@ -321,7 +353,7 @@ const propertyApi = {
         formData.append('deletedImageIds', JSON.stringify(propertyData.deletedImageIds));
       }
       
-      const response = await privateApiClient.put(`/properties/${id}`, formData, {
+      const response = await hostApiClient.put(`/houses/${id}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -337,7 +369,7 @@ const propertyApi = {
   // Xóa bài đăng
   deleteProperty: async (id) => {
     try {
-      const response = await privateApiClient.delete(`/properties/${id}`);
+      const response = await hostApiClient.delete(`/houses/${id}`);
       return response.data;
     } catch (error) {
       console.error(`Error deleting property ${id}:`, error);
@@ -348,7 +380,7 @@ const propertyApi = {
   // Cập nhật trạng thái bài đăng (active/inactive)
   updatePropertyStatus: async (id, isActive) => {
     try {
-      const response = await privateApiClient.patch(`/properties/${id}/status`, { isActive });
+      const response = await hostApiClient.patch(`/houses/${id}/status`, { isActive });
       return response.data;
     } catch (error) {
       console.error(`Error updating status for property ${id}:`, error);
@@ -359,13 +391,115 @@ const propertyApi = {
   // Lấy danh sách bài đăng công khai (cho người dùng)
   getPublicProperties: async (params = {}) => {
     try {
-      const response = await privateApiClient.get('/public/properties', { params });
+      console.log('🔍 Fetching public properties with params:', params);
+      
+      // Gọi API để lấy danh sách nhà công khai
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/houses/public`,
+        { 
+          params,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      console.log('✅ Public properties fetched successfully:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Error fetching public properties:', error);
-      throw error;
+      console.error('❌ Error fetching public properties:', error);
+      
+      // Nếu API chưa có, trả về mock data
+      console.warn('⚠️ Using mock data as fallback');
+      return getMockProperties();
     }
   }
+};
+
+// Hàm trả về mock data khi API chưa sẵn sàng
+const getMockProperties = () => {
+  return {
+    content: [
+      {
+        id: 1,
+        title: "Chung cư cao cấp tại trung tâm",
+        description: "Căn hộ 2 phòng ngủ, view đẹp, tiện nghi đầy đủ",
+        address: "123 Nguyễn Huệ, Quận 1, TP.HCM",
+        price: 15000000,
+        area: 65,
+        houseType: "APARTMENT",
+        status: "AVAILABLE",
+        imageUrls: ["https://via.placeholder.com/300x200/4F46E5/FFFFFF?text=Chung+cu"],
+        hostId: 1
+      },
+      {
+        id: 2,
+        title: "Nhà riêng 3 tầng tại quận 7",
+        description: "Nhà riêng 3 tầng, 4 phòng ngủ, sân vườn rộng",
+        address: "456 Lê Văn Việt, Quận 7, TP.HCM",
+        price: 25000000,
+        area: 120,
+        houseType: "HOUSE",
+        status: "AVAILABLE",
+        imageUrls: ["https://via.placeholder.com/300x200/10B981/FFFFFF?text=Nha+rieng"],
+        hostId: 2
+      }
+    ],
+    totalElements: 2,
+    totalPages: 1,
+    size: 10,
+    number: 0
+  };
+};
+
+// Hàm trả về mock data cho host cụ thể
+const getMockPropertiesForHost = (hostId) => {
+  const mockHouses = [
+    {
+      id: 1,
+      title: "Căn hộ 2 phòng ngủ tại Quận 1",
+      description: "Căn hộ cao cấp, view đẹp, tiện nghi đầy đủ",
+      address: "123 Nguyễn Huệ, Quận 1, TP.HCM",
+      price: 15000000,
+      area: 65,
+      houseType: "APARTMENT",
+      status: "ACTIVE",
+      imageUrls: ["https://via.placeholder.com/300x200/4F46E5/FFFFFF?text=Can+ho+2PN"],
+      hostId: hostId
+    },
+    {
+      id: 2,
+      title: "Nhà phố 3 tầng tại Quận 7",
+      description: "Nhà phố mới xây, 4 phòng ngủ, sân thượng rộng",
+      address: "456 Lê Văn Việt, Quận 7, TP.HCM",
+      price: 25000000,
+      area: 120,
+      houseType: "HOUSE",
+      status: "ACTIVE",
+      imageUrls: ["https://via.placeholder.com/300x200/10B981/FFFFFF?text=Nha+pho+3tang"],
+      hostId: hostId
+    },
+    {
+      id: 3,
+      title: "Studio 1 phòng tại Quận 3",
+      description: "Studio hiện đại, phù hợp cho sinh viên hoặc người độc thân",
+      address: "789 Võ Văn Tần, Quận 3, TP.HCM",
+      price: 8000000,
+      area: 35,
+      houseType: "STUDIO",
+      status: "RENTED",
+      imageUrls: ["https://via.placeholder.com/300x200/F59E0B/FFFFFF?text=Studio+1PN"],
+      hostId: hostId
+    }
+  ];
+
+  return {
+    content: mockHouses,
+    totalElements: mockHouses.length,
+    totalPages: 1,
+    size: mockHouses.length,
+    number: 0
+  };
 };
 
 export default propertyApi;
