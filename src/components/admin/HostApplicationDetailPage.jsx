@@ -73,15 +73,15 @@ const InfoValue = styled.span`
 const ImageViewer = styled.div`
   margin-top: 1rem;
   border: 2px dashed #cbd5e0;
-  padding: 1rem;
+  padding: 0.75rem;
   border-radius: 0.5rem;
   text-align: center;
   background-color: #f7fafc;
 
   img {
     max-width: 100%;
-    max-height: 400px;
-    border-radius: 0.5rem;
+    max-height: 250px;
+    border-radius: 0.375rem;
     object-fit: contain;
     cursor: pointer;
     transition: transform 0.2s;
@@ -103,8 +103,15 @@ const HostApplicationDetailPage = () => {
       setLoading(true);
       try {
         const data = await hostApplicationsApi.getRequestDetails(requestId);
+        console.log("Host application details:", data);
+        console.log("Image URLs:", {
+          idFrontPhotoUrl: data.idFrontPhotoUrl,
+          idBackPhotoUrl: data.idBackPhotoUrl,
+          proofOfOwnershipUrl: data.proofOfOwnershipUrl
+        });
         setRequest(data);
       } catch (err) {
+        console.error("Error fetching request details:", err);
         setError("Không thể tải chi tiết đơn đăng ký.");
       } finally {
         setLoading(false);
@@ -156,6 +163,10 @@ const HostApplicationDetailPage = () => {
             <InfoValue>{request.nationalId || "Chưa cập nhật"}</InfoValue>
           </InfoRow>
           <InfoRow>
+            <InfoLabel>Địa chỉ</InfoLabel>
+            <InfoValue>{request.address || "Chưa cập nhật"}</InfoValue>
+          </InfoRow>
+          <InfoRow>
             <InfoLabel>Trạng thái</InfoLabel>
             <InfoValue>
               {request.status === 'PENDING' && '⏳ Chờ duyệt'}
@@ -172,19 +183,136 @@ const HostApplicationDetailPage = () => {
         </InfoCard>
 
         <InfoCard>
-          <Title>Giấy tờ sở hữu</Title>
-          {request.proofOfOwnershipUrl ? (
-            <ImageViewer>
-              <a
-                href={request.proofOfOwnershipUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Mở ảnh trong tab mới"
-              >
-                <img src={request.proofOfOwnershipUrl} alt="Giấy tờ sở hữu" />
-              </a>
-            </ImageViewer>
-          ) : (
+          <Title>Ảnh giấy tờ đã gửi</Title>
+          
+          {/* Ảnh mặt trước CCCD/CMT */}
+          {request.idFrontPhotoUrl && (
+            <div style={{ marginBottom: "1.5rem" }}>
+              <h4 style={{ marginBottom: "0.5rem", color: "#4a5568", fontSize: "0.875rem" }}>
+                Mặt trước CCCD/CMT
+              </h4>
+              <ImageViewer>
+                <a
+                  href={request.idFrontPhotoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Mở ảnh trong tab mới"
+                >
+                  <img 
+                    src={request.idFrontPhotoUrl} 
+                    alt="Mặt trước CCCD/CMT"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                  <div 
+                    style={{ 
+                      display: 'none',
+                      width: '100%',
+                      height: '150px',
+                      backgroundColor: '#f7fafc',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '0.375rem',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#718096',
+                      fontSize: '0.875rem'
+                    }}
+                  >
+                    Không thể tải ảnh
+                  </div>
+                </a>
+              </ImageViewer>
+            </div>
+          )}
+
+          {/* Ảnh mặt sau CCCD/CMT */}
+          {request.idBackPhotoUrl && (
+            <div style={{ marginBottom: "1.5rem" }}>
+              <h4 style={{ marginBottom: "0.5rem", color: "#4a5568", fontSize: "0.875rem" }}>
+                Mặt sau CCCD/CMT
+              </h4>
+              <ImageViewer>
+                <a
+                  href={request.idBackPhotoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Mở ảnh trong tab mới"
+                >
+                  <img 
+                    src={request.idBackPhotoUrl} 
+                    alt="Mặt sau CCCD/CMT"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                  <div 
+                    style={{ 
+                      display: 'none',
+                      width: '100%',
+                      height: '150px',
+                      backgroundColor: '#f7fafc',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '0.375rem',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#718096',
+                      fontSize: '0.875rem'
+                    }}
+                  >
+                    Không thể tải ảnh
+                  </div>
+                </a>
+              </ImageViewer>
+            </div>
+          )}
+
+          {/* Giấy tờ chứng minh quyền sở hữu */}
+          {request.proofOfOwnershipUrl && (
+            <div style={{ marginBottom: "1.5rem" }}>
+              <h4 style={{ marginBottom: "0.5rem", color: "#4a5568", fontSize: "0.875rem" }}>
+                Giấy tờ chứng minh quyền sở hữu
+              </h4>
+              <ImageViewer>
+                <a
+                  href={request.proofOfOwnershipUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Mở ảnh trong tab mới"
+                >
+                  <img 
+                    src={request.proofOfOwnershipUrl} 
+                    alt="Giấy tờ chứng minh quyền sở hữu"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                  <div 
+                    style={{ 
+                      display: 'none',
+                      width: '100%',
+                      height: '150px',
+                      backgroundColor: '#f7fafc',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '0.375rem',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#718096',
+                      fontSize: '0.875rem'
+                    }}
+                  >
+                    Không thể tải ảnh
+                  </div>
+                </a>
+              </ImageViewer>
+            </div>
+          )}
+
+          {/* Thông báo nếu không có ảnh nào */}
+          {!request.idFrontPhotoUrl && !request.idBackPhotoUrl && !request.proofOfOwnershipUrl && (
             <p
               style={{
                 color: "#718096",
@@ -192,7 +320,7 @@ const HostApplicationDetailPage = () => {
                 marginTop: "1rem",
               }}
             >
-              Người dùng chưa cung cấp giấy tờ.
+              Người dùng chưa cung cấp ảnh giấy tờ.
             </p>
           )}
         </InfoCard>

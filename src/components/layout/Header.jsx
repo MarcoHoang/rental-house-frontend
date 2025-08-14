@@ -7,6 +7,7 @@ import {
   HomeIcon,
 } from "@heroicons/react/24/outline";
 import authService from "../../api/authService";
+import hostApi from "../../api/hostApi";
 import { getAvatarUrl } from "../../utils/avatarHelper";
 import Avatar from "../common/Avatar";
 import styled from "styled-components";
@@ -222,6 +223,7 @@ const Header = () => {
     email: "",
     roleName: "",
   });
+  const [hostApplication, setHostApplication] = useState(null);
 
   const { showSuccess, showError } = useToast();
 
@@ -349,12 +351,43 @@ const Header = () => {
     };
   }, [handleLogout]);
 
-  // Tải thông tin người dùng khi đã đăng nhập
+  // Tải thông tin người dùng và kiểm tra đơn đăng ký chủ nhà khi đã đăng nhập
   useEffect(() => {
     if (isLoggedIn) {
       loadUserProfile();
+      checkHostApplication();
     }
   }, [isLoggedIn, loadUserProfile]);
+
+  // Kiểm tra đơn đăng ký chủ nhà
+  const checkHostApplication = useCallback(async () => {
+    if (!userData.email || userData.roleName === "HOST") {
+      setHostApplication(null);
+      return;
+    }
+    
+    try {
+      console.log("Checking host application for:", userData.email);
+      const application = await hostApi.getMyApplication(userData.email);
+      console.log("Host application found:", application);
+      setHostApplication(application);
+    } catch (error) {
+      console.error("Error checking host application:", error);
+      
+      // Xử lý các trường hợp lỗi
+      if (error.response?.status === 404) {
+        // Không có đơn đăng ký - đây là trạng thái bình thường
+        setHostApplication(null);
+      } else if (error.response?.status === 401) {
+        // Phiên đăng nhập hết hạn
+        console.log("Session expired, clearing host application");
+        setHostApplication(null);
+      } else {
+        // Lỗi khác - giữ nguyên trạng thái hiện tại
+        console.log("Other error, keeping current state");
+      }
+    }
+  }, [userData.email, userData.roleName]);
 
   return (
     <HeaderWrapper>
@@ -435,8 +468,8 @@ const Header = () => {
                       Thông tin cá nhân
                     </Link>
 
-                    {/* Ẩn mục xin xét duyệt nếu đã là HOST */}
-                    {userData.roleName !== "HOST" && (
+                    {/* Ẩn mục xin xét duyệt nếu đã là HOST hoặc đã gửi đơn */}
+                    {userData.roleName !== "HOST" && !hostApplication && (
                       <button
                         type="button"
                         onClick={() => {
@@ -447,6 +480,47 @@ const Header = () => {
                       >
                         <HomeIcon className="w-4 h-4 mr-3 text-gray-400" />
                         Xin xét duyệt trở thành chủ nhà
+                      </button>
+                    )}
+
+                    {/* Hiển thị trạng thái đơn nếu đã gửi đơn */}
+                    {hostApplication && userData.roleName !== "HOST" && (
+                      <div className="px-4 py-3 text-sm text-gray-700 border-t border-gray-100">
+                        <div className="flex items-center">
+                          <HomeIcon className="w-4 h-4 mr-3 text-gray-400" />
+                          <div>
+                            <p className="font-medium">Đơn đăng ký chủ nhà</p>
+                            <p className="text-xs text-gray-500">
+                              {hostApplication.status === 'PENDING' && '⏳ Đang chờ duyệt'}
+                              {hostApplication.status === 'APPROVED' && '✅ Đã được duyệt'}
+                              {hostApplication.status === 'REJECTED' && '❌ Đã bị từ chối'}
+                            </p>
+                          </div>
+                        </div>
+                        {hostApplication.status === 'PENDING' && (
+                          <p className="text-xs text-blue-600 mt-1">
+                            Bạn đang có đơn chờ duyệt
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Thêm nút xem chi tiết đơn nếu đã gửi */}
+                    {hostApplication && userData.roleName !== "HOST" && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowDropdown(false);
+                          // Có thể thêm navigation đến trang xem chi tiết đơn
+                          window.location.href = '/profile';
+                        }}
+                        className="w-full text-left flex items-center px-4 py-3 text-sm text-blue-600 hover:bg-blue-50"
+                      >
+                        <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        Xem chi tiết đơn đăng ký
                       </button>
                     )}
 
@@ -503,6 +577,9 @@ const Header = () => {
               "Đã gửi đơn đăng ký trở thành chủ nhà thành công! Chúng tôi sẽ liên hệ với bạn sớm."
             );
             setShowHostRegistration(false);
+            
+            // Refresh trạng thái đơn đăng ký
+            checkHostApplication();
           } catch (error) {
             console.error("Lỗi khi gửi đơn đăng ký:", error);
 

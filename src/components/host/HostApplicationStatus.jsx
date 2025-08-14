@@ -130,20 +130,34 @@ const HostApplicationStatus = () => {
     const fetchApplication = async () => {
       try {
         setLoading(true);
+        setError(null);
+        
         const user = getUserFromStorage();
         if (!user || !user.id) {
           setError('Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.');
           return;
         }
 
+        console.log('Fetching application for user:', user.id);
         const application = await hostApi.getMyApplication(user.id);
+        console.log('Application data received:', application);
         setApplication(application);
       } catch (error) {
         console.error('Error fetching application:', error);
+        
+        // Xử lý các trường hợp lỗi khác nhau
         if (error.response?.status === 404) {
-          setError('Bạn chưa gửi đơn đăng ký làm chủ nhà.');
+          // Không có đơn đăng ký - đây không phải lỗi
+          setApplication(null);
+          setError(null);
+        } else if (error.response?.status === 401) {
+          setError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        } else if (error.response?.status === 403) {
+          setError('Bạn không có quyền truy cập thông tin này.');
+        } else if (error.message) {
+          setError(`Lỗi: ${error.message}`);
         } else {
-          setError('Không thể tải thông tin đơn đăng ký. Vui lòng thử lại.');
+          setError('Không thể tải thông tin đơn đăng ký. Vui lòng thử lại sau.');
         }
       } finally {
         setLoading(false);
@@ -311,22 +325,80 @@ const HostApplicationStatus = () => {
         </ReasonText>
       )}
 
-      {/* Hiển thị giấy tờ sở hữu nếu có */}
-      {application.proofOfOwnershipUrl && (
-        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-800 mb-2">
-            <strong>Giấy tờ sở hữu:</strong>
-          </p>
-          <a 
-            href={application.proofOfOwnershipUrl} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 underline text-sm"
-          >
-            Xem giấy tờ sở hữu
-          </a>
+      {/* Hiển thị ảnh giấy tờ */}
+      <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+        <p className="text-sm text-gray-800 mb-3 font-medium">
+          <strong>Ảnh giấy tờ đã gửi:</strong>
+        </p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Ảnh mặt trước CCCD/CMT */}
+          {application.idFrontPhotoUrl && (
+            <div className="bg-white p-3 rounded-lg border">
+              <p className="text-xs text-gray-600 mb-2">Mặt trước CCCD/CMT</p>
+              <img 
+                src={application.idFrontPhotoUrl} 
+                alt="Mặt trước CCCD/CMT"
+                className="w-full h-32 object-cover rounded border"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+              <div 
+                className="w-full h-32 bg-gray-100 rounded border hidden items-center justify-center text-gray-500 text-sm"
+                style={{ display: 'none' }}
+              >
+                Không thể tải ảnh
+              </div>
+            </div>
+          )}
+
+          {/* Ảnh mặt sau CCCD/CMT */}
+          {application.idBackPhotoUrl && (
+            <div className="bg-white p-3 rounded-lg border">
+              <p className="text-xs text-gray-600 mb-2">Mặt sau CCCD/CMT</p>
+              <img 
+                src={application.idBackPhotoUrl} 
+                alt="Mặt sau CCCD/CMT"
+                className="w-full h-32 object-cover rounded border"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+              <div 
+                className="w-full h-32 bg-gray-100 rounded border hidden items-center justify-center text-gray-500 text-sm"
+                style={{ display: 'none' }}
+              >
+                Không thể tải ảnh
+              </div>
+            </div>
+          )}
+
+          {/* Giấy tờ chứng minh quyền sở hữu */}
+          {application.proofOfOwnershipUrl && (
+            <div className="bg-white p-3 rounded-lg border md:col-span-2">
+              <p className="text-xs text-gray-600 mb-2">Giấy tờ chứng minh quyền sở hữu</p>
+              <img 
+                src={application.proofOfOwnershipUrl} 
+                alt="Giấy tờ chứng minh quyền sở hữu"
+                className="w-full h-48 object-cover rounded border"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+              <div 
+                className="w-full h-48 bg-gray-100 rounded border hidden items-center justify-center text-gray-500 text-sm"
+                style={{ display: 'none' }}
+              >
+                Không thể tải ảnh
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {application.status === 'APPROVED' && (
         <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
