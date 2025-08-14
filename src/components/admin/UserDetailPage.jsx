@@ -227,7 +227,7 @@ const formatDate = (dateString) => {
 // Helper để xử lý avatar URL
 const getAvatarImageUrl = (avatarUrl) => {
   console.log("Processing avatar URL:", avatarUrl);
-  
+
   if (!avatarUrl || avatarUrl === "/images/default-avatar.png") {
     console.log("Avatar URL is null or default, returning null");
     return null;
@@ -259,8 +259,6 @@ const getAvatarImageUrl = (avatarUrl) => {
   return url;
 };
 
-
-
 const UserDetailPage = () => {
   const { userId } = useParams();
   const [user, setUser] = useState(null);
@@ -271,9 +269,9 @@ const UserDetailPage = () => {
   useEffect(() => {
     const fetchUserDetails = async () => {
       setLoading(true);
-              setError(null);
-        setAvatarError(false);
-        try {
+      setError(null);
+      setAvatarError(false);
+      try {
         const data = await usersApi.getById(userId);
         console.log("User data from backend:", data);
         console.log("Avatar URL from backend:", data.avatarUrl);
@@ -347,7 +345,9 @@ const UserDetailPage = () => {
       <Grid>
         <MainInfoCard>
           <AvatarContainer>
-            {!avatarError && user.avatarUrl && user.avatarUrl !== "/images/default-avatar.png" ? (
+            {!avatarError &&
+            user.avatarUrl &&
+            user.avatarUrl !== "/images/default-avatar.png" ? (
               <Avatar
                 src={user.avatarUrl}
                 alt={`Avatar của ${
@@ -414,8 +414,12 @@ const UserDetailPage = () => {
           </InfoRow>
           <InfoRow>
             <InfoLabel>Avatar Status</InfoLabel>
-            <InfoValue style={{ fontSize: '0.75rem' }}>
-              {!avatarError && user.avatarUrl && user.avatarUrl !== "/images/default-avatar.png" ? '✅ Có ảnh' : '❌ Không có ảnh'}
+            <InfoValue style={{ fontSize: "0.75rem" }}>
+              {!avatarError &&
+              user.avatarUrl &&
+              user.avatarUrl !== "/images/default-avatar.png"
+                ? "✅ Có ảnh"
+                : "❌ Không có ảnh"}
             </InfoValue>
           </InfoRow>
         </MainInfoCard>
