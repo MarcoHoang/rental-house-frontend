@@ -6,6 +6,7 @@ import propertyApi from '../api/propertyApi';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { getHouseTypeLabel, getHouseStatusLabel, getHouseStatusColor } from '../utils/constants';
 import { extractHouseFromResponse } from '../utils/apiHelpers';
+import { useAuth } from '../hooks/useAuth';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -158,36 +159,6 @@ const InfoItem = styled.div`
   }
 `;
 
-const ContactSection = styled.div`
-  background: #f9fafb;
-  padding: 1.5rem;
-  border-radius: 0.5rem;
-  margin-top: 1.5rem;
-`;
-
-const ContactTitle = styled.h3`
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 1rem;
-`;
-
-const ContactButton = styled.button`
-  width: 100%;
-  padding: 0.75rem 1rem;
-  background: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s;
-  
-  &:hover {
-    background: #2563eb;
-  }
-`;
-
 const DescriptionSection = styled.div`
   margin-top: 2rem;
   
@@ -207,6 +178,7 @@ const DescriptionSection = styled.div`
 const HouseDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [house, setHouse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -222,6 +194,14 @@ const HouseDetailPage = () => {
         const houseData = extractHouseFromResponse(response);
         
         console.log('House details:', houseData);
+        
+        // Nếu người dùng đang đăng nhập với vai trò chủ nhà và đang xem nhà của mình
+        if (user && user.roleName === 'HOST' && houseData.hostId === user.id) {
+          // Sử dụng thông tin từ context thay vì từ API
+          houseData.hostName = user.fullName || user.username || user.email;
+          houseData.hostPhone = user.phone;
+        }
+        
         setHouse(houseData);
         setError(null);
       } catch (err) {
@@ -235,7 +215,7 @@ const HouseDetailPage = () => {
     if (id) {
       fetchHouseDetails();
     }
-  }, [id]);
+  }, [id, user]);
 
   const formatPrice = (price) => {
     if (!price) return 'Liên hệ';
@@ -259,11 +239,6 @@ const HouseDetailPage = () => {
     }
     
     return [];
-  };
-
-  const handleContactHost = () => {
-    // TODO: Implement contact functionality
-    alert('Tính năng liên hệ chủ nhà sẽ được phát triển sau!');
   };
 
   if (loading) {
@@ -390,6 +365,16 @@ const HouseDetailPage = () => {
               </InfoItem>
             )}
 
+            {house.hostPhone && (
+              <InfoItem>
+                <Phone size={20} className="icon" />
+                <div className="content">
+                  <div className="label">Số điện thoại</div>
+                  <div className="value">{house.hostPhone}</div>
+                </div>
+              </InfoItem>
+            )}
+
             {house.createdAt && (
               <InfoItem>
                 <Calendar size={20} className="icon" />
@@ -403,13 +388,7 @@ const HouseDetailPage = () => {
             )}
           </InfoGrid>
 
-          <ContactSection>
-            <ContactTitle>Liên hệ chủ nhà</ContactTitle>
-            <ContactButton onClick={handleContactHost}>
-              <Phone size={16} style={{ marginRight: '0.5rem' }} />
-              Liên hệ ngay
-            </ContactButton>
-          </ContactSection>
+          {/* Bỏ phần ContactSection vì không còn nút "Liên hệ ngay" */}
         </InfoSection>
       </MainContent>
     </Container>

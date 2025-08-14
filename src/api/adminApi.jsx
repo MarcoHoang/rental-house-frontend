@@ -246,13 +246,37 @@ export const usersApi = {
 
 // Houses Management
 export const housesApi = {
-  getAll: (params) => apiClient.get(`${API_PREFIX}/admin/houses`, { params }),
-  getById: (id) => apiClient.get(`${API_PREFIX}/admin/houses/${id}`),
+  getAll: async (params = {}) => {
+    try {
+      const response = await apiClient.get(`${API_PREFIX}/admin/houses`, { params });
+      return response.data.data;
+    } catch (error) {
+      logApiError(error, "getAllHouses");
+      throw error;
+    }
+  },
+  getById: async (id) => {
+    try {
+      const response = await apiClient.get(`${API_PREFIX}/admin/houses/${id}`);
+      return response.data.data;
+    } catch (error) {
+      logApiError(error, "getHouseById");
+      throw error;
+    }
+  },
   create: (houseData) =>
     apiClient.post(`${API_PREFIX}/admin/houses`, houseData),
   update: (id, houseData) =>
     apiClient.put(`${API_PREFIX}/admin/houses/${id}`, houseData),
-  delete: (id) => apiClient.delete(`${API_PREFIX}/admin/houses/${id}`),
+  delete: async (id) => {
+    try {
+      const response = await apiClient.delete(`${API_PREFIX}/admin/houses/${id}`);
+      return response.data;
+    } catch (error) {
+      logApiError(error, "deleteHouse");
+      throw error;
+    }
+  },
   updateStatus: (id, status) =>
     apiClient.patch(`${API_PREFIX}/admin/houses/${id}/status`, { status }),
 };

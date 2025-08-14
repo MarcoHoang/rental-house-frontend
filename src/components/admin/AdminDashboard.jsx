@@ -23,11 +23,13 @@ import {
 import UserManagement from "./UserManagement";
 import HostManagement from "./HostManagement";
 import HostApplicationsManagement from "./HostApplicationsManagement";
+import HouseManagement from "./HouseManagement";
 import ConfirmDialog from "../common/ConfirmDialog";
 import { useToast } from "../common/Toast";
 import UserDetailPage from "./UserDetailPage";
 import HostApplicationDetailPage from "./HostApplicationDetailPage";
 import HostDetailPage from "./HostDetailPage";
+import HouseDetailPage from "./HouseDetailPage";
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -614,7 +616,7 @@ const AdminDashboard = () => {
     {
       id: "host-management",
       label: "Quản lý Chủ nhà",
-      icon: Home,
+      icon: Users,
       path: "/admin/host-management",
     },
     { id: "houses", label: "Quản lý nhà", icon: Home, path: "/admin/houses" },
@@ -728,8 +730,9 @@ const AdminDashboard = () => {
               element={<HostDetailPage />}
             />
 
-            {/* Route cho các trang khác (ví dụ) */}
-            <Route path="houses" element={<HousesContent />} />
+            {/* Route cho House Management */}
+            <Route path="houses" element={<HouseManagement />} />
+            <Route path="houses/:houseId" element={<HouseDetailPage />} />
 
             {/* Các route đang phát triển */}
             <Route
@@ -771,11 +774,7 @@ const DashboardContent = () => (
   </div>
 );
 
-const HousesContent = () => (
-  <div>
-    <p>Nội dung trang quản lý nhà (Houses)...</p>
-  </div>
-);
+
 
 const DevelopingFeaturePage = ({ featureName }) => (
   <Card>
