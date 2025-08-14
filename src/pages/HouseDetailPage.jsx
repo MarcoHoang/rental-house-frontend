@@ -1,136 +1,207 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getHouseById } from '../api/houseApi';
+import { ArrowLeft, MapPin, DollarSign, Home, Calendar, User, Phone, Mail } from 'lucide-react';
 import styled from 'styled-components';
+import propertyApi from '../api/propertyApi';
+import LoadingSpinner from '../components/common/LoadingSpinner';
+import { getHouseTypeLabel, getHouseStatusLabel, getHouseStatusColor } from '../utils/constants';
+import { extractHouseFromResponse } from '../utils/apiHelpers';
 
-// Styled components
-const PageContainer = styled.div`
+const Container = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: 2rem;
 `;
 
 const BackButton = styled.button`
   display: flex;
   align-items: center;
-  background: none;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #f3f4f6;
   border: none;
-  color: #4a5568;
-  font-size: 1rem;
+  border-radius: 0.5rem;
+  color: #374151;
+  font-weight: 500;
   cursor: pointer;
-  margin-bottom: 1.5rem;
-  padding: 0.5rem 0;
+  transition: all 0.2s;
   
   &:hover {
-    color: #2b6cb0;
-  }
-  
-  svg {
-    margin-right: 0.5rem;
+    background: #e5e7eb;
   }
 `;
 
 const HouseHeader = styled.div`
-  margin-bottom: 2rem;
+  margin: 2rem 0;
 `;
 
 const HouseTitle = styled.h1`
-  font-size: 2rem;
-  font-weight: 700;
-  color: #1a202c;
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #1f2937;
   margin-bottom: 0.5rem;
 `;
 
-const HouseAddress = styled.p`
-  color: #4a5568;
-  font-size: 1.125rem;
-  margin-bottom: 1rem;
-`;
-
-const HousePrice = styled.p`
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #2b6cb0;
-  margin-bottom: 1.5rem;
-`;
-
-const ImageGallery = styled.div`
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
-  grid-template-rows: 200px 200px;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  border-radius: 0.5rem;
-  overflow: hidden;
-  
-  & > *:first-child {
-    grid-row: 1 / -1;
-  }
-`;
-
-const MainImage = styled.div`
-  background-image: url(${props => props.src});
-  background-size: cover;
-  background-position: center;
-`;
-
-const Thumbnail = styled.div`
-  background-image: url(${props => props.src});
-  background-size: cover;
-  background-position: center;
-  cursor: pointer;
-  transition: opacity 0.2s;
-  
-  &:hover {
-    opacity: 0.9;
-  }
-`;
-
-const Section = styled.section`
-  margin-bottom: 2.5rem;
-`;
-
-const SectionTitle = styled.h2`
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1a202c;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #e2e8f0;
-`;
-
-const HouseDescription = styled.p`
-  color: #4a5568;
-  line-height: 1.6;
-  margin-bottom: 1.5rem;
-`;
-
-const AmenitiesGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
-`;
-
-const AmenityItem = styled.div`
+const HouseLocation = styled.div`
   display: flex;
   align-items: center;
+  gap: 0.5rem;
+  color: #6b7280;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+`;
+
+const StatusBadge = styled.span`
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  ${props => props.color}
+`;
+
+const MainContent = styled.div`
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
   
-  svg {
-    margin-right: 0.5rem;
-    color: #4a5568;
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
   }
 `;
 
-const LoadingText = styled.p`
-  text-align: center;
-  padding: 4rem 0;
-  color: #718096;
+const ImageSection = styled.div`
+  .main-image {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+    border-radius: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  
+  .image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.5rem;
+  }
+  
+  .thumbnail {
+    width: 100%;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    
+    &:hover {
+      opacity: 0.8;
+    }
+  }
 `;
 
-const ErrorText = styled.p`
+const InfoSection = styled.div`
+  background: white;
+  padding: 2rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  height: fit-content;
+`;
+
+const PriceSection = styled.div`
   text-align: center;
-  padding: 4rem 0;
-  color: #e53e3e;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+`;
+
+const Price = styled.div`
+  font-size: 2rem;
+  font-weight: bold;
+  color: #059669;
+  margin-bottom: 0.5rem;
+`;
+
+const PriceLabel = styled.div`
+  color: #6b7280;
+  font-size: 0.875rem;
+`;
+
+const InfoGrid = styled.div`
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 2rem;
+`;
+
+const InfoItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  
+  .icon {
+    color: #6b7280;
+    flex-shrink: 0;
+  }
+  
+  .content {
+    flex: 1;
+  }
+  
+  .label {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+  }
+  
+  .value {
+    font-weight: 500;
+    color: #1f2937;
+  }
+`;
+
+const ContactSection = styled.div`
+  background: #f9fafb;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  margin-top: 1.5rem;
+`;
+
+const ContactTitle = styled.h3`
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 1rem;
+`;
+
+const ContactButton = styled.button`
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  
+  &:hover {
+    background: #2563eb;
+  }
+`;
+
+const DescriptionSection = styled.div`
+  margin-top: 2rem;
+  
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 1rem;
+  }
+  
+  p {
+    color: #4b5563;
+    line-height: 1.6;
+  }
 `;
 
 const HouseDetailPage = () => {
@@ -139,130 +210,209 @@ const HouseDetailPage = () => {
   const [house, setHouse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [mainImage, setMainImage] = useState('');
+  const [selectedImage, setSelectedImage] = useState(0);
 
   useEffect(() => {
-    const fetchHouse = async () => {
+    const fetchHouseDetails = async () => {
       try {
-        const response = await getHouseById(id);
-        setHouse(response.data);
-        if (response.data.images && response.data.images.length > 0) {
-          setMainImage(response.data.images[0]);
-        }
-        setLoading(false);
+        setLoading(true);
+        console.log('Fetching house details for ID:', id);
+        
+        const response = await propertyApi.getHouseById(id);
+        const houseData = extractHouseFromResponse(response);
+        
+        console.log('House details:', houseData);
+        setHouse(houseData);
+        setError(null);
       } catch (err) {
         console.error('Error fetching house details:', err);
-        setError('Không thể tải thông tin chi tiết ngôi nhà. Vui lòng thử lại sau.');
+        setError('Không thể tải thông tin nhà. Vui lòng thử lại sau.');
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchHouse();
+    if (id) {
+      fetchHouseDetails();
+    }
   }, [id]);
 
+  const formatPrice = (price) => {
+    if (!price) return 'Liên hệ';
+    return `${price.toLocaleString("vi-VN")} VNĐ/tháng`;
+  };
+
+  const formatArea = (area) => {
+    if (!area) return 'Chưa có thông tin';
+    return `${area}m²`;
+  };
+
+  const getImages = () => {
+    if (!house) return [];
+    
+    if (house.imageUrls && Array.isArray(house.imageUrls) && house.imageUrls.length > 0) {
+      return house.imageUrls;
+    }
+    
+    if (house.imageUrl) {
+      return [house.imageUrl];
+    }
+    
+    return [];
+  };
+
+  const handleContactHost = () => {
+    // TODO: Implement contact functionality
+    alert('Tính năng liên hệ chủ nhà sẽ được phát triển sau!');
+  };
+
   if (loading) {
-    return <LoadingText>Đang tải thông tin chi tiết...</LoadingText>;
+    return (
+      <Container>
+        <LoadingSpinner />
+      </Container>
+    );
   }
 
   if (error) {
-    return <ErrorText>{error}</ErrorText>;
+    return (
+      <Container>
+        <BackButton onClick={() => navigate(-1)}>
+          <ArrowLeft size={16} />
+          Quay lại
+        </BackButton>
+        <div style={{ textAlign: 'center', color: '#ef4444', marginTop: '2rem' }}>
+          {error}
+        </div>
+      </Container>
+    );
   }
 
   if (!house) {
-    return <ErrorText>Không tìm thấy thông tin ngôi nhà</ErrorText>;
+    return (
+      <Container>
+        <BackButton onClick={() => navigate(-1)}>
+          <ArrowLeft size={16} />
+          Quay lại
+        </BackButton>
+        <div style={{ textAlign: 'center', color: '#6b7280', marginTop: '2rem' }}>
+          Không tìm thấy thông tin nhà
+        </div>
+      </Container>
+    );
   }
 
-  // Prepare images for gallery (first 4 images)
-  const galleryImages = house.images?.slice(0, 4) || [];
-  const remainingImages = galleryImages.slice(1);
+  const images = getImages();
+  const mainImage = images[selectedImage] || "https://via.placeholder.com/600x400/6B7280/FFFFFF?text=Không+có+ảnh";
 
   return (
-    <PageContainer>
+    <Container>
       <BackButton onClick={() => navigate(-1)}>
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="19" y1="12" x2="5" y2="12"></line>
-          <polyline points="12 19 5 12 12 5"></polyline>
-        </svg>
+        <ArrowLeft size={16} />
         Quay lại
       </BackButton>
 
       <HouseHeader>
-        <HouseTitle>{house.name}</HouseTitle>
-        <HouseAddress>{house.address}</HouseAddress>
-        <HousePrice>
-          {new Intl.NumberFormat('vi-VN', { 
-            style: 'currency', 
-            currency: 'VND' 
-          }).format(house.price || 0)} / tháng
-        </HousePrice>
+        <HouseTitle>{house.title || house.name || 'Không có tên'}</HouseTitle>
+        <HouseLocation>
+          <MapPin size={20} />
+          {house.address || 'Chưa có địa chỉ'}
+        </HouseLocation>
+        {house.status && (
+          <StatusBadge color={getHouseStatusColor(house.status)}>
+            {getHouseStatusLabel(house.status)}
+          </StatusBadge>
+        )}
       </HouseHeader>
 
-      <ImageGallery>
-        <MainImage 
-          src={mainImage || 'https://via.placeholder.com/800x600?text=No+Image'} 
-          alt={house.name}
-        />
-        {remainingImages.map((image, index) => (
-          <Thumbnail 
-            key={index} 
-            src={image} 
-            onClick={() => setMainImage(image)}
-            alt={`${house.name} - ${index + 2}`}
-          />
-        ))}
-      </ImageGallery>
+      <MainContent>
+        <div>
+          <ImageSection>
+            <img
+              src={mainImage}
+              alt={house.title || house.name}
+              className="main-image"
+            />
+            {images.length > 1 && (
+              <div className="image-grid">
+                {images.map((image, index) => (
+                  <img
+                    key={index}
+                    src={image}
+                    alt={`Ảnh ${index + 1}`}
+                    className="thumbnail"
+                    onClick={() => setSelectedImage(index)}
+                    style={{
+                      border: selectedImage === index ? '2px solid #3b82f6' : 'none'
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </ImageSection>
 
-      <Section>
-        <SectionTitle>Mô tả</SectionTitle>
-        <HouseDescription>
-          {house.description || 'Chưa có mô tả chi tiết về ngôi nhà này.'}
-        </HouseDescription>
-      </Section>
-
-      <Section>
-        <SectionTitle>Thông tin chi tiết</SectionTitle>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <p className="text-sm text-gray-500">Diện tích</p>
-            <p className="font-medium">{house.area || '--'} m²</p>
-          </div>
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <p className="text-sm text-gray-500">Số phòng ngủ</p>
-            <p className="font-medium">{house.bedrooms || '--'}</p>
-          </div>
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <p className="text-sm text-gray-500">Số phòng tắm</p>
-            <p className="font-medium">{house.bathrooms || '--'}</p>
-          </div>
+          <DescriptionSection>
+            <h2>Mô tả</h2>
+            <p>{house.description || 'Chưa có mô tả chi tiết.'}</p>
+          </DescriptionSection>
         </div>
-      </Section>
 
-      {house.amenities && house.amenities.length > 0 && (
-        <Section>
-          <SectionTitle>Tiện ích</SectionTitle>
-          <AmenitiesGrid>
-            {house.amenities.map((amenity, index) => (
-              <AmenityItem key={index}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                {amenity}
-              </AmenityItem>
-            ))}
-          </AmenitiesGrid>
-        </Section>
-      )}
+        <InfoSection>
+          <PriceSection>
+            <Price>{formatPrice(house.price)}</Price>
+            <PriceLabel>Giá thuê mỗi tháng</PriceLabel>
+          </PriceSection>
 
-      <Section>
-        <SectionTitle>Thông tin liên hệ</SectionTitle>
-        <div className="bg-blue-50 p-6 rounded-lg">
-          <p className="text-gray-700 mb-2">Liên hệ chủ nhà để xem nhà và đặt lịch hẹn.</p>
-          <button className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors">
-            Liên hệ ngay
-          </button>
-        </div>
-      </Section>
-    </PageContainer>
+          <InfoGrid>
+            <InfoItem>
+              <Home size={20} className="icon" />
+              <div className="content">
+                <div className="label">Loại nhà</div>
+                <div className="value">{getHouseTypeLabel(house.houseType)}</div>
+              </div>
+            </InfoItem>
+
+            <InfoItem>
+              <Home size={20} className="icon" />
+              <div className="content">
+                <div className="label">Diện tích</div>
+                <div className="value">{formatArea(house.area)}</div>
+              </div>
+            </InfoItem>
+
+            {house.hostName && (
+              <InfoItem>
+                <User size={20} className="icon" />
+                <div className="content">
+                  <div className="label">Chủ nhà</div>
+                  <div className="value">{house.hostName}</div>
+                </div>
+              </InfoItem>
+            )}
+
+            {house.createdAt && (
+              <InfoItem>
+                <Calendar size={20} className="icon" />
+                <div className="content">
+                  <div className="label">Ngày đăng</div>
+                  <div className="value">
+                    {new Date(house.createdAt).toLocaleDateString('vi-VN')}
+                  </div>
+                </div>
+              </InfoItem>
+            )}
+          </InfoGrid>
+
+          <ContactSection>
+            <ContactTitle>Liên hệ chủ nhà</ContactTitle>
+            <ContactButton onClick={handleContactHost}>
+              <Phone size={16} style={{ marginRight: '0.5rem' }} />
+              Liên hệ ngay
+            </ContactButton>
+          </ContactSection>
+        </InfoSection>
+      </MainContent>
+    </Container>
   );
 };
 

@@ -5,6 +5,7 @@ import {
   Routes,
   Navigate,
 } from "react-router-dom";
+
 import UserHomePage from "./pages/UserHomePage";
 import HostDashboardPage from "./pages/host/HostDashboardPage";
 import PostPropertyPage from "./pages/host/PostPropertyPage";
@@ -40,25 +41,15 @@ const ProtectedRoute = ({
 
   // Sử dụng utility function để lấy user data an toàn
   const user = getUserFromStorage() || {};
-  console.log("User from storage:", JSON.stringify(user, null, 2));
 
   // Kiểm tra roleName (không phân biệt hoa thường)
   const userRole = user.roleName ? user.roleName.toUpperCase() : null;
-  console.log("User role (uppercase):", userRole);
-
-  // Debug logs
-  console.log("ProtectedRoute - User data:", user);
-  console.log("ProtectedRoute - requireHost:", requireHost);
-  console.log("ProtectedRoute - requireUser:", requireUser);
-  console.log("ProtectedRoute - user.roleName:", user.roleName);
 
   // Kiểm tra yêu cầu HOST
   if (requireHost) {
     if (userRole === "HOST") {
-      console.log("User is HOST, allowing access to host route");
       return children;
     } else {
-      console.log("User is not HOST, redirecting to /");
       return <Navigate to="/" replace />;
     }
   }
@@ -66,13 +57,10 @@ const ProtectedRoute = ({
   // Kiểm tra yêu cầu USER thường
   if (requireUser) {
     if (userRole === "USER") {
-      console.log("User is regular USER, allowing access to user route");
       return children;
     } else if (userRole === "HOST") {
-      console.log("User is HOST, redirecting to /host");
       return <Navigate to="/host" replace />;
     } else {
-      console.log("User not authenticated, redirecting to /");
       return <Navigate to="/" replace />;
     }
   }
@@ -100,11 +88,13 @@ function App() {
             {/* Trang chủ chung cho tất cả người dùng */}
             <Route
               path="/"
-              element={
-                <ProtectedRoute>
-                  <UserHomePage />
-                </ProtectedRoute>
-              }
+              element={<UserHomePage />}
+            />
+
+            {/* Trang chi tiết nhà - công khai cho tất cả */}
+            <Route
+              path="/houses/:id"
+              element={<HouseDetailPage />}
             />
 
             {/* Các route yêu cầu đăng nhập (chỉ dành cho user thường) */}

@@ -1,5 +1,6 @@
 // src/components/admin/EditHouseModal.jsx
 import React, { useState, useEffect } from "react";
+import { HOUSE_TYPE_LABELS, HOUSE_STATUS_LABELS } from "../../utils/constants";
 
 const EditHouseModal = ({ isOpen, onClose, house, onSave }) => {
   // State nội bộ của form, được khởi tạo từ prop 'house'
@@ -148,11 +149,9 @@ const EditHouseModal = ({ isOpen, onClose, house, onSave }) => {
                 onChange={handleChange}
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
               >
-                <option value="APARTMENT">Căn hộ (Apartment)</option>
-                <option value="VILLA">Biệt thự (Villa)</option>
-                <option value="TOWNHOUSE">Nhà phố (Townhouse)</option>
-                <option value="BOARDING_HOUSE">Nhà trọ</option>
-                <option value="WHOLE_HOUSE">Nhà nguyên căn</option>
+                {Object.entries(HOUSE_TYPE_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
               </select>
             </div>
             <div>
@@ -169,9 +168,9 @@ const EditHouseModal = ({ isOpen, onClose, house, onSave }) => {
                 onChange={handleChange}
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
               >
-                <option value="AVAILABLE">Còn sẵn</option>
-                <option value="RENTED">Đã thuê</option>
-                <option value="INACTIVE">Bảo trì</option>
+                {Object.entries(HOUSE_STATUS_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
               </select>
             </div>
           </div>

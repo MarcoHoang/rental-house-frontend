@@ -17,6 +17,9 @@ import { useAuth } from '../../hooks/useAuth';
 import propertyApi from '../../api/propertyApi';
 import HouseList from '../../components/house/HouseList';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import EditHouseModal from '../../components/admin/EditHouseModal';
+import { extractHousesFromResponse } from '../../utils/apiHelpers';
+import { HOUSE_STATUS_LABELS } from '../../utils/constants';
 
 const DashboardContainer = styled.div`
   min-height: 100vh;
@@ -213,31 +216,24 @@ const HostDashboardPage = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedHouse, setSelectedHouse] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         
-        console.log('=== FETCHING DATA START ===');
-        console.log('User object:', user);
-        console.log('User ID:', user?.id);
-        
         if (!user?.id) {
-          console.log('User ID not available yet, skipping fetch');
           setLoading(false);
           return;
         }
         
-        console.log('Fetching properties for user ID:', user.id);
+        // Fetch properties của chủ nhà - sử dụng my-houses endpoint
+        const propertiesResponse = await propertyApi.getMyHouses();
         
-        // Fetch properties của chủ nhà theo hostId
-        const propertiesResponse = await propertyApi.getPropertiesByHostId(user.id);
-        console.log('API Response:', propertiesResponse);
-        
-        const properties = propertiesResponse.content || propertiesResponse.data || [];
-        console.log('Extracted properties:', properties);
-        console.log('Properties length:', properties.length);
+        // getMyHouses trả về array trực tiếp, không cần extract
+        const properties = Array.isArray(propertiesResponse) ? propertiesResponse : [];
         
         setHouses(properties);
         setFilteredHouses(properties);
@@ -250,19 +246,34 @@ const HostDashboardPage = () => {
           averageRating: 0 // Sẽ fetch từ API rating sau
         };
         
-        console.log('Setting new stats:', newStats);
         setStats(newStats);
-        
         setError(null);
-        console.log('=== FETCHING DATA SUCCESS ===');
-      } catch (err) {
-        console.error('=== FETCHING DATA ERROR ===');
-        console.error('Lỗi khi fetch dữ liệu:', err);
-        setError('Không thể tải dữ liệu. Vui lòng thử lại sau.');
-      } finally {
-        setLoading(false);
-        console.log('=== FETCHING DATA END ===');
-      }
+              } catch (err) {
+          console.error('Lỗi khi fetch dữ liệu:', err);
+          
+          // Hiển thị thông báo lỗi chi tiết hơn
+          let errorMessage = 'Không thể tải dữ liệu. Vui lòng thử lại sau.';
+          
+          if (err.response) {
+            // Lỗi từ server
+            if (err.response.data && err.response.data.message) {
+              errorMessage = err.response.data.message;
+            } else if (err.response.status === 401) {
+              errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+            } else if (err.response.status === 403) {
+              errorMessage = 'Bạn không có quyền truy cập dữ liệu này.';
+            } else if (err.response.status === 404) {
+              errorMessage = 'Không tìm thấy dữ liệu.';
+            }
+          } else if (err.request) {
+            // Lỗi network
+            errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.';
+          }
+          
+          setError(errorMessage);
+        } finally {
+          setLoading(false);
+        }
     };
 
     fetchData();
@@ -299,18 +310,58 @@ const HostDashboardPage = () => {
 
   // Xử lý chỉnh sửa nhà
   const handleEditHouse = (house) => {
-    // TODO: Chuyển hướng đến trang chỉnh sửa
-    console.log('Chỉnh sửa nhà:', house);
-    // Có thể chuyển hướng đến trang edit: navigate(`/host/properties/${house.id}/edit`)
+    setSelectedHouse(house);
+    setEditModalOpen(true);
+  };
+
+  // Xử lý lưu chỉnh sửa nhà
+  const handleSaveEdit = async (updatedHouse) => {
+    try {
+      // Gọi API cập nhật nhà thực tế
+      await propertyApi.updateHouse(updatedHouse.id, updatedHouse);
+      
+      // Cập nhật danh sách sau khi chỉnh sửa
+      setHouses(prevHouses => 
+        prevHouses.map(h => h.id === updatedHouse.id ? updatedHouse : h)
+      );
+      
+      setEditModalOpen(false);
+      setSelectedHouse(null);
+      
+      // Hiển thị thông báo thành công
+      alert('Cập nhật nhà thành công!');
+    } catch (error) {
+      console.error('Lỗi khi cập nhật nhà:', error);
+      
+      // Hiển thị thông báo lỗi chi tiết hơn
+      let errorMessage = 'Có lỗi xảy ra khi cập nhật nhà. Vui lòng thử lại.';
+      
+      if (error.response) {
+        // Lỗi từ server
+        if (error.response.data && error.response.data.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.response.status === 401) {
+          errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+        } else if (error.response.status === 403) {
+          errorMessage = 'Bạn không có quyền cập nhật nhà này.';
+        } else if (error.response.status === 404) {
+          errorMessage = 'Không tìm thấy nhà cần cập nhật.';
+        }
+      } else if (error.request) {
+        // Lỗi network
+        errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.';
+      }
+      
+      alert(errorMessage);
+    }
   };
 
   // Xử lý xóa nhà
   const handleDeleteHouse = async (house) => {
     if (window.confirm(`Bạn có chắc chắn muốn xóa nhà "${house.title || house.name}"?`)) {
       try {
-        // TODO: Gọi API xóa nhà
-        console.log('Xóa nhà:', house);
-        // await propertyApi.deleteProperty(house.id);
+        // Gọi API xóa nhà thực tế
+        await propertyApi.deleteHouse(house.id);
         
         // Cập nhật danh sách sau khi xóa
         setHouses(prevHouses => prevHouses.filter(h => h.id !== house.id));
@@ -324,7 +375,27 @@ const HostDashboardPage = () => {
         alert('Đã xóa nhà thành công!');
       } catch (error) {
         console.error('Lỗi khi xóa nhà:', error);
-        alert('Có lỗi xảy ra khi xóa nhà. Vui lòng thử lại.');
+        
+        // Hiển thị thông báo lỗi chi tiết hơn
+        let errorMessage = 'Có lỗi xảy ra khi xóa nhà. Vui lòng thử lại.';
+        
+        if (error.response) {
+          // Lỗi từ server
+          if (error.response.data && error.response.data.message) {
+            errorMessage = error.response.data.message;
+          } else if (error.response.status === 401) {
+            errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+          } else if (error.response.status === 403) {
+            errorMessage = 'Bạn không có quyền xóa nhà này.';
+          } else if (error.response.status === 404) {
+            errorMessage = 'Không tìm thấy nhà cần xóa.';
+          }
+        } else if (error.request) {
+          // Lỗi network
+          errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.';
+        }
+        
+        alert(errorMessage);
       }
     }
   };
@@ -374,10 +445,9 @@ const HostDashboardPage = () => {
             onChange={(e) => setStatusFilter(e.target.value)}
           >
             <option value="ALL">Tất cả trạng thái</option>
-            <option value="ACTIVE">Đang cho thuê</option>
-            <option value="INACTIVE">Tạm dừng</option>
-            <option value="PENDING">Chờ duyệt</option>
-            <option value="RENTED">Đã cho thuê</option>
+            {Object.entries(HOUSE_STATUS_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
           </FilterSelect>
         </SearchAndFilterBar>
         
@@ -462,6 +532,17 @@ const HostDashboardPage = () => {
           {renderPropertiesContent()}
         </PropertiesSection>
       </MainContent>
+
+      {/* Modal chỉnh sửa nhà */}
+      <EditHouseModal
+        isOpen={editModalOpen}
+        onClose={() => {
+          setEditModalOpen(false);
+          setSelectedHouse(null);
+        }}
+        house={selectedHouse}
+        onSave={handleSaveEdit}
+      />
     </DashboardContainer>
   );
 };

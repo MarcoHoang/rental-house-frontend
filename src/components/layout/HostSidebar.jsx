@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useCallback } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { 
   Home, 
@@ -8,8 +8,11 @@ import {
   Users, 
   TrendingUp, 
   User,
-  Building2
+  Building2,
+  LogOut
 } from 'lucide-react';
+import ConfirmDialog from '../common/ConfirmDialog';
+import { useToast } from '../common/Toast';
 
 const SidebarContainer = styled.div`
   width: 250px;
@@ -83,12 +86,57 @@ const NavItem = styled(Link)`
   }
 `;
 
+const LogoutButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  color: #ef4444;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 400;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #fef2f2;
+    color: #dc2626;
+  }
+
+  .icon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+`;
+
 const HostSidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { showSuccess } = useToast();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const isActive = (path) => {
     return location.pathname === path;
   };
+
+  // Hàm xử lý đăng xuất
+  const handleLogout = useCallback(() => {
+    setShowLogoutConfirm(true);
+  }, []);
+
+  // Hàm thực hiện đăng xuất sau khi xác nhận
+  const performLogout = useCallback(() => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    // Kích hoạt sự kiện để cập nhật giao diện
+    window.dispatchEvent(new Event("storage"));
+    showSuccess("Đăng xuất thành công", "Bạn đã đăng xuất khỏi hệ thống");
+    navigate("/");
+  }, [navigate, showSuccess]);
 
   return (
     <SidebarContainer>
@@ -139,8 +187,24 @@ const HostSidebar = () => {
             <User className="icon" />
             Thông tin cá nhân
           </NavItem>
+          <LogoutButton onClick={handleLogout}>
+            <LogOut className="icon" />
+            Đăng xuất
+          </LogoutButton>
         </NavSection>
       </SidebarContent>
+
+      {/* Logout Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={performLogout}
+        title="Xác nhận đăng xuất"
+        message="Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?"
+        type="warning"
+        confirmText="Đăng xuất"
+        cancelText="Hủy"
+      />
     </SidebarContainer>
   );
 };

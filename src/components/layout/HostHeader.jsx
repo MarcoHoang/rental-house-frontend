@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  ChevronDownIcon,
   UserIcon,
   ArrowRightOnRectangleIcon,
   PlusIcon,
@@ -184,7 +183,6 @@ const PostButton = styled(Link)`
 
 const HostHeader = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [userData, setUserData] = useState({
     username: "",
@@ -213,7 +211,7 @@ const HostHeader = () => {
       email: "",
       role: "",
     });
-    setShowDropdown(false);
+
     window.dispatchEvent(new Event("storage"));
     showSuccess("Đăng xuất thành công", "Bạn đã đăng xuất khỏi hệ thống");
     navigate("/");
@@ -330,59 +328,16 @@ const HostHeader = () => {
 
         <div className="flex items-center space-x-4">
           {isLoggedIn ? (
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => setShowDropdown(!showDropdown)}
-                className="flex items-center space-x-2 focus:outline-none hover:bg-gray-100 px-3 py-1 rounded-full transition-colors"
-                aria-haspopup="true"
-                aria-expanded={showDropdown}
-              >
-                <Avatar
-                  src={userData.avatar}
-                  alt={userData.fullName || "Người dùng"}
-                  name={userData.fullName || "Người dùng"}
-                  size="40px"
-                />
-                <div className="user-name">
-                  {userData?.fullName || "Người dùng"}
-                </div>
-                <ChevronDownIcon className="w-4 h-4 text-gray-500 hidden md:block" />
-              </button>
-
-              {showDropdown && (
-                <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setShowDropdown(false)}
-                  />
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg py-1 z-50 border border-gray-100">
-                    <div className="px-4 py-3 border-b border-gray-100">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {userData.fullName || "Người dùng"}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate">
-                        {userData.email}
-                      </p>
-                    </div>
-                    <Link
-                      to="/profile"
-                      className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
-                      onClick={() => setShowDropdown(false)}
-                    >
-                      <UserIcon className="w-4 h-4 mr-3 text-gray-400" />
-                      Thông tin cá nhân
-                    </Link>
-
-                    <button
-                      onClick={handleLogout}
-                      className="w-full text-left flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 border-t border-gray-100"
-                    >
-                      <ArrowRightOnRectangleIcon className="w-4 h-4 mr-3 text-gray-400" />
-                      Đăng xuất
-                    </button>
-                  </div>
-                </>
-              )}
+            <div className="flex items-center space-x-2 px-3 py-1 rounded-full">
+              <Avatar
+                src={userData.avatar}
+                alt={userData.fullName || "Người dùng"}
+                name={userData.fullName || "Người dùng"}
+                size="40px"
+              />
+              <div className="user-name">
+                {userData?.fullName || "Người dùng"}
+              </div>
             </div>
           ) : (
             <div className="flex items-center space-x-3">

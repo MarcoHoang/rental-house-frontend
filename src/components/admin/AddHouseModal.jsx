@@ -1,5 +1,6 @@
 // src/components/admin/AddHouseModal.jsx
 import React, { useState, useEffect } from "react";
+import { HOUSE_TYPES, HOUSE_STATUS, HOUSE_TYPE_LABELS, HOUSE_STATUS_LABELS } from "../../utils/constants";
 
 const AddHouseModal = ({ isOpen, onClose, onSave }) => {
   const [formData, setFormData] = useState({
@@ -7,11 +8,11 @@ const AddHouseModal = ({ isOpen, onClose, onSave }) => {
     address: "",
     price: "",
     description: "",
-    houseType: "APARTMENT",
+    houseType: HOUSE_TYPES.APARTMENT,
     numBedrooms: "",
     numBathrooms: "",
     area: "",
-    status: "AVAILABLE",
+    status: HOUSE_STATUS.AVAILABLE,
     // Thêm trường mới để lưu trữ các file ảnh được chọn
     images: [], // Đây sẽ là một mảng các File object
   });
@@ -25,11 +26,11 @@ const AddHouseModal = ({ isOpen, onClose, onSave }) => {
         address: "",
         price: "",
         description: "",
-        houseType: "APARTMENT",
+        houseType: HOUSE_TYPES.APARTMENT,
         numBedrooms: "",
         numBathrooms: "",
         area: "",
-        status: "AVAILABLE",
+        status: HOUSE_STATUS.AVAILABLE,
         images: [],
       });
       setImagePreviews([]); // Reset previews khi modal mở
@@ -201,9 +202,9 @@ const AddHouseModal = ({ isOpen, onClose, onSave }) => {
               onChange={handleChange}
               className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
             >
-              <option value="APARTMENT">Căn hộ</option>
-              <option value="HOUSE">Nhà riêng</option>
-              <option value="VILLA">Biệt thự</option>
+              {Object.entries(HOUSE_TYPE_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
             </select>
           </div>
 
@@ -277,10 +278,9 @@ const AddHouseModal = ({ isOpen, onClose, onSave }) => {
               onChange={handleChange}
               className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
             >
-              <option value="AVAILABLE">CÒN SẴN</option>
-              <option value="RENTED">ĐÃ THUÊ</option>
-              <option value="INACTIVE">KHÔNG HOẠT ĐỘNG</option>
-              <option value="MAINTENANCE">BẢO TRÌ</option>
+              {Object.entries(HOUSE_STATUS_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
             </select>
           </div>
 

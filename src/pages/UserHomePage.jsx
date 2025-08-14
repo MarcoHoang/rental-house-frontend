@@ -7,6 +7,8 @@ import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import SearchBar from "../components/house/SearchBar";
 import LoadingSpinner from "../components/common/LoadingSpinner";
+import { extractHousesFromResponse } from "../utils/apiHelpers";
+import { HOUSE_STATUS, HOUSE_TYPES, HOUSE_STATUS_LABELS, HOUSE_TYPE_LABELS } from "../utils/constants";
 
 import { Plus, Home, User } from "lucide-react";
 
@@ -125,70 +127,23 @@ const HomePage = () => {
     const fetchHouses = async () => {
       try {
         setLoading(true); // Bắt đầu tải, bật spinner
-        console.log('🏠 Starting to fetch houses...');
-        
         const response = await propertyApi.getPublicProperties(); // Gọi API lấy bài đăng công khai
-        console.log('🏠 API Response:', response);
-        console.log('🏠 Response type:', typeof response);
-        console.log('🏠 Response keys:', response ? Object.keys(response) : 'no response');
         
-        // Xử lý response format một cách linh hoạt
-        let housesData = [];
-        
-        if (response && response.content) {
-          console.log('🏠 Using response.content');
-          housesData = response.content;
-        } else if (response && response.data) {
-          console.log('🏠 Using response.data');
-          housesData = response.data;
-        } else if (Array.isArray(response)) {
-          console.log('🏠 Response is array, using directly');
-          housesData = response;
-        } else if (response && typeof response === 'object') {
-          console.log('🏠 Response is object, checking for data');
-          // Kiểm tra xem có phải là mock data không
-          if (response.content && Array.isArray(response.content)) {
-            housesData = response.content;
-          } else {
-            console.warn('🏠 No valid data structure found in response');
-            housesData = [];
-          }
-        } else {
-          console.warn('🏠 Invalid response format');
-          housesData = [];
-        }
-        
-        console.log('🏠 Extracted houses data:', housesData);
-        console.log('🏠 Houses data length:', housesData.length);
-        
-        // Kiểm tra xem có phải là mock data không
-        if (housesData.length > 0) {
-          const firstHouse = housesData[0];
-          console.log('🏠 First house sample:', {
-            id: firstHouse.id,
-            title: firstHouse.title,
-            name: firstHouse.name,
-            address: firstHouse.address,
-            price: firstHouse.price,
-            isMock: firstHouse.isMock || false
-          });
-        }
+        // Sử dụng helper function để extract data
+        const housesData = extractHousesFromResponse(response);
         
         setHouses(housesData); // Cập nhật state với dữ liệu nhận được
         setFilteredHouses(housesData);
         setError(null); // Xóa bất kỳ lỗi nào trước đó
-        
-        console.log('🏠 Successfully set houses data, count:', housesData.length);
       } catch (err) {
         // Nếu có lỗi, cập nhật state lỗi
-        console.error("🏠 Error in fetchHouses:", err);
+        console.error("Error in fetchHouses:", err);
         setError(
           "Rất tiếc, đã có lỗi xảy ra. Không thể tải dữ liệu nhà cho thuê."
         );
       } finally {
         // Dù thành công hay thất bại, cũng tắt spinner
         setLoading(false);
-        console.log('🏠 Fetch houses completed');
       }
     };
 
@@ -232,17 +187,12 @@ const HomePage = () => {
 
     try {
       setLoading(true);
-      console.log('🔍 Searching houses with keyword:', keyword);
       
       const response = await propertyApi.searchHouses(keyword);
-      console.log('🔍 Search response:', response);
-      
-      const searchResults = response.content || response.data || [];
+      const searchResults = extractHousesFromResponse(response);
       setFilteredHouses(searchResults);
-      
-      console.log('🔍 Search completed, found:', searchResults.length, 'houses');
     } catch (error) {
-      console.error('🔍 Search error:', error);
+              console.error('Search error:', error);
       // Nếu search API thất bại, fallback về local search
       const term = keyword.toLowerCase();
       const localResults = houses.filter(house => 
@@ -308,20 +258,18 @@ const HomePage = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="ALL">Tất cả trạng thái</option>
-              <option value="ACTIVE">Đang cho thuê</option>
-              <option value="INACTIVE">Tạm dừng</option>
-              <option value="PENDING">Chờ duyệt</option>
-              <option value="RENTED">Đã cho thuê</option>
+              {Object.entries(HOUSE_STATUS_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
             </FilterSelect>
             <FilterSelect
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
             >
               <option value="ALL">Tất cả loại nhà</option>
-              <option value="APARTMENT">Căn hộ</option>
-              <option value="HOUSE">Nhà phố</option>
-              <option value="VILLA">Biệt thự</option>
-              <option value="STUDIO">Studio</option>
+              {Object.entries(HOUSE_TYPE_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
             </FilterSelect>
           </SearchAndFilterBar>
           

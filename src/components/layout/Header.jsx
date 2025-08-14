@@ -391,6 +391,7 @@ const Header = () => {
           {isLoggedIn ? (
             // Hiển thị khi đã đăng nhập
             <div className="relative">
+                          <div className="relative">
               <button
                 onClick={() => setShowDropdown(!showDropdown)}
                 className="flex items-center space-x-2 focus:outline-none hover:bg-gray-100 px-3 py-1 rounded-full transition-colors"
@@ -459,6 +460,7 @@ const Header = () => {
                   </div>
                 </>
               )}
+            </div>
             </div>
           ) : (
             // Hiển thị khi chưa đăng nhập

@@ -9,15 +9,23 @@ const publicApiClient = axios.create({
   baseURL: `${API_BASE_URL}${API_PREFIX}`,
 });
 
+// Gắn token cho public API nếu có (để user đã đăng nhập có thể truy cập dữ liệu của mình)
+publicApiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 // Gắn interceptor cho publicApiClient để xử lý lỗi
 publicApiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     console.error('Public API Error:', error);
-    if (error.response) {
-      console.error('Response status:', error.response.status);
-      console.error('Response data:', error.response.data);
-    }
     return Promise.reject(error);
   }
 );
