@@ -384,8 +384,8 @@ const HouseDetailPage = () => {
   }
 
   const status = getStatusDisplay(house.status);
-  const images = house.imageUrls || [];
-  const mainImage = images[selectedImage] || null;
+  const images = house.imageUrls ? [...new Set(house.imageUrls)] : [];
+  const mainImage = images[selectedImage] || images[0] || null;
 
   return (
     <Container>
