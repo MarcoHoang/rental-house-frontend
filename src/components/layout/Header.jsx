@@ -361,14 +361,14 @@ const Header = () => {
 
   // Kiểm tra đơn đăng ký chủ nhà
   const checkHostApplication = useCallback(async () => {
-    if (!userData.email || userData.roleName === "HOST") {
+    if (!userData.id || userData.roleName === "HOST") {
       setHostApplication(null);
       return;
     }
     
     try {
-      console.log("Checking host application for:", userData.email);
-      const application = await hostApi.getMyApplication(userData.email);
+      console.log("Checking host application for user ID:", userData.id);
+      const application = await hostApi.getMyApplication(userData.id);
       console.log("Host application found:", application);
       setHostApplication(application);
     } catch (error) {
@@ -387,7 +387,7 @@ const Header = () => {
         console.log("Other error, keeping current state");
       }
     }
-  }, [userData.email, userData.roleName]);
+  }, [userData.id, userData.roleName]);
 
   return (
     <HeaderWrapper>
@@ -418,6 +418,9 @@ const Header = () => {
             <NavLink to="/cho-thue-can-ho">Căn hộ</NavLink>
             <NavLink to="/cho-thue-nha-pho">Nhà phố</NavLink>
             <NavLink to="/blog">Blog</NavLink>
+            {isLoggedIn && userData?.roleName === "USER" && (
+              <NavLink to="/my-rentals">Đơn thuê của tôi</NavLink>
+            )}
           </NavLinks>
         </Nav>
 
@@ -523,6 +526,20 @@ const Header = () => {
                         </svg>
                         Xem chi tiết đơn đăng ký
                       </button>
+                    )}
+
+                    {/* Link đến trang đơn thuê của tôi */}
+                    {userData.roleName === "USER" && (
+                      <Link
+                        to="/my-rentals"
+                        onClick={() => setShowDropdown(false)}
+                        className="w-full text-left flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                        Đơn thuê của tôi
+                      </Link>
                     )}
 
                     <button

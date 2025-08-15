@@ -222,21 +222,6 @@ const AdminLogin = () => {
           </div>
           <h1>Admin Panel</h1>
           <p>Đăng nhập để quản lý hệ thống</p>
-          {import.meta.env.DEV && (
-            <div style={{ 
-              marginTop: '1rem', 
-              padding: '0.5rem', 
-              backgroundColor: '#f0f9ff', 
-              border: '1px solid #0ea5e9', 
-              borderRadius: '0.5rem',
-              fontSize: '0.75rem',
-              color: '#0369a1'
-            }}>
-              <strong>Test Account:</strong><br/>
-              Email: admin@renthouse.com<br/>
-              Password: admin123
-            </div>
-          )}
         </LoginHeader>
 
         <Form onSubmit={handleSubmit}>

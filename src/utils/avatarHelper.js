@@ -17,7 +17,7 @@ const API_BASE_URL = import.meta.env.DEV
  */
 export const getAvatarUrl = (fileUrl) => {
   if (!fileUrl) {
-    return '/default-avatar.png';
+    return 'https://via.placeholder.com/150x150/cccccc/666666?text=Avatar';
   }
 
   // Nếu đã là URL đầy đủ (bắt đầu bằng http), trả về nguyên
@@ -27,7 +27,7 @@ export const getAvatarUrl = (fileUrl) => {
 
   // Nếu là default avatar, trả về placeholder
   if (fileUrl === '/default-avatar.png' || fileUrl === 'default-avatar.png' || fileUrl === '/images/default-avatar.png') {
-    return '/default-avatar.png';
+    return 'https://via.placeholder.com/150x150/cccccc/666666?text=Avatar';
   }
 
   // Nếu là URL tương đối từ backend (ví dụ: "avatar/filename.jpg")
@@ -48,7 +48,7 @@ export const getAvatarUrl = (fileUrl) => {
 export const loadAuthenticatedImage = async (imageUrl) => {
   try {
     // Không load authenticated image cho placeholder
-    if (imageUrl.includes('via.placeholder.com') || imageUrl === '/default-avatar.png') {
+    if (imageUrl.includes('via.placeholder.com') || imageUrl === '/default-avatar.png' || imageUrl.includes('placeholder.com')) {
       return imageUrl;
     }
 
