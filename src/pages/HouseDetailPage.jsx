@@ -266,15 +266,18 @@ const HouseDetailPage = () => {
   const getImages = () => {
     if (!house) return [];
     
+    let images = [];
+    
     if (house.imageUrls && Array.isArray(house.imageUrls) && house.imageUrls.length > 0) {
-      return house.imageUrls;
+      images = [...house.imageUrls];
     }
     
-    if (house.imageUrl) {
-      return [house.imageUrl];
+    if (house.imageUrl && !images.includes(house.imageUrl)) {
+      images.push(house.imageUrl);
     }
     
-    return [];
+    // Loại bỏ ảnh trùng lặp
+    return [...new Set(images)];
   };
 
   if (loading) {
@@ -315,6 +318,13 @@ const HouseDetailPage = () => {
 
   const images = getImages();
   const mainImage = images[selectedImage] || "https://via.placeholder.com/600x400/6B7280/FFFFFF?text=Không+có+ảnh";
+  
+  console.log('Images debug:', {
+    totalImages: images.length,
+    selectedImage: selectedImage,
+    mainImage: mainImage,
+    allImages: images
+  });
 
   const handleBackClick = () => {
     // Kiểm tra xem người dùng đến từ trang nào
@@ -365,7 +375,8 @@ const HouseDetailPage = () => {
                     className="thumbnail"
                     onClick={() => setSelectedImage(index)}
                     style={{
-                      border: selectedImage === index ? '2px solid #3b82f6' : 'none'
+                      border: selectedImage === index ? '2px solid #3b82f6' : 'none',
+                      cursor: 'pointer'
                     }}
                   />
                 ))}
@@ -478,20 +489,7 @@ const HouseDetailPage = () => {
 
           {/* Phần hành động */}
           <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid #e5e7eb' }}>
-            {/* Thông báo cho người dùng thường */}
-            {user?.roleName !== 'ADMIN' && user?.roleName !== 'HOST' && (
-              <div style={{ 
-                marginBottom: '1rem', 
-                padding: '0.75rem', 
-                backgroundColor: '#f0f9ff', 
-                border: '1px solid #bae6fd', 
-                borderRadius: '0.5rem',
-                fontSize: '0.875rem',
-                color: '#0369a1'
-              }}>
-                💡 <strong>Mẹo:</strong> Gọi điện trực tiếp để được tư vấn chi tiết và đặt lịch xem nhà!
-              </div>
-            )}
+
             
 
               

@@ -412,16 +412,7 @@ const UserDetailPage = () => {
             <InfoLabel>Tổng chi tiêu</InfoLabel>
             <InfoValue>{formatCurrency(user.totalSpent || 0)}</InfoValue>
           </InfoRow>
-          <InfoRow>
-            <InfoLabel>Avatar Status</InfoLabel>
-            <InfoValue style={{ fontSize: "0.75rem" }}>
-              {!avatarError &&
-              user.avatarUrl &&
-              user.avatarUrl !== "/images/default-avatar.png"
-                ? "✅ Có ảnh"
-                : "❌ Không có ảnh"}
-            </InfoValue>
-          </InfoRow>
+
         </MainInfoCard>
 
         <HistoryCard>
