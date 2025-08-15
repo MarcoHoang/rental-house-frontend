@@ -18,6 +18,8 @@ import propertyApi from '../../api/propertyApi';
 import HouseList from '../../components/house/HouseList';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EditHouseModal from '../../components/admin/EditHouseModal';
+import ToastContainer from '../../components/common/ToastContainer';
+import ConfirmModal from '../../components/common/ConfirmModal';
 import { extractHousesFromResponse } from '../../utils/apiHelpers';
 import { HOUSE_STATUS_LABELS } from '../../utils/constants';
 
@@ -218,6 +220,29 @@ const HostDashboardPage = () => {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedHouse, setSelectedHouse] = useState(null);
+  
+  // Toast state
+  const [toasts, setToasts] = useState([]);
+  
+  // Confirm delete modal state
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [houseToDelete, setHouseToDelete] = useState(null);
+
+  // Toast helper functions
+  const showToast = (type, title, message) => {
+    const id = Date.now();
+    const newToast = { id, type, title, message };
+    setToasts(prev => [...prev, newToast]);
+    
+    // Auto remove toast after 5 seconds
+    setTimeout(() => {
+      setToasts(prev => prev.filter(toast => toast.id !== id));
+    }, 5000);
+  };
+
+  const removeToast = (id) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -271,6 +296,7 @@ const HostDashboardPage = () => {
           }
           
           setError(errorMessage);
+          showToast('error', 'Lỗi tải dữ liệu', errorMessage);
         } finally {
           setLoading(false);
         }
@@ -329,7 +355,7 @@ const HostDashboardPage = () => {
       setSelectedHouse(null);
       
       // Hiển thị thông báo thành công
-      alert('Cập nhật nhà thành công!');
+      showToast('success', 'Cập nhật nhà thành công', 'Nhà đã được cập nhật thành công.');
     } catch (error) {
       console.error('Lỗi khi cập nhật nhà:', error);
       
@@ -352,51 +378,59 @@ const HostDashboardPage = () => {
         errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.';
       }
       
-      alert(errorMessage);
+      showToast('error', 'Lỗi cập nhật nhà', errorMessage);
     }
   };
 
   // Xử lý xóa nhà
   const handleDeleteHouse = async (house) => {
-    if (window.confirm(`Bạn có chắc chắn muốn xóa nhà "${house.title || house.name}"?`)) {
-      try {
-        // Gọi API xóa nhà thực tế
-        await propertyApi.deleteHouse(house.id);
-        
-        // Cập nhật danh sách sau khi xóa
-        setHouses(prevHouses => prevHouses.filter(h => h.id !== house.id));
-        
-        // Cập nhật stats
-        setStats(prev => ({
-          ...prev,
-          totalProperties: prev.totalProperties - 1
-        }));
-        
-        alert('Đã xóa nhà thành công!');
-      } catch (error) {
-        console.error('Lỗi khi xóa nhà:', error);
-        
-        // Hiển thị thông báo lỗi chi tiết hơn
-        let errorMessage = 'Có lỗi xảy ra khi xóa nhà. Vui lòng thử lại.';
-        
-        if (error.response) {
-          // Lỗi từ server
-          if (error.response.data && error.response.data.message) {
-            errorMessage = error.response.data.message;
-          } else if (error.response.status === 401) {
-            errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
-          } else if (error.response.status === 403) {
-            errorMessage = 'Bạn không có quyền xóa nhà này.';
-          } else if (error.response.status === 404) {
-            errorMessage = 'Không tìm thấy nhà cần xóa.';
-          }
-        } else if (error.request) {
-          // Lỗi network
-          errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.';
+    setHouseToDelete(house);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!houseToDelete) return;
+
+    try {
+      // Gọi API xóa nhà thực tế
+      await propertyApi.deleteHouse(houseToDelete.id);
+      
+      // Cập nhật danh sách sau khi xóa
+      setHouses(prevHouses => prevHouses.filter(h => h.id !== houseToDelete.id));
+      
+      // Cập nhật stats
+      setStats(prev => ({
+        ...prev,
+        totalProperties: prev.totalProperties - 1
+      }));
+      
+      showToast('success', 'Xóa nhà thành công', 'Nhà đã được xóa thành công.');
+    } catch (error) {
+      console.error('Lỗi khi xóa nhà:', error);
+      
+      // Hiển thị thông báo lỗi chi tiết hơn
+      let errorMessage = 'Có lỗi xảy ra khi xóa nhà. Vui lòng thử lại.';
+      
+      if (error.response) {
+        // Lỗi từ server
+        if (error.response.data && error.response.data.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.response.status === 401) {
+          errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+        } else if (error.response.status === 403) {
+          errorMessage = 'Bạn không có quyền xóa nhà này.';
+        } else if (error.response.status === 404) {
+          errorMessage = 'Không tìm thấy nhà cần xóa.';
         }
-        
-        alert(errorMessage);
+      } else if (error.request) {
+        // Lỗi network
+        errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.';
       }
+      
+      showToast('error', 'Lỗi xóa nhà', errorMessage);
+    } finally {
+      setDeleteModalOpen(false);
+      setHouseToDelete(null);
     }
   };
 
@@ -543,6 +577,24 @@ const HostDashboardPage = () => {
         house={selectedHouse}
         onSave={handleSaveEdit}
       />
+
+             {/* Toast messages */}
+       <ToastContainer 
+         toasts={toasts}
+         onRemoveToast={removeToast}
+       />
+
+             {/* Confirm delete modal */}
+       <ConfirmModal
+         isOpen={deleteModalOpen}
+         onCancel={() => setDeleteModalOpen(false)}
+         onConfirm={handleConfirmDelete}
+         title="Xác nhận xóa nhà"
+         message={`Bạn có chắc chắn muốn xóa nhà "${houseToDelete?.title || houseToDelete?.name}"?`}
+         type="danger"
+         confirmText="Xóa nhà"
+         cancelText="Hủy"
+       />
     </DashboardContainer>
   );
 };
