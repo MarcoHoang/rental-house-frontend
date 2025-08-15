@@ -113,6 +113,7 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete }) => {
             to={`/houses/${id}`}
             state={{ from: window.location.pathname }}
             className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+            onClick={() => console.log('Clicking on house detail link for house ID:', id)}
           >
             <Eye size={16} />
             Xem chi tiết

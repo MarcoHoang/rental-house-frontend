@@ -18,11 +18,11 @@ const AvatarContainer = styled.div`
     return `${Math.max(12, size * 0.4)}px`;
   }};
   border: 2px solid ${props => props.borderColor || 'transparent'};
-  cursor: ${props => props.clickable ? 'pointer' : 'default'};
+  cursor: ${props => props.$clickable ? 'pointer' : 'default'};
   transition: all 0.2s ease;
 
   &:hover {
-    transform: ${props => props.clickable ? 'scale(1.05)' : 'none'};
+    transform: ${props => props.$clickable ? 'scale(1.05)' : 'none'};
   }
 
   img {
@@ -140,7 +140,7 @@ const Avatar = ({
       size={size}
       $bgColor={bgColor}
       borderColor={borderColor}
-      clickable={clickable}
+      $clickable={clickable}
       onClick={handleClick}
       className={className}
     >

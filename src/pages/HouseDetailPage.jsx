@@ -5,8 +5,9 @@ import styled from 'styled-components';
 import propertyApi from '../api/propertyApi';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { getHouseTypeLabel, getHouseStatusLabel, getHouseStatusColor } from '../utils/constants';
+import RentHouseModal from '../components/house/RentHouseModal';
 import { extractHouseFromResponse } from '../utils/apiHelpers';
-import { useAuth } from '../hooks/useAuth';
+import { useAuthContext } from '../contexts/AuthContext';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -179,22 +180,39 @@ const HouseDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const [house, setHouse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [showRentModal, setShowRentModal] = useState(false);
+
+  console.log('=== HOUSE DETAIL PAGE DEBUG ===');
+  console.log('Component rendered');
+  console.log('User object:', user);
+  console.log('User exists:', !!user);
+  console.log('User role:', user?.roleName);
+  console.log('User ID:', user?.id);
+  console.log('Token exists:', !!localStorage.getItem('token'));
+  console.log('================================');
 
   useEffect(() => {
     const fetchHouseDetails = async () => {
       try {
         setLoading(true);
         console.log('Fetching house details for ID:', id);
+        console.log('Current user:', {
+          user: user,
+          roleName: user?.roleName,
+          id: user?.id
+        });
         
         const response = await propertyApi.getHouseById(id);
         const houseData = extractHouseFromResponse(response);
         
         console.log('House details:', houseData);
+        console.log('House status:', houseData?.status);
+        console.log('House status type:', typeof houseData?.status);
         
         // Nếu người dùng đang đăng nhập với vai trò chủ nhà và đang xem nhà của mình
         if (user && user.roleName === 'HOST' && houseData.hostId === user.id) {
@@ -307,6 +325,13 @@ const HouseDetailPage = () => {
     }
   };
 
+  console.log('=== HOUSE DETAIL PAGE RENDER ===');
+  console.log('User exists:', !!user);
+  console.log('User role:', user?.roleName);
+  console.log('House exists:', !!house);
+  console.log('Should show rent button:', !!user);
+  console.log('================================');
+  
   return (
     <Container>
       <BackButton onClick={handleBackClick}>
@@ -320,11 +345,6 @@ const HouseDetailPage = () => {
           <MapPin size={20} />
           {house.address || 'Chưa có địa chỉ'}
         </HouseLocation>
-        {house.status && (
-          <StatusBadge color={getHouseStatusColor(house.status)}>
-            {getHouseStatusLabel(house.status)}
-          </StatusBadge>
-        )}
       </HouseHeader>
 
       <MainContent>
@@ -360,24 +380,22 @@ const HouseDetailPage = () => {
         </div>
 
         <InfoSection>
-          {/* Thông báo cho người dùng thường */}
-          {user?.roleName !== 'ADMIN' && user?.roleName !== 'HOST' && (
-            <div style={{ 
-              marginBottom: '1.5rem', 
-              padding: '0.75rem', 
-              backgroundColor: '#fef3c7', 
-              border: '1px solid #fbbf24', 
-              borderRadius: '0.5rem',
-              fontSize: '0.875rem',
-              color: '#92400e'
-            }}>
-              ℹ️ <strong>Lưu ý:</strong> Một số thông tin kỹ thuật đã được ẩn để bảo vệ quyền riêng tư của chủ nhà.
-            </div>
-          )}
           
           <PriceSection>
             <Price>{formatPrice(house.price)}</Price>
             <PriceLabel>Giá thuê mỗi tháng</PriceLabel>
+            <div style={{ 
+              marginTop: '0.5rem',
+              padding: '0.5rem',
+              backgroundColor: '#f0fdf4',
+              border: '1px solid #bbf7d0',
+              borderRadius: '0.375rem',
+              fontSize: '0.75rem',
+              color: '#166534',
+              textAlign: 'center'
+            }}>
+              💰 Giá đã bao gồm phí dịch vụ cơ bản
+            </div>
           </PriceSection>
 
           <InfoGrid>
@@ -401,8 +419,8 @@ const HouseDetailPage = () => {
               </div>
             </InfoItem>
 
-            {/* Chỉ hiển thị thông tin chủ nhà cho ADMIN và HOST */}
-            {house.hostName && (user?.roleName === 'ADMIN' || (user?.roleName === 'HOST' && user?.id === house.hostId)) && (
+            {/* Thông tin chủ nhà - hiển thị cho tất cả user */}
+            {house.hostName && (
               <InfoItem>
                 <User size={20} className="icon" />
                 <div className="content">
@@ -412,48 +430,20 @@ const HouseDetailPage = () => {
                       <strong>{house.hostName}</strong>
                     </div>
                     <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                      ID: #{house.hostId} • Đã xác minh ✅
+                      Chủ nhà đã được xác minh ✅
                     </div>
                   </div>
                 </div>
               </InfoItem>
             )}
 
-            {/* Chỉ hiển thị ID chủ nhà cho ADMIN và HOST (chủ nhà của chính nhà đó) */}
-            {house.hostId && (user?.roleName === 'ADMIN' || (user?.roleName === 'HOST' && user?.id === house.hostId)) && (
-              <InfoItem>
-                <User size={20} className="icon" />
-                <div className="content">
-                  <div className="label">ID Chủ nhà</div>
-                  <div className="value">#{house.hostId}</div>
-                </div>
-              </InfoItem>
-            )}
-
+            {/* Số điện thoại chủ nhà */}
             {house.hostPhone && (
               <InfoItem>
                 <Phone size={20} className="icon" />
                 <div className="content">
                   <div className="label">Số điện thoại</div>
                   <div className="value">{house.hostPhone}</div>
-                </div>
-              </InfoItem>
-            )}
-
-            {/* Thông tin chủ nhà cho người dùng thường */}
-            {house.hostName && user?.roleName !== 'ADMIN' && user?.roleName !== 'HOST' && (
-              <InfoItem>
-                <User size={20} className="icon" />
-                <div className="content">
-                  <div className="label">Chủ nhà</div>
-                  <div className="value">
-                    <div style={{ marginBottom: '0.5rem' }}>
-                      <strong>{house.hostName}</strong>
-                    </div>
-                    <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                      Chủ nhà đã được xác minh ✅
-                    </div>
-                  </div>
                 </div>
               </InfoItem>
             )}
@@ -486,66 +476,96 @@ const HouseDetailPage = () => {
             )}
           </InfoGrid>
 
-          {/* Nút liên hệ chủ nhà */}
-          {house.hostPhone && (
-            <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid #e5e7eb' }}>
-              {/* Thông báo cho người dùng thường */}
-              {user?.roleName !== 'ADMIN' && user?.roleName !== 'HOST' && (
-                <div style={{ 
-                  marginBottom: '1rem', 
-                  padding: '0.75rem', 
-                  backgroundColor: '#f0f9ff', 
-                  border: '1px solid #bae6fd', 
-                  borderRadius: '0.5rem',
-                  fontSize: '0.875rem',
-                  color: '#0369a1'
-                }}>
-                  💡 <strong>Mẹo:</strong> Gọi điện trực tiếp để được tư vấn chi tiết và đặt lịch xem nhà!
-                </div>
+          {/* Phần hành động */}
+          <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid #e5e7eb' }}>
+            {/* Thông báo cho người dùng thường */}
+            {user?.roleName !== 'ADMIN' && user?.roleName !== 'HOST' && (
+              <div style={{ 
+                marginBottom: '1rem', 
+                padding: '0.75rem', 
+                backgroundColor: '#f0f9ff', 
+                border: '1px solid #bae6fd', 
+                borderRadius: '0.5rem',
+                fontSize: '0.875rem',
+                color: '#0369a1'
+              }}>
+                💡 <strong>Mẹo:</strong> Gọi điện trực tiếp để được tư vấn chi tiết và đặt lịch xem nhà!
+              </div>
+            )}
+            
+
+              
+              {/* Nút thuê nhà */}
+              {user && (
+                <button
+                  onClick={() => setShowRentModal(true)}
+                  style={{
+                    width: '100%',
+                    padding: '1rem',
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    fontSize: '1rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    marginBottom: '1rem'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.transform = 'translateY(-1px)';
+                    e.target.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                >
+                  🏠 Thuê nhà ngay
+                </button>
               )}
               
-              <button
-                onClick={() => window.open(`tel:${house.hostPhone}`, '_self')}
-                style={{
-                  width: '100%',
-                  padding: '1rem',
-                  backgroundColor: '#059669',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '0.5rem',
-                  fontSize: '1rem',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.2s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem'
-                }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = '#047857'}
-                onMouseLeave={(e) => e.target.style.backgroundColor = '#059669'}
-              >
-                <Phone size={20} />
-                {user?.roleName === 'ADMIN' ? 'Gọi điện cho chủ nhà' : 
-                 user?.roleName === 'HOST' && user?.id === house.hostId ? 'Số điện thoại của bạn' :
-                 'Gọi điện cho chủ nhà'}
-              </button>
-              
-              {/* Thông tin bổ sung cho người dùng thường */}
-              {user?.roleName !== 'ADMIN' && user?.roleName !== 'HOST' && (
+              {/* Thông tin bổ sung */}
+              <div style={{ 
+                marginTop: '1rem', 
+                padding: '1rem',
+                backgroundColor: '#f8fafc',
+                borderRadius: '0.5rem',
+                border: '1px solid #e2e8f0'
+              }}>
                 <div style={{ 
-                  marginTop: '0.75rem', 
-                  fontSize: '0.75rem', 
-                  color: '#6b7280',
-                  textAlign: 'center'
+                  fontSize: '0.875rem', 
+                  color: '#64748b',
+                  textAlign: 'center',
+                  lineHeight: '1.5'
                 }}>
-                  ⏰ Thời gian tư vấn: 8:00 - 22:00 hàng ngày
+                  <div style={{ marginBottom: '0.5rem' }}>
+                    ⏰ <strong>Thời gian tư vấn:</strong> 8:00 - 22:00 hàng ngày
+                  </div>
+                  <div>
+                    📞 <strong>Hỗ trợ:</strong> Gọi điện trực tiếp để được tư vấn nhanh nhất
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
-          )}
+        
         </InfoSection>
       </MainContent>
+
+      {/* Modal thuê nhà */}
+      <RentHouseModal
+        isOpen={showRentModal}
+        onClose={() => setShowRentModal(false)}
+        house={house}
+        onSuccess={(rentalData) => {
+          console.log('Rental created successfully:', rentalData);
+          // Có thể thêm logic redirect hoặc cập nhật UI ở đây
+        }}
+      />
     </Container>
   );
 };

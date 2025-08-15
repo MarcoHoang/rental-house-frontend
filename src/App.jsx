@@ -5,6 +5,7 @@ import {
   Routes,
   Navigate,
 } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
 
 import UserHomePage from "./pages/UserHomePage";
 import HostDashboardPage from "./pages/host/HostDashboardPage";
@@ -26,6 +27,7 @@ import ChangePasswordPage from "./pages/ChangePasswordPage";
 import HouseListPage from "./pages/HouseListPage";
 import HouseDetailPage from "./pages/HouseDetailPage";
 import AllHousesPage from "./pages/AllHousesPage";
+import MyRentalsPage from "./pages/MyRentalsPage";
 
 // Protected Route Component (đã cải thiện)
 const ProtectedRoute = ({
@@ -78,7 +80,8 @@ function App() {
     <ErrorBoundary>
       <ToastProvider>
         <Router>
-          <Routes>
+          <AuthProvider>
+            <Routes>
             {/* Các route công khai */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -101,6 +104,16 @@ function App() {
             <Route
               path="/all-houses"
               element={<AllHousesPage />}
+            />
+
+            {/* Trang đơn thuê của user */}
+            <Route
+              path="/my-rentals"
+              element={
+                <ProtectedRoute requireUser={true}>
+                  <MyRentalsPage />
+                </ProtectedRoute>
+              }
             />
 
             {/* Các route yêu cầu đăng nhập (chỉ dành cho user thường) */}
@@ -183,11 +196,12 @@ function App() {
 
             {/* Chuyển hướng các đường dẫn không xác định về trang chủ */}
             <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Router>
-      </ToastProvider>
-    </ErrorBoundary>
-  );
-}
+                      </Routes>
+          </AuthProvider>
+          </Router>
+        </ToastProvider>
+      </ErrorBoundary>
+    );
+  }
 
 export default App;
