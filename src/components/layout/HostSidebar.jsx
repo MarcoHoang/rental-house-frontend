@@ -9,7 +9,8 @@ import {
   TrendingUp, 
   User,
   Building2,
-  LogOut
+  LogOut,
+  Lock
 } from 'lucide-react';
 import ConfirmDialog from '../common/ConfirmDialog';
 import { useToast } from '../common/Toast';
@@ -186,6 +187,10 @@ const HostSidebar = () => {
           <NavItem to="/host/profile" $active={isActive('/host/profile')}>
             <User className="icon" />
             Thông tin cá nhân
+          </NavItem>
+          <NavItem to="/host/change-password" $active={isActive('/host/change-password')}>
+            <Lock className="icon" />
+            Đổi mật khẩu
           </NavItem>
           <LogoutButton onClick={handleLogout}>
             <LogOut className="icon" />

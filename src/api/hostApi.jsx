@@ -397,6 +397,50 @@ const hostApi = {
       throw error;
     }
   },
+
+  // Đổi mật khẩu cho host (sử dụng endpoint mới cho host)
+  changePassword: async (userId, oldPassword, newPassword, confirmPassword) => {
+    try {
+      console.log("hostApi.changePassword - Starting password change for user:", userId);
+      
+      // Sử dụng endpoint mới cho host - không cần userId trong body
+      const requestData = {
+        oldPassword: oldPassword || '',
+        newPassword: newPassword || '',
+        confirmPassword: confirmPassword || ''
+      };
+      
+      console.log("hostApi.changePassword - Request data:", requestData);
+      console.log("hostApi.changePassword - Request data types:", {
+        oldPassword: typeof oldPassword,
+        newPassword: typeof newPassword,
+        confirmPassword: typeof confirmPassword
+      });
+      
+      const response = await api.put(`/hosts/change-password`, requestData);
+
+      console.log("hostApi.changePassword - Response:", response);
+      console.log("hostApi.changePassword - Response data:", response.data);
+
+      // Xử lý response format từ backend: { code: "00", message: "...", data: ... }
+      let result;
+      if (response.data.data) {
+        // Format: { code: "00", message: "...", data: ... }
+        result = response.data;
+      } else {
+        // Fallback: Format: { message: "...", ... }
+        result = response.data;
+      }
+
+      console.log("hostApi.changePassword - Processed result:", result);
+      return result;
+    } catch (error) {
+      console.error("hostApi.changePassword - Error:", error);
+      console.error("hostApi.changePassword - Error response:", error.response);
+      logApiError(error, "changePassword");
+      throw error;
+    }
+  },
 };
 
 export default hostApi;

@@ -24,6 +24,7 @@ import ToastProvider from "./components/common/Toast";
 import { AUTH_CONFIG } from "./config/auth";
 import { getUserFromStorage } from "./utils/localStorage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
+import ChangePasswordHostPage from "./pages/host/ChangePasswordHostPage";
 import HouseListPage from "./pages/HouseListPage";
 import HouseDetailPage from "./pages/HouseDetailPage";
 import AllHousesPage from "./pages/AllHousesPage";
@@ -186,6 +187,14 @@ function App() {
                 element={
                   <div style={{ padding: "20px" }}>
                     <HostProfilePage />
+                  </div>
+                }
+              />
+              <Route
+                path="change-password"
+                element={
+                  <div style={{ padding: "20px" }}>
+                    <ChangePasswordHostPage />
                   </div>
                 }
               />
