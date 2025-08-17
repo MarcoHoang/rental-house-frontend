@@ -53,7 +53,7 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete }) => {
   };
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-1">
+    <div className="border border-gray-200 rounded-lg overflow-hidden shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer group">
       {/* Hình ảnh */}
       <div className="relative">
         <img
@@ -116,7 +116,10 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete }) => {
               to={`/houses/${id}`}
               state={{ from: window.location.pathname }}
               className="group relative flex-1 flex items-center justify-center p-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all duration-200 hover:scale-105"
-              onClick={() => console.log('Clicking on house detail link for house ID:', id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                console.log('Clicking on house detail link for house ID:', id);
+              }}
               title="Xem chi tiết nhà"
             >
               <Eye size={18} />
@@ -130,7 +133,10 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete }) => {
             
             {/* Nút chỉnh sửa */}
             <button
-              onClick={() => onEdit && onEdit(house)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit && onEdit(house);
+              }}
               className="group relative flex-1 flex items-center justify-center p-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition-all duration-200 hover:scale-105"
               title="Chỉnh sửa nhà"
             >
@@ -145,7 +151,10 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete }) => {
             
             {/* Nút xóa */}
             <button
-              onClick={() => onDelete && onDelete(house)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete && onDelete(house);
+              }}
               className="group relative flex-1 flex items-center justify-center p-3 bg-red-600 text-white rounded-md hover:bg-red-700 transition-all duration-200 hover:scale-105"
               title="Xóa nhà"
             >
@@ -165,7 +174,10 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete }) => {
               to={`/houses/${id}`}
               state={{ from: window.location.pathname }}
               className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
-              onClick={() => console.log('Clicking on house detail link for house ID:', id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                console.log('Clicking on house detail link for house ID:', id);
+              }}
             >
               <Eye size={16} />
               Xem chi tiết
@@ -173,6 +185,15 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete }) => {
           </div>
         )}
       </div>
+      
+      {/* Overlay click để xem chi tiết nhà */}
+      <Link
+        to={`/houses/${id}`}
+        state={{ from: window.location.pathname }}
+        className="absolute inset-0 z-0"
+        onClick={() => console.log('Clicking on house card for house ID:', id)}
+        aria-label={`Xem chi tiết nhà ${displayName}`}
+      />
     </div>
   );
 };
