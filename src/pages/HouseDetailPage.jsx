@@ -440,15 +440,14 @@ const ContactHostSection = styled.div`
     margin: 0 auto;
   }
 
-  .host-profile {
+  .host-contact-row {
     display: flex;
     align-items: center;
     gap: 1rem;
-    padding: 0.75rem 1rem;
+    padding: 1rem;
     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
     border: 1px solid #e5e7eb;
     border-radius: 0.75rem;
-    margin-bottom: 0.75rem;
   }
 
   .host-avatar {
@@ -459,6 +458,7 @@ const ContactHostSection = styled.div`
     overflow: hidden;
     border: 2px solid white;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
   }
 
   .host-avatar img {
@@ -486,32 +486,40 @@ const ContactHostSection = styled.div`
 
   .host-info {
     flex: 1;
+    min-width: 0; /* Để text không bị tràn */
   }
 
   .host-name {
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: 600;
     color: #1f2937;
     margin-bottom: 0.125rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .host-status {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: #6b7280;
+    white-space: nowrap;
   }
 
   .contact-buttons {
     display: flex;
     gap: 0.75rem;
-    padding: 0;
+    flex-shrink: 0;
     
     @media (max-width: 640px) {
-      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    @media (max-width: 480px) {
+      gap: 0.375rem;
     }
   }
 
   .chat-button {
-    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -524,16 +532,24 @@ const ContactHostSection = styled.div`
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
-    font-size: 0.875rem;
+    font-size: 0.8rem;
+    min-height: 44px;
+    white-space: nowrap;
+    min-width: 120px;
     
     &:hover {
       background: #f9fafb;
       border-color: #d1d5db;
     }
+    
+    @media (max-width: 480px) {
+      font-size: 0.75rem;
+      padding: 0.625rem 0.75rem;
+      min-width: 100px;
+    }
   }
 
   .phone-button {
-    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -546,11 +562,20 @@ const ContactHostSection = styled.div`
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
-    font-size: 0.875rem;
+    font-size: 0.8rem;
+    min-height: 44px;
+    white-space: nowrap;
+    min-width: 120px;
     
     &:hover {
       background: #0d9488;
       border-color: #0d9488;
+    }
+    
+    @media (max-width: 480px) {
+      font-size: 0.75rem;
+      padding: 0.625rem 0.75rem;
+      min-width: 100px;
     }
   }
 
@@ -897,66 +922,67 @@ const HouseDetailPage = () => {
             <ContactHostSection>
               <h2>Liên hệ chủ nhà</h2>
               <div className="contact-container">
-                <div className="host-profile">
+                <div className="host-contact-row">
                   <div className="host-avatar">
                     <img 
-                      src={house.hostAvatar || "https://via.placeholder.com/60x60/6B7280/FFFFFF?text=CH"} 
+                      src={house.hostAvatar || user?.avatar || "https://via.placeholder.com/50x50/6B7280/FFFFFF?text=CH"} 
                       alt={house.hostName}
                       onError={(e) => {
-                        e.target.src = "https://via.placeholder.com/60x60/6B7280/FFFFFF?text=CH";
+                        e.target.src = "https://via.placeholder.com/50x50/6B7280/FFFFFF?text=CH";
                       }}
                     />
                     <div className="verification-badge">✓</div>
                   </div>
+                  
                   <div className="host-info">
                     <div className="host-name">{house.hostName}</div>
                     <div className="host-status">Chủ nhà đã được xác minh</div>
                   </div>
-                </div>
-                
-                <div className="contact-buttons">
-                  <button className="chat-button">
-                    <div style={{ 
-                      width: '20px', 
-                      height: '20px', 
-                      background: '#0068ff', 
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'white',
-                      fontSize: '10px',
-                      fontWeight: 'bold'
-                    }}>
-                      Z
-                    </div>
-                    Chat Zalo
-                  </button>
                   
-                  <button 
-                    className="phone-button"
-                    onClick={() => setShowPhoneNumber(!showPhoneNumber)}
-                  >
-                    <div className="phone-icon">
-                      <Phone size={16} />
-                      <div className="phone-ripple"></div>
-                    </div>
-                    <div>
-                      {showPhoneNumber ? (
-                        <div className="phone-number">{house.hostPhone}</div>
-                      ) : (
-                        <>
-                          <div className="phone-number">
-                            {house.hostPhone ? 
-                              `${house.hostPhone.substring(0, 4)} ${house.hostPhone.substring(4, 7)} ***` : 
-                              'Chưa có số điện thoại'
-                            }
-                          </div>
-                          <div className="show-number-text">Hiện số</div>
-                        </>
-                      )}
-                    </div>
-                  </button>
+                  <div className="contact-buttons">
+                    <button className="chat-button">
+                      <div style={{ 
+                        width: '20px', 
+                        height: '20px', 
+                        background: '#0068ff', 
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        fontSize: '10px',
+                        fontWeight: 'bold'
+                      }}>
+                        Z
+                      </div>
+                      Chat Zalo
+                    </button>
+                    
+                    <button 
+                      className="phone-button"
+                      onClick={() => setShowPhoneNumber(!showPhoneNumber)}
+                    >
+                      <div className="phone-icon">
+                        <Phone size={16} />
+                        <div className="phone-ripple"></div>
+                      </div>
+                      <div>
+                        {showPhoneNumber ? (
+                          <div className="phone-number">{house.hostPhone}</div>
+                        ) : (
+                          <>
+                            <div className="phone-number">
+                              {house.hostPhone ? 
+                                `${house.hostPhone.substring(0, 4)} ${house.hostPhone.substring(4, 7)} ***` : 
+                                'Chưa có số điện thoại'
+                              }
+                            </div>
+                            <div className="show-number-text">Hiện số</div>
+                          </>
+                        )}
+                      </div>
+                    </button>
+                  </div>
                 </div>
               </div>
             </ContactHostSection>
