@@ -82,6 +82,29 @@ const HouseDetails = styled.div`
   color: #6b7280;
 `;
 
+const UserInfo = styled.div`
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+`;
+
+const UserInfoTitle = styled.h4`
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 0.75rem 0;
+`;
+
+const UserInfoDetails = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #4b5563;
+`;
+
 const FormGroup = styled.div`
   margin-bottom: 1.5rem;
 `;
@@ -98,19 +121,38 @@ const Input = styled.input`
   padding: 0.75rem;
   border: 1px solid #d1d5db;
   border-radius: 0.375rem;
-  font-size: 1rem;
+  font-size: 0.875rem;
   transition: border-color 0.2s;
 
   &:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 1px #667eea;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
+`;
 
-  &:disabled {
-    background-color: #f3f4f6;
-    cursor: not-allowed;
+const Textarea = styled.textarea`
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
+`;
+
+const CharacterCount = styled.div`
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-align: right;
+  margin-top: 0.25rem;
 `;
 
 const ErrorText = styled.p`
@@ -239,7 +281,11 @@ const AvailabilityStatus = styled.div`
 
 const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
   const [startDate, setStartDate] = useState("");
+  const [startTime, setStartTime] = useState("14:00"); // Mặc định 14:00
   const [endDate, setEndDate] = useState("");
+  const [endTime, setEndTime] = useState("12:00"); // Mặc định 12:00
+  const [guestCount, setGuestCount] = useState(1);
+  const [messageToHost, setMessageToHost] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availability, setAvailability] = useState(null);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
@@ -255,40 +301,42 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
   minEndDate.setDate(minEndDate.getDate() + 1);
   const minEndDateString = minEndDate.toISOString().split("T")[0];
 
-  // Tính toán tổng tiền theo tháng
+  // Tính toán tổng tiền theo giờ
   const calculateTotalPrice = () => {
     if (!startDate || !endDate || !house?.price) return 0;
     
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+    const start = new Date(startDate + "T" + startTime);
+    const end = new Date(endDate + "T" + endTime);
+    const hours = (end - start) / (1000 * 60 * 60);
     
-    // Tính theo tháng (30 ngày = 1 tháng)
-    const months = Math.ceil(days / 30);
+    // Tính theo giờ (giá tháng / 30 ngày / 24 giờ)
+    const hourlyPrice = house.price / 30 / 24;
     
-    return months * house.price;
+    return Math.ceil(hours * hourlyPrice);
   };
 
   const totalPrice = calculateTotalPrice();
-  const numberOfDays = startDate && endDate 
-    ? Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24))
+  const numberOfHours = startDate && endDate 
+    ? Math.ceil((new Date(endDate + "T" + endTime) - new Date(startDate + "T" + startTime)) / (1000 * 60 * 60))
     : 0;
 
-  // Kiểm tra tính khả dụng khi ngày thay đổi
+  // Kiểm tra tính khả dụng khi ngày hoặc giờ thay đổi
   useEffect(() => {
-    if (startDate && endDate && house?.id) {
+    if (startDate && endDate && startTime && endTime && house?.id) {
       checkAvailability();
     } else {
       setAvailability(null);
     }
-  }, [startDate, endDate, house?.id]);
+  }, [startDate, endDate, startTime, endTime, house?.id]);
 
   const checkAvailability = async () => {
-    if (!startDate || !endDate || !house?.id) return;
+    if (!startDate || !endDate || !startTime || !endTime || !house?.id) return;
 
     setIsCheckingAvailability(true);
     try {
-      const result = await rentalApi.checkAvailability(house.id, startDate, endDate);
+      const startDateTime = startDate + "T" + startTime;
+      const endDateTime = endDate + "T" + endTime;
+      const result = await rentalApi.checkAvailability(house.id, startDateTime, endDateTime);
       setAvailability(result);
     } catch (error) {
       console.error("Error checking availability:", error);
@@ -306,12 +354,39 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
 
     if (!startDate) {
       newErrors.startDate = "Vui lòng chọn ngày bắt đầu";
+    } else {
+      // Kiểm tra thời gian bắt đầu phải lớn hơn 2 tiếng so với hiện tại
+      const startDateTime = new Date(startDate + "T" + startTime);
+      const minimumStartTime = new Date();
+      minimumStartTime.setHours(minimumStartTime.getHours() + 2);
+      
+      if (startDateTime <= minimumStartTime) {
+        newErrors.startDate = "Thời gian bắt đầu phải lớn hơn 2 tiếng so với hiện tại";
+      }
     }
 
     if (!endDate) {
       newErrors.endDate = "Vui lòng chọn ngày kết thúc";
     } else if (startDate && endDate <= startDate) {
       newErrors.endDate = "Ngày kết thúc phải sau ngày bắt đầu";
+    }
+
+    // Kiểm tra thời gian thuê tối thiểu (ít nhất 2 tiếng)
+    if (startDate && endDate && startTime && endTime) {
+      const start = new Date(startDate + "T" + startTime);
+      const end = new Date(endDate + "T" + endTime);
+      const hours = (end - start) / (1000 * 60 * 60);
+      if (hours < 2) {
+        newErrors.endDate = "Thời gian thuê tối thiểu là 2 tiếng";
+      }
+    }
+
+    if (guestCount < 1 || guestCount > 20) {
+      newErrors.guestCount = "Số lượng khách phải từ 1 đến 20 người";
+    }
+
+    if (messageToHost && messageToHost.length > 1000) {
+      newErrors.messageToHost = "Lời nhắn không được vượt quá 1000 ký tự";
     }
 
     if (availability && !availability.available) {
@@ -339,17 +414,22 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
 
     setIsSubmitting(true);
     try {
-      const rentalData = {
+      // Format ngày và giờ theo ISO string để backend có thể parse
+      const startDateTime = new Date(startDate + "T" + startTime + ":00").toISOString();
+      const endDateTime = new Date(endDate + "T" + endTime + ":00").toISOString();
+      
+      const rentalRequestData = {
         houseId: house.id,
-        renterId: user.id,
-        startDate: startDate + "T00:00:00",
-        endDate: endDate + "T23:59:59",
-        totalPrice: totalPrice,
+        startDate: startDateTime,
+        endDate: endDateTime,
+        guestCount: guestCount,
+        messageToHost: messageToHost,
       };
 
-      const result = await rentalApi.createRental(rentalData);
+      console.log('Sending rental request data:', rentalRequestData);
+      const result = await rentalApi.createRequest(rentalRequestData);
       
-      showSuccess("Thành công", result.message || "Đặt nhà thành công!");
+      showSuccess("Thành công", result.message || "Đã gửi yêu cầu thuê nhà thành công! Chủ nhà sẽ xem xét và phản hồi sớm.");
       onSuccess && onSuccess(result.data);
       onClose();
     } catch (error) {
@@ -374,7 +454,7 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
     <ModalOverlay onClick={onClose}>
       <ModalContent onClick={(e) => e.stopPropagation()}>
         <ModalHeader>
-          <ModalTitle>Đặt nhà</ModalTitle>
+          <ModalTitle>Gửi yêu cầu thuê nhà</ModalTitle>
           <CloseButton onClick={onClose}>&times;</CloseButton>
         </ModalHeader>
 
@@ -387,6 +467,16 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
             <div>📏 {house.area} m²</div>
           </HouseDetails>
         </HouseInfo>
+
+        {/* Thông tin người thuê */}
+        <UserInfo>
+          <UserInfoTitle>Thông tin người thuê</UserInfoTitle>
+          <UserInfoDetails>
+            <div>👤 <strong>{user?.fullName || user?.username || 'Chưa có tên'}</strong></div>
+            <div>📧 {user?.email || 'Chưa có email'}</div>
+            <div>📱 {user?.phone || 'Chưa có số điện thoại'}</div>
+          </UserInfoDetails>
+        </UserInfo>
 
         <form onSubmit={handleSubmit}>
           <FormGroup>
@@ -403,7 +493,21 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
           </FormGroup>
 
           <FormGroup>
-            <Label htmlFor="endDate">Ngày kết thúc *</Label>
+            <Label htmlFor="startTime">Giờ nhận phòng *</Label>
+            <Input
+              type="time"
+              id="startTime"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              required
+            />
+            <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
+              Thời gian nhận phòng thường từ 14:00
+            </div>
+          </FormGroup>
+
+          <FormGroup>
+            <Label htmlFor="endDate">Ngày trả phòng *</Label>
             <Input
               type="date"
               id="endDate"
@@ -415,15 +519,59 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
             {errors.endDate && <ErrorText>{errors.endDate}</ErrorText>}
           </FormGroup>
 
+          <FormGroup>
+            <Label htmlFor="endTime">Giờ trả phòng *</Label>
+            <Input
+              type="time"
+              id="endTime"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+              required
+            />
+            <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
+              Thời gian trả phòng thường trước 12:00
+            </div>
+          </FormGroup>
+
+          <FormGroup>
+            <Label htmlFor="guestCount">Số lượng khách *</Label>
+            <Input
+              type="number"
+              id="guestCount"
+              value={guestCount}
+              onChange={(e) => setGuestCount(parseInt(e.target.value) || 1)}
+              min="1"
+              max="20"
+              required
+            />
+            {errors.guestCount && <ErrorText>{errors.guestCount}</ErrorText>}
+          </FormGroup>
+
+          <FormGroup>
+            <Label htmlFor="messageToHost">Lời nhắn cho chủ nhà</Label>
+            <Textarea
+              id="messageToHost"
+              value={messageToHost}
+              onChange={(e) => setMessageToHost(e.target.value)}
+              placeholder="Nhập lời nhắn cho chủ nhà (tùy chọn)..."
+              rows="3"
+              maxLength="1000"
+            />
+            <CharacterCount>
+              {messageToHost.length}/1000 ký tự
+            </CharacterCount>
+            {errors.messageToHost && <ErrorText>{errors.messageToHost}</ErrorText>}
+          </FormGroup>
+
           {/* Hiển thị trạng thái khả dụng */}
-          {isCheckingAvailability && (
+          {startDate && endDate && startTime && endTime && isCheckingAvailability && (
             <AvailabilityStatus className="checking">
               <LoadingSpinner />
               Đang kiểm tra tính khả dụng...
             </AvailabilityStatus>
           )}
 
-          {availability && !isCheckingAvailability && (
+          {startDate && endDate && startTime && endTime && availability && !isCheckingAvailability && (
             <AvailabilityStatus className={availability.available ? "available" : "unavailable"}>
               {availability.available ? "✅" : "❌"} {availability.message}
             </AvailabilityStatus>
@@ -434,7 +582,7 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
           )}
 
           {/* Hiển thị thông tin giá */}
-          {startDate && endDate && numberOfDays > 0 && (
+          {startDate && endDate && startTime && endTime && numberOfHours > 0 && (
             <PriceInfo>
               <PriceTitle>Chi tiết giá</PriceTitle>
               <PriceDetails>
@@ -442,8 +590,16 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
                 <span>{house.price?.toLocaleString()} VNĐ</span>
               </PriceDetails>
               <PriceDetails>
-                <span>Số tháng:</span>
-                <span>{Math.ceil(numberOfDays / 30)} tháng</span>
+                <span>Giá/giờ:</span>
+                <span>{Math.ceil(house.price / 30 / 24).toLocaleString()} VNĐ</span>
+              </PriceDetails>
+              <PriceDetails>
+                <span>Thời gian:</span>
+                <span>{startDate} {startTime} - {endDate} {endTime}</span>
+              </PriceDetails>
+              <PriceDetails>
+                <span>Số giờ:</span>
+                <span>{numberOfHours} giờ</span>
               </PriceDetails>
               <TotalPrice>
                 <span>Tổng cộng:</span>
@@ -464,10 +620,10 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
               {isSubmitting ? (
                 <>
                   <LoadingSpinner />
-                  Đang đặt...
+                  Đang gửi yêu cầu...
                 </>
               ) : (
-                "Xác nhận đặt nhà"
+                "Gửi yêu cầu thuê nhà"
               )}
             </Button>
           </ButtonGroup>

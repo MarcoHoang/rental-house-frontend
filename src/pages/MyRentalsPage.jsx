@@ -84,9 +84,24 @@ const StatusBadge = styled.span`
   text-transform: uppercase;
   letter-spacing: 0.05em;
 
-  &.scheduled {
+  &.pending {
     background: #fef3c7;
     color: #92400e;
+  }
+
+  &.approved {
+    background: #d1fae5;
+    color: #065f46;
+  }
+
+  &.rejected {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  &.scheduled {
+    background: #dbeafe;
+    color: #1e40af;
   }
 
   &.checked-in {
@@ -239,6 +254,12 @@ const EmptyDescription = styled.p`
 
 const getStatusLabel = (status) => {
   switch (status) {
+    case 'PENDING':
+      return 'Chờ duyệt';
+    case 'APPROVED':
+      return 'Đã duyệt';
+    case 'REJECTED':
+      return 'Đã từ chối';
     case 'SCHEDULED':
       return 'Đã đặt';
     case 'CHECKED_IN':
@@ -254,6 +275,12 @@ const getStatusLabel = (status) => {
 
 const getStatusColor = (status) => {
   switch (status) {
+    case 'PENDING':
+      return 'pending';
+    case 'APPROVED':
+      return 'approved';
+    case 'REJECTED':
+      return 'rejected';
     case 'SCHEDULED':
       return 'scheduled';
     case 'CHECKED_IN':
@@ -429,11 +456,51 @@ const MyRentalsPage = () => {
               </DetailItem>
               
               <DetailItem>
+                <User size={16} className="icon" />
+                <span>Số khách:</span>
+                <span className="value">{rental.guestCount || 1} người</span>
+              </DetailItem>
+              
+              <DetailItem>
                 <Calendar size={16} className="icon" />
                 <span>Ngày đặt:</span>
                 <span className="value">{formatDateTime(rental.createdAt)}</span>
               </DetailItem>
             </RentalDetails>
+
+            {rental.messageToHost && (
+              <div style={{ 
+                background: '#f8fafc', 
+                padding: '1rem', 
+                borderRadius: '0.5rem', 
+                marginBottom: '1rem',
+                border: '1px solid #e5e7eb'
+              }}>
+                <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#374151' }}>
+                  Lời nhắn cho chủ nhà:
+                </div>
+                <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>
+                  {rental.messageToHost}
+                </div>
+              </div>
+            )}
+
+            {rental.rejectReason && (
+              <div style={{ 
+                background: '#fef2f2', 
+                padding: '1rem', 
+                borderRadius: '0.5rem', 
+                marginBottom: '1rem',
+                border: '1px solid #fecaca'
+              }}>
+                <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#dc2626' }}>
+                  Lý do từ chối:
+                </div>
+                <div style={{ color: '#991b1b', fontSize: '0.875rem' }}>
+                  {rental.rejectReason}
+                </div>
+              </div>
+            )}
 
             {rental.totalPrice && (
               <PriceInfo>
@@ -454,12 +521,12 @@ const MyRentalsPage = () => {
                 Xem chi tiết nhà
               </Button>
               
-              {rental.status === 'SCHEDULED' && (
+              {(rental.status === 'PENDING' || rental.status === 'SCHEDULED') && (
                 <Button 
                   className="danger" 
                   onClick={() => handleCancelRental(rental.id)}
                 >
-                  Hủy đơn thuê
+                  Hủy yêu cầu
                 </Button>
               )}
             </ActionButtons>

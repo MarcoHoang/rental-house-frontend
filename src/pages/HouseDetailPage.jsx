@@ -925,10 +925,10 @@ const HouseDetailPage = () => {
                 <div className="host-contact-row">
                   <div className="host-avatar">
                     <img 
-                      src={house.hostAvatar || user?.avatar || "https://via.placeholder.com/50x50/6B7280/FFFFFF?text=CH"} 
+                      src={house.hostAvatar || "/default-avatar.png"} 
                       alt={house.hostName}
                       onError={(e) => {
-                        e.target.src = "https://via.placeholder.com/50x50/6B7280/FFFFFF?text=CH";
+                        e.target.src = "/default-avatar.png";
                       }}
                     />
                     <div className="verification-badge">✓</div>
