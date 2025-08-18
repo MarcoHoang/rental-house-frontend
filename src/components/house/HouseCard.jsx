@@ -1,17 +1,25 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Edit, Eye, Trash2, MapPin, DollarSign, Home } from "lucide-react";
+import { Edit, Eye, Trash2, MapPin, DollarSign, Home, Heart } from "lucide-react";
 import { 
   getHouseTypeLabel, 
   getHouseStatusLabel, 
   getHouseStatusColor 
 } from "../../utils/constants";
+import { formatPostingTime } from "../../utils/timeUtils";
+import favoriteApi from "../../api/favoriteApi";
+import { useAuth } from "../../hooks/useAuth";
 
 const HouseCard = ({ house, showActions = false, onEdit, onDelete }) => {
-  const { id, title, name, address, price, area, houseType, status, imageUrls, imageUrl } = house;
+  const { id, title, name, address, price, area, houseType, status, imageUrls, imageUrl, createdAt, favoriteCount } = house;
+  const { user } = useAuth();
   
   // Sử dụng title nếu có, nếu không thì dùng name
   const displayName = title || name || 'Không có tên';
+  
+  // State cho yêu thích
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
   
   // Cải thiện logic lấy ảnh
   const getDisplayImage = () => {
@@ -39,6 +47,58 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete }) => {
 
   const [imageError, setImageError] = useState(false);
   const displayImage = imageError ? "https://via.placeholder.com/300x200/6B7280/FFFFFF?text=Không+có+ảnh" : getDisplayImage();
+
+  // Kiểm tra trạng thái yêu thích khi component mount
+  useEffect(() => {
+    if (user && id) {
+      const checkFavoriteStatus = async () => {
+        try {
+          const response = await favoriteApi.checkFavorite(id);
+          setIsFavorite(response.data);
+        } catch (error) {
+          console.error('Error checking favorite status:', error);
+        }
+      };
+      checkFavoriteStatus();
+    }
+  }, [user, id]);
+
+  // Xử lý yêu thích
+  const handleToggleFavorite = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user) {
+      // Nếu chưa đăng nhập, có thể redirect đến trang login
+      alert('Vui lòng đăng nhập để yêu thích nhà');
+      return;
+    }
+
+
+
+    try {
+      setFavoriteLoading(true);
+      const response = await favoriteApi.toggleFavorite(id);
+      setIsFavorite(response.data);
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      
+      // Xử lý lỗi cụ thể hơn
+      if (error.response?.status === 401) {
+        alert('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
+        // Có thể redirect đến trang login
+        window.location.href = '/login';
+      } else if (error.response?.status === 403) {
+        alert('Bạn không có quyền thực hiện hành động này');
+      } else if (error.response?.data?.message) {
+        alert(error.response.data.message);
+      } else {
+        alert('Có lỗi xảy ra khi yêu thích nhà. Vui lòng thử lại sau.');
+      }
+    } finally {
+      setFavoriteLoading(false);
+    }
+  };
 
   // Format giá tiền
   const formatPrice = (price) => {
@@ -107,6 +167,14 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete }) => {
           </h4>
         </div>
 
+        {/* Hiển thị số lượng yêu thích nếu có */}
+        {house.favoriteCount !== undefined && house.favoriteCount > 0 && (
+          <div className="flex items-center gap-2 mb-4 text-sm text-gray-600">
+            <Heart size={16} className="text-red-500" />
+            <span>{house.favoriteCount} người yêu thích</span>
+          </div>
+        )}
+
         {/* Nút xem chi tiết và các nút hành động quản lý */}
         {showActions ? (
           // Khi ở trang quản lý chủ nhà - hiển thị tất cả nút trên 1 hàng
@@ -168,30 +236,56 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete }) => {
             </button>
           </div>
         ) : (
-          // Khi ở trang chủ - chỉ hiển thị nút xem chi tiết như cũ
+          // Khi ở trang chủ - hiển thị thời gian đăng bài và nút yêu thích
           <div className="pt-3 border-t border-gray-100">
-            <Link
-              to={`/houses/${id}`}
-              state={{ from: window.location.pathname }}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
-              onClick={(e) => {
-                e.stopPropagation();
-                console.log('Clicking on house detail link for house ID:', id);
-              }}
-            >
-              <Eye size={16} />
-              Xem chi tiết
-            </Link>
+            <div className="flex items-center justify-between">
+              {/* Thời gian đăng bài */}
+              <div className="text-sm text-gray-500">
+                {formatPostingTime(createdAt)}
+              </div>
+              
+              {/* Nút yêu thích */}
+              <button
+                onClick={handleToggleFavorite}
+                disabled={favoriteLoading}
+                className={`p-2 rounded-full transition-all duration-200 hover:scale-110 ${
+                  isFavorite 
+                    ? 'text-red-500 hover:text-red-600' 
+                    : 'text-gray-400 hover:text-red-500'
+                } ${favoriteLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                title={isFavorite ? 'Bỏ yêu thích' : 'Yêu thích'}
+              >
+                <Heart 
+                  size={18} 
+                  fill={isFavorite ? 'currentColor' : 'none'} 
+                  strokeWidth={2}
+                />
+              </button>
+            </div>
           </div>
         )}
       </div>
       
-      {/* Overlay click để xem chi tiết nhà */}
+      {/* Overlay click để xem chi tiết nhà - chỉ áp dụng cho ảnh và tiêu đề */}
       <Link
         to={`/houses/${id}`}
         state={{ from: window.location.pathname }}
-        className="absolute inset-0 z-0"
-        onClick={() => console.log('Clicking on house card for house ID:', id)}
+        className="absolute inset-0 z-0 pointer-events-none"
+        aria-label={`Xem chi tiết nhà ${displayName}`}
+      />
+      
+      {/* Clickable areas cho ảnh và tiêu đề */}
+      <Link
+        to={`/houses/${id}`}
+        state={{ from: window.location.pathname }}
+        className="absolute top-0 left-0 w-full h-48 z-10 pointer-events-auto"
+        aria-label={`Xem chi tiết nhà ${displayName}`}
+      />
+      
+      <Link
+        to={`/houses/${id}`}
+        state={{ from: window.location.pathname }}
+        className="absolute top-48 left-0 w-full h-16 z-10 pointer-events-auto"
         aria-label={`Xem chi tiết nhà ${displayName}`}
       />
     </div>

@@ -115,6 +115,7 @@ const HomePage = () => {
   // Quản lý trạng thái của component: danh sách nhà, đang tải, và lỗi
   const [houses, setHouses] = useState([]);
   const [filteredHouses, setFilteredHouses] = useState([]);
+  const [topHouses, setTopHouses] = useState([]); // State cho nhà nổi bật
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -127,13 +128,18 @@ const HomePage = () => {
     const fetchHouses = async () => {
       try {
         setLoading(true); // Bắt đầu tải, bật spinner
-        const response = await propertyApi.getPublicProperties(); // Gọi API lấy bài đăng công khai
         
-        // Sử dụng helper function để extract data
-        const housesData = extractHousesFromResponse(response);
+        // Lấy nhà nổi bật theo số lượng yêu thích cho section "Nhà cho thuê nổi bật"
+        const topHousesResponse = await propertyApi.getTopHousesByFavorites(5);
+        const topHousesData = extractHousesFromResponse(topHousesResponse);
+        setTopHouses(topHousesData); // Lưu nhà nổi bật
         
-        setHouses(housesData); // Cập nhật state với dữ liệu nhận được
-        setFilteredHouses(housesData);
+        // Lấy tất cả nhà cho phần tìm kiếm và lọc
+        const allHousesResponse = await propertyApi.getPublicProperties();
+        const allHousesData = extractHousesFromResponse(allHousesResponse);
+        
+        setHouses(allHousesData); // Cập nhật state với dữ liệu tất cả nhà
+        setFilteredHouses(allHousesData);
         setError(null); // Xóa bất kỳ lỗi nào trước đó
       } catch (err) {
         // Nếu có lỗi, cập nhật state lỗi
@@ -274,6 +280,25 @@ const HomePage = () => {
 
         <FeaturedSection>
           <SectionTitle>Nhà cho thuê nổi bật</SectionTitle>
+          
+          {/* Hiển thị nhà nổi bật theo số lượng yêu thích */}
+          {topHouses.length > 0 ? (
+            <div>
+              <p style={{ textAlign: "center", marginBottom: "2rem", color: "#64748b" }}>
+                Top 5 nhà được yêu thích nhiều nhất
+              </p>
+              <HouseList houses={topHouses} />
+            </div>
+          ) : (
+            <p style={{ textAlign: "center", color: "#64748b" }}>
+              Đang tải nhà nổi bật...
+            </p>
+          )}
+        </FeaturedSection>
+
+        {/* Section mới cho tìm kiếm và lọc tất cả nhà */}
+        <FeaturedSection style={{ backgroundColor: "#f8fafc" }}>
+          <SectionTitle>Tìm kiếm nhà cho thuê</SectionTitle>
           
           <SearchAndFilterBar>
             <SearchInput
