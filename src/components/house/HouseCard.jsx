@@ -53,7 +53,7 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete }) => {
   };
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-1">
+    <div className="border border-gray-200 rounded-lg overflow-hidden shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer group">
       {/* Hình ảnh */}
       <div className="relative">
         <img
@@ -107,40 +107,93 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete }) => {
           </h4>
         </div>
 
-        {/* Nút xem chi tiết - luôn hiển thị cho người dùng */}
-        <div className="pt-3 border-t border-gray-100">
-          <Link
-            to={`/houses/${id}`}
-            state={{ from: window.location.pathname }}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
-            onClick={() => console.log('Clicking on house detail link for house ID:', id)}
-          >
-            <Eye size={16} />
-            Xem chi tiết
-          </Link>
-        </div>
-
-        {/* Nút hành động quản lý nếu showActions = true */}
-        {showActions && (
+        {/* Nút xem chi tiết và các nút hành động quản lý */}
+        {showActions ? (
+          // Khi ở trang quản lý chủ nhà - hiển thị tất cả nút trên 1 hàng
           <div className="flex gap-2 pt-3 border-t border-gray-100">
-            <button
-              onClick={() => onEdit && onEdit(house)}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors"
+            {/* Nút xem chi tiết */}
+            <Link
+              to={`/houses/${id}`}
+              state={{ from: window.location.pathname }}
+              className="group relative flex-1 flex items-center justify-center p-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all duration-200 hover:scale-105"
+              onClick={(e) => {
+                e.stopPropagation();
+                console.log('Clicking on house detail link for house ID:', id);
+              }}
+              title="Xem chi tiết nhà"
             >
-              <Edit size={16} />
-              Chỉnh sửa
+              <Eye size={18} />
+              
+              {/* Tooltip */}
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                Xem chi tiết nhà
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+              </div>
+            </Link>
+            
+            {/* Nút chỉnh sửa */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit && onEdit(house);
+              }}
+              className="group relative flex-1 flex items-center justify-center p-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition-all duration-200 hover:scale-105"
+              title="Chỉnh sửa nhà"
+            >
+              <Edit size={18} />
+              
+              {/* Tooltip */}
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                Chỉnh sửa nhà
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+              </div>
             </button>
             
+            {/* Nút xóa */}
             <button
-              onClick={() => onDelete && onDelete(house)}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete && onDelete(house);
+              }}
+              className="group relative flex-1 flex items-center justify-center p-3 bg-red-600 text-white rounded-md hover:bg-red-700 transition-all duration-200 hover:scale-105"
+              title="Xóa nhà"
             >
-              <Trash2 size={16} />
-              Xóa
+              <Trash2 size={18} />
+              
+              {/* Tooltip */}
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                Xóa nhà
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+              </div>
             </button>
+          </div>
+        ) : (
+          // Khi ở trang chủ - chỉ hiển thị nút xem chi tiết như cũ
+          <div className="pt-3 border-t border-gray-100">
+            <Link
+              to={`/houses/${id}`}
+              state={{ from: window.location.pathname }}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                console.log('Clicking on house detail link for house ID:', id);
+              }}
+            >
+              <Eye size={16} />
+              Xem chi tiết
+            </Link>
           </div>
         )}
       </div>
+      
+      {/* Overlay click để xem chi tiết nhà */}
+      <Link
+        to={`/houses/${id}`}
+        state={{ from: window.location.pathname }}
+        className="absolute inset-0 z-0"
+        onClick={() => console.log('Clicking on house card for house ID:', id)}
+        aria-label={`Xem chi tiết nhà ${displayName}`}
+      />
     </div>
   );
 };
