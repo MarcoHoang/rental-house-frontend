@@ -227,7 +227,7 @@ const HostApplicationStatus = () => {
       <StatusContainer>
         <div className="text-center py-4 text-red-600">
           <ExclamationTriangleIcon className="w-6 h-6 mx-auto mb-2" />
-          <p>{error}</p>
+          <p>{String(error)}</p>
         </div>
       </StatusContainer>
     );

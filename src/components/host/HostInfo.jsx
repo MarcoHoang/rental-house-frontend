@@ -248,7 +248,7 @@ const HostInfo = () => {
     return (
       <Container>
         <ErrorMessage>
-          <p>{error}</p>
+          <p>{String(error)}</p>
         </ErrorMessage>
       </Container>
     );

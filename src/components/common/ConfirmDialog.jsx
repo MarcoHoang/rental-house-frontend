@@ -208,7 +208,11 @@ const ConfirmDialog = ({
         </Header>
         
         <Content>
-          <p className="message">{message}</p>
+          {typeof message === 'string' ? (
+            <p className="message">{message}</p>
+          ) : (
+            <div className="message">{message}</div>
+          )}
         </Content>
         
         <Actions>

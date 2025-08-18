@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import ConfirmDialog from '../common/ConfirmDialog';
 import { useToast } from '../common/Toast';
+import HostNotificationBadge from '../host/HostNotificationBadge';
 
 const SidebarContainer = styled.div`
   width: 250px;
@@ -75,6 +76,7 @@ const NavItem = styled(Link)`
   background: ${props => props.$active ? '#eff6ff' : 'transparent'};
   border-right: ${props => props.$active ? '3px solid #1e40af' : 'none'};
   transition: all 0.2s;
+  position: relative;
 
   &:hover {
     background: ${props => props.$active ? '#eff6ff' : '#f9fafb'};
@@ -151,6 +153,7 @@ const HostSidebar = () => {
           <NavItem to="/host" $active={isActive('/host')}>
             <Home className="icon" />
             Tổng quan
+            <HostNotificationBadge isInline={true} hideWhenViewed={true} />
           </NavItem>
         </NavSection>
 
@@ -171,6 +174,7 @@ const HostSidebar = () => {
           <NavItem to="/host/bookings" $active={isActive('/host/bookings')}>
             <Users className="icon" />
             Quản lý đơn đặt
+            <HostNotificationBadge isInline={true} hideWhenViewed={true} />
           </NavItem>
         </NavSection>
 

@@ -9,10 +9,12 @@ import {
 import { formatPostingTime } from "../../utils/timeUtils";
 import favoriteApi from "../../api/favoriteApi";
 import { useAuth } from "../../hooks/useAuth";
+import { useToast } from "../common/Toast";
 
 const HouseCard = ({ house, showActions = false, onEdit, onDelete }) => {
   const { id, title, name, address, price, area, houseType, status, imageUrls, imageUrl, createdAt, favoriteCount } = house;
   const { user } = useAuth();
+  const { showError } = useToast();
   
   // Sử dụng title nếu có, nếu không thì dùng name
   const displayName = title || name || 'Không có tên';
@@ -54,7 +56,19 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete }) => {
       const checkFavoriteStatus = async () => {
         try {
           const response = await favoriteApi.checkFavorite(id);
-          setIsFavorite(response.data);
+          // Xử lý response format từ API
+          let isFavorited = false;
+          if (typeof response === 'boolean') {
+            isFavorited = response;
+          } else if (response && typeof response.data === 'boolean') {
+            isFavorited = response.data;
+          } else if (response && response.data && typeof response.data.isFavorite === 'boolean') {
+            isFavorited = response.data.isFavorite;
+          } else {
+            console.warn('Unexpected favorite response format:', response);
+            isFavorited = false;
+          }
+          setIsFavorite(isFavorited);
         } catch (error) {
           console.error('Error checking favorite status:', error);
         }
@@ -70,7 +84,7 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete }) => {
     
     if (!user) {
       // Nếu chưa đăng nhập, có thể redirect đến trang login
-      alert('Vui lòng đăng nhập để yêu thích nhà');
+      showError('Lỗi', 'Vui lòng đăng nhập để yêu thích nhà');
       return;
     }
 
@@ -79,21 +93,34 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete }) => {
     try {
       setFavoriteLoading(true);
       const response = await favoriteApi.toggleFavorite(id);
-      setIsFavorite(response.data);
+      // Xử lý response format từ API
+      let isFavorited = false;
+      if (typeof response === 'boolean') {
+        isFavorited = response;
+      } else if (response && typeof response.data === 'boolean') {
+        isFavorited = response.data;
+      } else if (response && response.data && typeof response.data.isFavorite === 'boolean') {
+        isFavorited = response.data.isFavorite;
+      } else {
+        console.warn('Unexpected favorite toggle response format:', response);
+        // Toggle trạng thái hiện tại nếu không biết response format
+        isFavorited = !isFavorite;
+      }
+      setIsFavorite(isFavorited);
     } catch (error) {
       console.error('Error toggling favorite:', error);
       
       // Xử lý lỗi cụ thể hơn
       if (error.response?.status === 401) {
-        alert('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
+        showError('Lỗi', 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
         // Có thể redirect đến trang login
         window.location.href = '/login';
       } else if (error.response?.status === 403) {
-        alert('Bạn không có quyền thực hiện hành động này');
+        showError('Lỗi', 'Bạn không có quyền thực hiện hành động này');
       } else if (error.response?.data?.message) {
-        alert(error.response.data.message);
+        showError('Lỗi', error.response.data.message);
       } else {
-        alert('Có lỗi xảy ra khi yêu thích nhà. Vui lòng thử lại sau.');
+        showError('Lỗi', 'Có lỗi xảy ra khi yêu thích nhà. Vui lòng thử lại sau.');
       }
     } finally {
       setFavoriteLoading(false);

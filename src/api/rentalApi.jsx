@@ -200,7 +200,7 @@ const rentalApi = {
   // Hủy đơn thuê
   cancelRental: async (rentalId) => {
     try {
-      const response = await api.delete(`/rentals/${rentalId}`);
+      const response = await api.put(`/rentals/${rentalId}/cancel`);
       
       return {
         success: true,
@@ -283,7 +283,7 @@ const rentalApi = {
       console.log("rentalApi.checkAvailability - Response:", response);
       
       const result = response.data.data || response.data;
-      
+
       return {
         available: result.available,
         message: result.message
@@ -291,6 +291,93 @@ const rentalApi = {
     } catch (error) {
       console.error("rentalApi.checkAvailability - Error:", error);
       logApiError(error, "checkAvailability");
+      throw error;
+    }
+  },
+
+  // === HOST METHODS ===
+  
+  // Lấy tất cả yêu cầu (mọi trạng thái) của host
+  getHostAllRequests: async (hostId) => {
+    try {
+      const response = await api.get(`/rentals/host/${hostId}`);
+      
+      return {
+        success: true,
+        data: response.data.data || response.data || [],
+        message: response.data.message || "Lấy danh sách yêu cầu thành công",
+      };
+    } catch (error) {
+      console.error("rentalApi.getHostAllRequests - Error:", error);
+      logApiError(error, "getHostAllRequests");
+      throw error;
+    }
+  },
+  
+  // Lấy danh sách yêu cầu thuê nhà của host
+  getHostPendingRequests: async (hostId) => {
+    try {
+      const response = await api.get(`/rentals/host/${hostId}/pending`);
+      
+      return {
+        success: true,
+        data: response.data.data || response.data || [],
+        message: response.data.message || "Lấy danh sách yêu cầu thành công",
+      };
+    } catch (error) {
+      console.error("rentalApi.getHostPendingRequests - Error:", error);
+      logApiError(error, "getHostPendingRequests");
+      throw error;
+    }
+  },
+
+  // Chấp nhận yêu cầu thuê nhà
+  approveRequest: async (rentalId) => {
+    try {
+      const response = await api.put(`/rentals/${rentalId}/approve`);
+      
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: response.data.message || "Chấp nhận yêu cầu thành công",
+      };
+    } catch (error) {
+      console.error("rentalApi.approveRequest - Error:", error);
+      logApiError(error, "approveRequest");
+      throw error;
+    }
+  },
+
+  // Từ chối yêu cầu thuê nhà
+  rejectRequest: async (rentalId, reason) => {
+    try {
+      const response = await api.put(`/rentals/${rentalId}/reject`, { reason });
+      
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: response.data.message || "Từ chối yêu cầu thành công",
+      };
+    } catch (error) {
+      console.error("rentalApi.rejectRequest - Error:", error);
+      logApiError(error, "rejectRequest");
+      throw error;
+    }
+  },
+
+  // Lấy số lượng yêu cầu chờ duyệt
+  getHostPendingRequestsCount: async (hostId) => {
+    try {
+      const response = await api.get(`/rentals/host/${hostId}/pending/count`);
+      
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: response.data.message || "Lấy số lượng yêu cầu thành công",
+      };
+    } catch (error) {
+      console.error("rentalApi.getHostPendingRequestsCount - Error:", error);
+      logApiError(error, "getHostPendingRequestsCount");
       throw error;
     }
   },

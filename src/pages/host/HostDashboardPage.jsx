@@ -257,8 +257,18 @@ const HostDashboardPage = () => {
         // Fetch properties của chủ nhà - sử dụng my-houses endpoint
         const propertiesResponse = await propertyApi.getMyHouses();
         
-        // getMyHouses trả về array trực tiếp, không cần extract
-        const properties = Array.isArray(propertiesResponse) ? propertiesResponse : [];
+        // Xử lý response format từ API
+        let properties = [];
+        if (Array.isArray(propertiesResponse)) {
+          properties = propertiesResponse;
+        } else if (propertiesResponse && Array.isArray(propertiesResponse.data)) {
+          properties = propertiesResponse.data;
+        } else if (propertiesResponse && Array.isArray(propertiesResponse.content)) {
+          properties = propertiesResponse.content;
+        } else {
+          console.warn('Unexpected response format from getMyHouses:', propertiesResponse);
+          properties = [];
+        }
         
         setHouses(properties);
         setFilteredHouses(properties);
@@ -295,8 +305,9 @@ const HostDashboardPage = () => {
             errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.';
           }
           
-          setError(errorMessage);
-          showToast('error', 'Lỗi tải dữ liệu', errorMessage);
+          // Đảm bảo errorMessage là string
+          setError(String(errorMessage));
+          showToast('error', 'Lỗi tải dữ liệu', String(errorMessage));
         } finally {
           setLoading(false);
         }

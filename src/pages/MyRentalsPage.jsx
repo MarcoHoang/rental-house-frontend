@@ -6,6 +6,7 @@ import rentalApi from '../api/rentalApi';
 import { useToast } from '../components/common/Toast';
 import { useAuthContext } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import ConfirmDialog from '../components/common/ConfirmDialog';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -92,6 +93,11 @@ const StatusBadge = styled.span`
   &.approved {
     background: #d1fae5;
     color: #065f46;
+  }
+
+  &.scheduled {
+    background: #dbeafe;
+    color: #1e40af;
   }
 
   &.rejected {
@@ -257,11 +263,11 @@ const getStatusLabel = (status) => {
     case 'PENDING':
       return 'Chờ duyệt';
     case 'APPROVED':
-      return 'Đã duyệt';
+      return 'Đã chấp nhận';
     case 'REJECTED':
       return 'Đã từ chối';
     case 'SCHEDULED':
-      return 'Đã đặt';
+      return 'Đã lên lịch';
     case 'CHECKED_IN':
       return 'Đã nhận phòng';
     case 'CHECKED_OUT':
@@ -316,6 +322,8 @@ const MyRentalsPage = () => {
   const [rentals, setRentals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [rentalToCancel, setRentalToCancel] = useState(null);
   const navigate = useNavigate();
   const { showSuccess, showError } = useToast();
   const { user } = useAuthContext();
@@ -342,6 +350,8 @@ const MyRentalsPage = () => {
         console.log('Attempting to fetch rentals for user:', user.roleName);
 
         const rentalsData = await rentalApi.getMyRentals();
+        console.log('MyRentalsPage - Raw rentals data:', rentalsData);
+        console.log('MyRentalsPage - Rentals statuses:', rentalsData.map(r => ({ id: r.id, status: r.status, title: r.houseTitle })));
         setRentals(rentalsData);
         setError(null);
       } catch (err) {
@@ -357,20 +367,48 @@ const MyRentalsPage = () => {
     }
   }, [user]);
 
-  const handleCancelRental = async (rentalId) => {
-    if (!window.confirm('Bạn có chắc chắn muốn hủy đơn thuê này?')) {
-      return;
-    }
+  const handleCancelRental = (rental) => {
+    setRentalToCancel(rental);
+    setShowCancelConfirm(true);
+  };
+
+  const confirmCancelRental = async () => {
+    if (!rentalToCancel) return;
 
     try {
-      await rentalApi.cancelRental(rentalId);
+      await rentalApi.cancelRental(rentalToCancel.id);
       showSuccess('Thành công', 'Đã hủy đơn thuê thành công');
       
       // Cập nhật danh sách
-      setRentals(rentals.filter(rental => rental.id !== rentalId));
+      setRentals(rentals.filter(rental => rental.id !== rentalToCancel.id));
     } catch (err) {
       console.error('Error canceling rental:', err);
-      showError('Lỗi', 'Không thể hủy đơn thuê. Vui lòng thử lại sau.');
+      
+      // Xử lý lỗi chi tiết hơn
+      let errorMessage = 'Không thể hủy đơn thuê. Vui lòng thử lại sau.';
+      
+      if (err.response?.status === 409) {
+        // Lỗi conflict - thường là do thời gian không cho phép hủy
+        if (err.response?.data?.message) {
+          errorMessage = err.response.data.message;
+        } else {
+          errorMessage = 'Không thể hủy đơn thuê. Chỉ có thể hủy đơn thuê trước 24 giờ so với thời gian bắt đầu thuê.';
+        }
+      } else if (err.response?.data?.message) {
+        // Lấy message từ backend nếu có
+        errorMessage = err.response.data.message;
+      } else if (err.response?.status === 400) {
+        errorMessage = 'Yêu cầu không hợp lệ. Vui lòng kiểm tra lại thông tin.';
+      } else if (err.response?.status === 403) {
+        errorMessage = 'Bạn không có quyền hủy đơn thuê này.';
+      } else if (err.response?.status === 404) {
+        errorMessage = 'Không tìm thấy đơn thuê.';
+      }
+      
+      showError('Không thể hủy đơn thuê', errorMessage);
+    } finally {
+      setShowCancelConfirm(false);
+      setRentalToCancel(null);
     }
   };
 
@@ -502,6 +540,57 @@ const MyRentalsPage = () => {
               </div>
             )}
 
+            {(rental.status === 'APPROVED' || rental.status === 'SCHEDULED') && (
+              <div style={{ 
+                background: '#f0fdf4', 
+                padding: '1rem', 
+                borderRadius: '0.5rem', 
+                marginBottom: '1rem',
+                border: '1px solid #bbf7d0'
+              }}>
+                <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#166534' }}>
+                  ✅ Yêu cầu đã được chấp nhận!
+                </div>
+                <div style={{ color: '#15803d', fontSize: '0.875rem' }}>
+                  Chủ nhà đã chấp nhận yêu cầu thuê nhà của bạn. Vui lòng liên hệ với chủ nhà để sắp xếp thời gian nhận phòng.
+                </div>
+              </div>
+            )}
+
+            {rental.status === 'CHECKED_IN' && (
+              <div style={{ 
+                background: '#eff6ff', 
+                padding: '1rem', 
+                borderRadius: '0.5rem', 
+                marginBottom: '1rem',
+                border: '1px solid #bfdbfe'
+              }}>
+                <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#1e40af' }}>
+                  🏠 Đã nhận phòng!
+                </div>
+                <div style={{ color: '#1e40af', fontSize: '0.875rem' }}>
+                  Bạn đã nhận phòng thành công. Chúc bạn có một kỳ nghỉ tuyệt vời!
+                </div>
+              </div>
+            )}
+
+            {rental.status === 'CHECKED_OUT' && (
+              <div style={{ 
+                background: '#f8fafc', 
+                padding: '1rem', 
+                borderRadius: '0.5rem', 
+                marginBottom: '1rem',
+                border: '1px solid #e2e8f0'
+              }}>
+                <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#475569' }}>
+                  📋 Đã hoàn tất!
+                </div>
+                <div style={{ color: '#475569', fontSize: '0.875rem' }}>
+                  Kỳ thuê nhà đã hoàn tất. Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!
+                </div>
+              </div>
+            )}
+
             {rental.totalPrice && (
               <PriceInfo>
                 <PriceTitle>Thông tin giá</PriceTitle>
@@ -522,17 +611,54 @@ const MyRentalsPage = () => {
               </Button>
               
               {(rental.status === 'PENDING' || rental.status === 'SCHEDULED') && (
-                <Button 
-                  className="danger" 
-                  onClick={() => handleCancelRental(rental.id)}
-                >
-                  Hủy yêu cầu
-                </Button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <Button 
+                    className="danger" 
+                    onClick={() => handleCancelRental(rental)}
+                  >
+                    Hủy yêu cầu
+                  </Button>
+                  <div style={{ 
+                    fontSize: '0.75rem', 
+                    color: '#6b7280', 
+                    fontStyle: 'italic',
+                    textAlign: 'center'
+                  }}>
+                    ⚠️ Chỉ có thể hủy trước 24 giờ so với thời gian bắt đầu thuê
+                  </div>
+                </div>
               )}
-            </ActionButtons>
-          </RentalCard>
-        ))
+                          </ActionButtons>
+            </RentalCard>
+          ))
       )}
+
+      {/* Confirm Cancel Dialog */}
+      <ConfirmDialog
+        isOpen={showCancelConfirm}
+        onClose={() => setShowCancelConfirm(false)}
+        onConfirm={confirmCancelRental}
+        title="Xác nhận hủy đơn thuê"
+        type="danger"
+        message={
+          <div>
+            <p>Bạn có chắc chắn muốn hủy đơn thuê nhà "{rentalToCancel?.houseTitle}"?</p>
+            <div style={{ 
+              marginTop: '1rem', 
+              padding: '0.75rem', 
+              background: '#fef3c7', 
+              borderRadius: '0.5rem',
+              border: '1px solid #f59e0b',
+              fontSize: '0.875rem',
+              color: '#92400e'
+            }}>
+              <strong>⚠️ Lưu ý:</strong> Chỉ có thể hủy đơn thuê trước 24 giờ so với thời gian bắt đầu thuê.
+            </div>
+          </div>
+        }
+        confirmText="Hủy đơn thuê"
+        cancelText="Giữ lại"
+      />
     </Container>
   );
 };

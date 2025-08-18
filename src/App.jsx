@@ -8,7 +8,9 @@ import {
 import { AuthProvider } from "./contexts/AuthContext";
 
 import UserHomePage from "./pages/UserHomePage";
-import HostDashboardPage from "./pages/host/HostDashboardPage";
+import HostDashboardPage from "./pages/HostDashboardPage";
+import HostDashboardPageOld from "./pages/host/HostDashboardPage";
+import HostRentalRequests from "./components/host/HostRentalRequests";
 import PostPropertyPage from "./pages/host/PostPropertyPage";
 import HostProfilePage from "./pages/host/HostProfilePage";
 import Register from "./components/login-register/Register";
@@ -170,7 +172,7 @@ function App() {
                 path="properties"
                 element={
                   <div style={{ padding: "20px" }}>
-                    <HostDashboardPage />
+                    <HostDashboardPageOld />
                   </div>
                 }
               />
@@ -178,7 +180,7 @@ function App() {
                 path="bookings"
                 element={
                   <div style={{ padding: "20px" }}>
-                    <HostDashboardPage />
+                    <HostRentalRequests />
                   </div>
                 }
               />

@@ -355,13 +355,13 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
     if (!startDate) {
       newErrors.startDate = "Vui lòng chọn ngày bắt đầu";
     } else {
-      // Kiểm tra thời gian bắt đầu phải lớn hơn 2 tiếng so với hiện tại
+      // Kiểm tra thời gian bắt đầu phải lớn hơn 1 ngày so với hiện tại
       const startDateTime = new Date(startDate + "T" + startTime);
       const minimumStartTime = new Date();
-      minimumStartTime.setHours(minimumStartTime.getHours() + 2);
+      minimumStartTime.setDate(minimumStartTime.getDate() + 1);
       
       if (startDateTime <= minimumStartTime) {
-        newErrors.startDate = "Thời gian bắt đầu phải lớn hơn 2 tiếng so với hiện tại";
+        newErrors.startDate = "Thời gian bắt đầu phải vượt qua thời gian hiện tại ít nhất 1 ngày";
       }
     }
 
@@ -371,13 +371,13 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
       newErrors.endDate = "Ngày kết thúc phải sau ngày bắt đầu";
     }
 
-    // Kiểm tra thời gian thuê tối thiểu (ít nhất 2 tiếng)
+    // Kiểm tra thời gian thuê tối thiểu (ít nhất 1 ngày)
     if (startDate && endDate && startTime && endTime) {
       const start = new Date(startDate + "T" + startTime);
       const end = new Date(endDate + "T" + endTime);
       const hours = (end - start) / (1000 * 60 * 60);
-      if (hours < 2) {
-        newErrors.endDate = "Thời gian thuê tối thiểu là 2 tiếng";
+      if (hours < 24) {
+        newErrors.endDate = "Thời gian thuê tối thiểu là 1 ngày";
       }
     }
 
@@ -502,7 +502,7 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
               required
             />
             <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
-              Thời gian nhận phòng thường từ 14:00
+              Thời gian nhận phòng thường từ 14:00. Thời gian bắt đầu phải vượt qua hiện tại ít nhất 1 ngày.
             </div>
           </FormGroup>
 
