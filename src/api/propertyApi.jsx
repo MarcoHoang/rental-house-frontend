@@ -63,7 +63,15 @@ const propertyApi = {
         longitude: houseData.longitude || 0
       };
 
+      console.log('propertyApi.createHouse - Request data:', JSON.stringify(requestData, null, 2));
 
+
+
+      console.log('propertyApi.createHouse - Sending request to:', '/houses');
+      console.log('propertyApi.createHouse - Request headers:', {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + (localStorage.getItem('token') ? '***' : 'null')
+      });
 
       const response = await hostApiClient.post('/houses', requestData, {
         headers: {

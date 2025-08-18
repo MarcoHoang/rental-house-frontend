@@ -102,6 +102,10 @@ export const AuthProvider = ({ children }) => {
       console.log('AuthProvider.login - Extracted token and user:', { token: !!token, userData });
 
       if (token && userData) {
+        // Lưu token và user data vào localStorage
+        safeSetToStorage('token', token);
+        safeSetToStorage('user', userData);
+        
         // Cập nhật state
         console.log('AuthProvider.login - Setting user state:', userData);
         setUser(userData);
@@ -172,6 +176,10 @@ export const AuthProvider = ({ children }) => {
       console.log('AuthProvider.loginAsHost - Extracted token and host:', { token: !!token, hostData });
 
       if (token && hostData) {
+        // Lưu token và host data vào localStorage
+        safeSetToStorage('token', token);
+        safeSetToStorage('user', hostData);
+        
         // Cập nhật state
         console.log('AuthProvider.loginAsHost - Setting user state:', hostData);
         setUser(hostData);

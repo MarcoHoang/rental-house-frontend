@@ -10,6 +10,7 @@ import {
   VALIDATION_RULES 
 } from '../../utils/constants';
 import { formatHouseForApi, getApiErrorMessage } from '../../utils/apiHelpers';
+import { getUserFromStorage } from '../../utils/localStorage';
 
 const PostPropertyPage = () => {
   const [formData, setFormData] = useState({
@@ -118,7 +119,7 @@ const PostPropertyPage = () => {
       console.log('Đã tải lên các ảnh:', imageUrls);
 
       // Lấy thông tin người dùng từ localStorage
-      const user = JSON.parse(localStorage.getItem('user'));
+      const user = getUserFromStorage();
       if (!user || !user.id) {
         throw new Error('Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.');
       }

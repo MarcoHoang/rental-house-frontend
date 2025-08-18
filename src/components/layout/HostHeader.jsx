@@ -8,9 +8,11 @@ import {
 import authService from "../../api/authService";
 import { getAvatarUrl } from "../../utils/avatarHelper";
 import Avatar from "../common/Avatar";
+import NotificationBell from "../common/NotificationBell";
 import styled from "styled-components";
 import ConfirmDialog from "../common/ConfirmDialog";
 import { useToast } from "../common/Toast";
+import { useAuthContext } from "../../contexts/AuthContext";
 
 // Styled components (giống với Header.jsx)
 const HeaderWrapper = styled.header`
@@ -185,6 +187,7 @@ const HostHeader = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [userData, setUserData] = useState({
+    id: null,
     username: "",
     fullName: "",
     avatar: null,
@@ -193,6 +196,7 @@ const HostHeader = () => {
   });
   const navigate = useNavigate();
   const { showSuccess } = useToast();
+  const { user: authUser } = useAuthContext();
 
   // Hàm xử lý đăng xuất
   const handleLogout = useCallback(() => {
@@ -230,7 +234,9 @@ const HostHeader = () => {
     try {
       if (storedUser) {
         const userData = JSON.parse(storedUser);
+        console.log('HostHeader.loadUserProfile - Parsed userData:', userData);
         setUserData({
+          id: userData.id,
           username: userData.email || "", // Lưu email vào username để tương thích
           fullName: userData.fullName || "Người dùng",
           avatar: getAvatarUrl(userData.avatarUrl || userData.avatar),
@@ -241,14 +247,17 @@ const HostHeader = () => {
       }
 
       const profile = await authService.getProfile();
+      console.log('HostHeader.loadUserProfile - API profile:', profile);
       if (profile) {
         const userData = {
+          id: profile.id,
           username: profile.email || "", // Lưu email vào username để tương thích
           fullName: profile.fullName || "Người dùng",
           avatar: getAvatarUrl(profile.avatarUrl || profile.avatar),
           email: profile.email || "",
           role: profile.role || "",
         };
+        console.log('HostHeader.loadUserProfile - Formatted userData:', userData);
         setUserData(userData);
         localStorage.setItem("user", JSON.stringify(userData));
         setIsLoggedIn(true);
@@ -270,7 +279,9 @@ const HostHeader = () => {
       if (token && user) {
         try {
           const userData = JSON.parse(user);
+          console.log('HostHeader.checkAuth - Parsed userData:', userData);
           setUserData({
+            id: userData.id,
             username: userData.email || "", // Lưu email vào username để tương thích
             fullName: userData.fullName || "Người dùng",
             avatar: getAvatarUrl(userData.avatarUrl || userData.avatar),
@@ -340,17 +351,29 @@ const HostHeader = () => {
 
         <div className="flex items-center space-x-4">
           {isLoggedIn ? (
-            <div className="flex items-center space-x-2 px-3 py-1 rounded-full">
-              <Avatar
-                src={userData.avatar}
-                alt={userData.fullName || "Người dùng"}
-                name={userData.fullName || "Người dùng"}
-                size="40px"
-              />
-              <div className="user-name">
-                {userData?.fullName || "Người dùng"}
+            <>
+              {console.log('HostHeader.render - userData:', userData)}
+              {console.log('HostHeader.render - authUser:', authUser)}
+              <NotificationBell userId={userData.id || authUser?.id || (() => {
+                try {
+                  const storedUser = localStorage.getItem('user');
+                  return storedUser ? JSON.parse(storedUser).id : null;
+                } catch (e) {
+                  return null;
+                }
+              })()} />
+              <div className="flex items-center space-x-2 px-3 py-1 rounded-full">
+                <Avatar
+                  src={userData.avatar}
+                  alt={userData.fullName || "Người dùng"}
+                  name={userData.fullName || "Người dùng"}
+                  size="40px"
+                />
+                <div className="user-name">
+                  {userData?.fullName || "Người dùng"}
+                </div>
               </div>
-            </div>
+            </>
           ) : (
             <div className="flex items-center space-x-3">
               <Link
