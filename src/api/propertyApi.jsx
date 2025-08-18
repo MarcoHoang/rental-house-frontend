@@ -421,6 +421,31 @@ const propertyApi = {
     }
   },
 
+  // Lấy nhà nổi bật theo số lượng yêu thích (công khai - không cần authentication)
+  getTopHousesByFavorites: async (limit = 5) => {
+    try {
+      const response = await publicApiClient.get('/houses/top-favorites', {
+        params: { limit }
+      });
+
+      // Backend trả về ApiResponse format, cần extract data
+      if (response.data && response.data.data) {
+        return {
+          content: response.data.data,
+          totalElements: response.data.data.length,
+          totalPages: 1,
+          size: response.data.data.length,
+          number: 0
+        };
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching top houses by favorites:', error);
+      throw error;
+    }
+  },
+
   // Lấy hình ảnh của nhà (công khai - không cần authentication)
   getHouseImages: async (id) => {
     try {

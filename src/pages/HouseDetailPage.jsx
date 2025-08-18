@@ -918,17 +918,17 @@ const HouseDetailPage = () => {
           </MapSection>
 
           {/* Section Liên hệ chủ nhà */}
-          {house.hostName && (
+          {house.hostName && (house.hostPhone || house.hostAvatar) && (
             <ContactHostSection>
               <h2>Liên hệ chủ nhà</h2>
               <div className="contact-container">
                 <div className="host-contact-row">
                   <div className="host-avatar">
                     <img 
-                      src={house.hostAvatar || user?.avatar || "https://via.placeholder.com/50x50/6B7280/FFFFFF?text=CH"} 
+                      src={house.hostAvatar || "/default-avatar.png" || "https://via.placeholder.com/50x50/6B7280/FFFFFF?text=CH"}
                       alt={house.hostName}
                       onError={(e) => {
-                        e.target.src = "https://via.placeholder.com/50x50/6B7280/FFFFFF?text=CH";
+                        e.target.src = "/default-avatar.png";
                       }}
                     />
                     <div className="verification-badge">✓</div>
@@ -968,7 +968,7 @@ const HouseDetailPage = () => {
                       </div>
                       <div>
                         {showPhoneNumber ? (
-                          <div className="phone-number">{house.hostPhone}</div>
+                          <div className="phone-number">{house.hostPhone || 'Chưa có số điện thoại'}</div>
                         ) : (
                           <>
                             <div className="phone-number">
@@ -977,7 +977,9 @@ const HouseDetailPage = () => {
                                 'Chưa có số điện thoại'
                               }
                             </div>
-                            <div className="show-number-text">Hiện số</div>
+                            <div className="show-number-text">
+                              {house.hostPhone ? 'Hiện số' : 'Không có số'}
+                            </div>
                           </>
                         )}
                       </div>
@@ -1048,15 +1050,13 @@ const HouseDetailPage = () => {
             )}
 
             {/* Số điện thoại chủ nhà */}
-            {house.hostPhone && (
-              <InfoItem>
-                <Phone size={20} className="icon" />
-                <div className="content">
-                  <div className="label">Số điện thoại</div>
-                  <div className="value">{house.hostPhone}</div>
-                </div>
-              </InfoItem>
-            )}
+            <InfoItem>
+              <Phone size={20} className="icon" />
+              <div className="content">
+                <div className="label">Số điện thoại</div>
+                <div className="value">{house.hostPhone || 'Chưa cập nhật'}</div>
+              </div>
+            </InfoItem>
 
             {house.createdAt && (
               <InfoItem>

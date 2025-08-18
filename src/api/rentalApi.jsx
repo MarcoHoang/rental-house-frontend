@@ -52,7 +52,40 @@ api.interceptors.response.use(
 );
 
 const rentalApi = {
-  // Tạo đơn thuê nhà mới
+  // Tạo yêu cầu thuê nhà mới (workflow mới)
+  createRequest: async (requestData) => {
+    try {
+      console.log("rentalApi.createRequest - Starting request creation:", requestData);
+      
+      const response = await api.post("/rentals/request", requestData);
+      
+      console.log("rentalApi.createRequest - Response:", response);
+      
+      // Xử lý response format từ backend
+      let result;
+      if (response.data.data) {
+        // Format: { code: "00", message: "...", data: RentalDTO }
+        result = response.data.data;
+      } else if (response.data.id) {
+        // Fallback: Format: RentalDTO
+        result = response.data;
+      } else {
+        throw new Error("Response format không hợp lệ");
+      }
+
+      return {
+        success: true,
+        data: result,
+        message: response.data.message || "Gửi yêu cầu thuê nhà thành công",
+      };
+    } catch (error) {
+      console.error("rentalApi.createRequest - Error:", error);
+      logApiError(error, "createRequest");
+      throw error;
+    }
+  },
+
+  // Tạo đơn thuê nhà mới (legacy - giữ lại để tương thích)
   createRental: async (rentalData) => {
     try {
       console.log("rentalApi.createRental - Starting rental creation:", rentalData);
@@ -241,47 +274,19 @@ const rentalApi = {
   // Kiểm tra xem nhà có thể thuê trong khoảng thời gian không
   checkAvailability: async (houseId, startDate, endDate) => {
     try {
-      // Gọi API để lấy thông tin nhà và kiểm tra trạng thái
-      const houseResponse = await api.get(`/houses/${houseId}`);
-      const house = houseResponse.data.data || houseResponse.data;
+      console.log("rentalApi.checkAvailability - Checking availability:", { houseId, startDate, endDate });
       
-      if (house.status !== "AVAILABLE") {
-        return {
-          available: false,
-          message: "Nhà không khả dụng để thuê",
-        };
-      }
-
-      // Kiểm tra xem có đơn thuê nào trùng lịch không
-      const rentalsResponse = await api.get(`/rentals`);
-      const allRentals = rentalsResponse.data.data || rentalsResponse.data || [];
-      
-      const conflictingRentals = allRentals.filter(rental => {
-        if (rental.houseId !== houseId) return false;
-        
-        const rentalStart = new Date(rental.startDate);
-        const rentalEnd = new Date(rental.endDate);
-        const requestStart = new Date(startDate);
-        const requestEnd = new Date(endDate);
-        
-        // Kiểm tra xem có trùng lịch không
-        return (
-          (requestStart >= rentalStart && requestStart < rentalEnd) ||
-          (requestEnd > rentalStart && requestEnd <= rentalEnd) ||
-          (requestStart <= rentalStart && requestEnd >= rentalEnd)
-        );
+      const response = await api.get(`/rentals/check-availability`, {
+        params: { houseId, startDate, endDate }
       });
-
-      if (conflictingRentals.length > 0) {
-        return {
-          available: false,
-          message: "Nhà đã được đặt trong khoảng thời gian này",
-        };
-      }
-
+      
+      console.log("rentalApi.checkAvailability - Response:", response);
+      
+      const result = response.data.data || response.data;
+      
       return {
-        available: true,
-        message: "Nhà có thể thuê trong khoảng thời gian này",
+        available: result.available,
+        message: result.message
       };
     } catch (error) {
       console.error("rentalApi.checkAvailability - Error:", error);
