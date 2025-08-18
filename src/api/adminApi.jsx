@@ -308,9 +308,33 @@ export const contractsApi = {
 
 // Dashboard Statistics
 export const dashboardApi = {
-  getStats: () => apiClient.get(`${API_PREFIX}/admin/dashboard/stats`),
-  getRecentHouses: () =>
-    apiClient.get(`${API_PREFIX}/admin/dashboard/recent-houses`),
+  getStats: async () => {
+    try {
+      const response = await apiClient.get(`${API_PREFIX}/admin/dashboard/stats`);
+      return response.data.data;
+    } catch (error) {
+      logApiError(error, "getDashboardStats");
+      throw error;
+    }
+  },
+  getRecentHouses: async () => {
+    try {
+      const response = await apiClient.get(`${API_PREFIX}/admin/dashboard/recent-houses`);
+      return response.data.data;
+    } catch (error) {
+      logApiError(error, "getRecentHouses");
+      throw error;
+    }
+  },
+  getRecentRentals: async () => {
+    try {
+      const response = await apiClient.get(`${API_PREFIX}/admin/dashboard/recent-rentals`);
+      return response.data.data;
+    } catch (error) {
+      logApiError(error, "getRecentRentals");
+      throw error;
+    }
+  },
   getRevenueChart: (period) =>
     apiClient.get(`${API_PREFIX}/admin/dashboard/revenue?period=${period}`),
 };
