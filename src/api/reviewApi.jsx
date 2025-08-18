@@ -17,33 +17,18 @@ const reviewApi = {
   // Tạo đánh giá mới
   createReview: async (reviewData) => {
     try {
-      console.log('Creating review:', reviewData);
-      console.log('API endpoint: /reviews');
+      // Log cơ bản cho debugging
+      console.log('Creating review:', { reviewerId: reviewData.reviewerId, houseId: reviewData.houseId, rating: reviewData.rating });
       
       const requestBody = {
-        reviewerId: reviewData.userId,
+        reviewerId: reviewData.reviewerId,
         houseId: reviewData.houseId,
         rating: reviewData.rating,
         comment: reviewData.comment
       };
       
-      console.log('Request body:', requestBody);
-      console.log('Request body types:', {
-        reviewerId: typeof requestBody.reviewerId,
-        houseId: typeof requestBody.houseId,
-        rating: typeof requestBody.rating,
-        comment: typeof requestBody.comment
-      });
-      console.log('Request body values:', {
-        reviewerId: requestBody.reviewerId,
-        houseId: requestBody.houseId,
-        rating: requestBody.rating,
-        comment: requestBody.comment
-      });
-      
       const response = await publicApiClient.post('/reviews', requestBody);
       
-      console.log('Review created successfully:', response);
       return response.data;
     } catch (error) {
       console.error('Error creating review:', error);
@@ -62,7 +47,6 @@ const reviewApi = {
         comment: reviewData.comment
       });
       
-      console.log('Review updated successfully:', response);
       return response.data;
     } catch (error) {
       console.error('Error updating review:', error);
@@ -74,7 +58,6 @@ const reviewApi = {
   deleteReview: async (reviewId) => {
     try {
       const response = await publicApiClient.delete(`/reviews/${reviewId}`);
-      console.log('Review deleted successfully:', response);
       return response.data;
     } catch (error) {
       console.error('Error deleting review:', error);
@@ -106,6 +89,17 @@ const reviewApi = {
     } catch (error) {
       console.error('Error fetching user review:', error);
       return { data: null };
+    }
+  },
+
+  // Toggle review visibility (admin/host only)
+  toggleReviewVisibility: async (reviewId) => {
+    try {
+      const response = await publicApiClient.put(`/reviews/${reviewId}/toggle-visibility`);
+      return response.data;
+    } catch (error) {
+      console.error('Error toggling review visibility:', error);
+      throw error;
     }
   }
 };

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Star, MessageCircle, Edit, Trash2, User, Calendar, AlertCircle } from 'lucide-react';
+import { Star, MessageCircle, Edit, Trash2, User, Calendar, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import reviewApi from '../../api/reviewApi';
 import rentalApi from '../../api/rentalApi';
 import { useAuthContext } from '../../contexts/AuthContext';
+import ReviewDebugForm from '../debug/ReviewDebugForm';
 
 const ReviewSectionContainer = styled.div`
   margin-top: 2rem;
@@ -284,6 +285,10 @@ const ActionButton = styled.button`
   &.delete:hover {
     color: #ef4444;
   }
+  
+  &.hide:hover {
+    color: #8b5cf6;
+  }
 `;
 
 const ReviewContent = styled.div`
@@ -329,6 +334,7 @@ const ReviewSection = ({ houseId }) => {
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingReview, setEditingReview] = useState(null);
+  const [showHiddenReviews, setShowHiddenReviews] = useState(false);
   const [formData, setFormData] = useState({
     rating: 0,
     comment: ''
@@ -349,7 +355,6 @@ const ReviewSection = ({ houseId }) => {
     try {
       setLoading(true);
       const response = await reviewApi.getHouseReviews(houseId);
-      console.log('Reviews response:', response);
       const list = response?.data || response || [];
       // Accept both array and paged formats
       const normalized = Array.isArray(list) ? list : (list?.content || []);
@@ -366,11 +371,9 @@ const ReviewSection = ({ houseId }) => {
   const checkUserReview = async () => {
     try {
       const response = await reviewApi.checkUserReview(houseId, user.id);
-      console.log('User review check response:', response);
       const exists = (response && typeof response === 'object') ? !!response.exists : (response === true || response === 'true');
       if (exists) {
         const userReviewData = await reviewApi.getUserReview(houseId, user.id);
-        console.log('User review data:', userReviewData);
         setUserReview(userReviewData?.data || userReviewData || null);
       } else {
         setUserReview(null);
@@ -384,7 +387,6 @@ const ReviewSection = ({ houseId }) => {
     try {
       setCheckingRental(true);
       const myRentals = await rentalApi.getMyRentals();
-      console.log('User rentals:', myRentals);
       
       // Tìm rental của nhà này
       const houseRental = myRentals.find(rental => rental.houseId === parseInt(houseId));
@@ -428,25 +430,49 @@ const ReviewSection = ({ houseId }) => {
       return;
     }
 
+    if (formData.comment.trim().length < 1) {
+      alert('Nội dung đánh giá không được để trống');
+      return;
+    }
+
+    if (formData.comment.trim().length > 1000) {
+      alert('Nội dung đánh giá không được quá 1000 ký tự');
+      return;
+    }
+
+    // Validation bổ sung
+    if (!houseId || isNaN(houseId)) {
+      alert('House ID không hợp lệ');
+      return;
+    }
+
+    if (!user?.id || isNaN(user.id)) {
+      alert('User ID không hợp lệ');
+      return;
+    }
+
+    if (!formData.rating || formData.rating < 1 || formData.rating > 5) {
+      alert('Vui lòng chọn số sao đánh giá (từ 1-5)');
+      return;
+    }
+
+    // Kiểm tra rating có phải là số không
+    if (isNaN(formData.rating)) {
+      alert('Rating không hợp lệ');
+      return;
+    }
+
     try {
       const reviewData = {
-        houseId,
-        userId: user.id,
+        houseId: Number(houseId),  // Đảm bảo houseId là number
+        reviewerId: Number(user.id),  // Đảm bảo reviewerId là number
         userName: user.fullName || user.username || 'User',
-        rating: formData.rating,
+        rating: Number(formData.rating),  // Đảm bảo rating là number
         comment: formData.comment.trim()
       };
 
-      console.log('Submitting review data:', reviewData);
-      console.log('User object:', user);
-      console.log('User ID:', user?.id);
-      console.log('User role:', user?.roleName);
-      console.log('House ID:', houseId);
-      console.log('House ID type:', typeof houseId);
-      console.log('Rating:', formData.rating);
-      console.log('Rating type:', typeof formData.rating);
-      console.log('Comment:', formData.comment);
-      console.log('Comment type:', typeof formData.comment);
+      // Log cơ bản cho debugging (có thể bỏ trong production)
+      console.log('Submitting review:', { houseId, reviewerId: user?.id, rating: formData.rating });
 
       if (editingReview) {
         await reviewApi.updateReview(editingReview.id, reviewData);
@@ -512,11 +538,41 @@ const ReviewSection = ({ houseId }) => {
       await reviewApi.deleteReview(reviewId);
       await fetchReviews();
       await checkUserReview();
-      
-
     } catch (error) {
       console.error('Error deleting review:', error);
       alert('Có lỗi xảy ra khi xóa đánh giá. Vui lòng thử lại.');
+    }
+  };
+
+  const handleHostDelete = async (reviewId) => {
+    if (window.confirm('Bạn có chắc chắn muốn xóa đánh giá này? Hành động này sẽ làm mất cả đánh giá và số sao.')) {
+      try {
+        await reviewApi.deleteReview(reviewId);
+        await fetchReviews();
+        await checkUserReview();
+        alert('Đã xóa đánh giá thành công!');
+      } catch (error) {
+        console.error('Error deleting review:', error);
+        alert('Có lỗi xảy ra khi xóa đánh giá. Vui lòng thử lại.');
+      }
+    }
+  };
+
+  const handleToggleVisibility = async (reviewId, isVisible) => {
+    const action = isVisible ? 'hiện' : 'ẩn';
+    if (window.confirm(`Bạn có chắc chắn muốn ${action} đánh giá này?`)) {
+      try {
+        await reviewApi.toggleReviewVisibility(reviewId);
+        setReviews(reviews.map(review => 
+          review.id === reviewId 
+            ? { ...review, isVisible: isVisible }
+            : review
+        ));
+        alert(`Đã ${action} đánh giá thành công!`);
+      } catch (error) {
+        console.error('Error toggling review visibility:', error);
+        alert(`Có lỗi xảy ra khi ${action} đánh giá. Vui lòng thử lại.`);
+      }
     }
   };
 
@@ -568,14 +624,10 @@ const ReviewSection = ({ houseId }) => {
     ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1)
     : 0;
 
-  // Debug log
-  console.log('ReviewSection Debug:', {
-    user: user?.id,
-    userRole: user?.roleName,
-    hasUserReview: !!userReview,
-    canReview,
-    userRentalStatus: userRentalStatus?.status
-  });
+  const visibleReviewsCount = reviews.filter(review => review.isVisible !== false).length;
+
+  // Debug log cơ bản (có thể bỏ trong production)
+  // console.log('ReviewSection Debug:', { user: user?.id, userRole: user?.roleName, hasUserReview: !!userReview, canReview });
 
   const renderStars = (rating, interactive = false, onStarClick = null) => {
     return Array.from({ length: 5 }, (_, index) => (
@@ -599,7 +651,20 @@ const ReviewSection = ({ houseId }) => {
               <span>{averageRating}/5</span>
             </AverageRating>
             <span>•</span>
-            <span>{reviews.length} đánh giá</span>
+            <span>{visibleReviewsCount} đánh giá hiển thị</span>
+            {reviews.length > visibleReviewsCount && (
+              <span style={{ 
+                fontSize: '0.875rem', 
+                color: '#6b7280',
+                cursor: 'pointer',
+                textDecoration: 'underline'
+              }}
+              onClick={() => setShowHiddenReviews(!showHiddenReviews)}
+              title="Click để xem/ẩn review ẩn"
+              >
+                ({reviews.length - visibleReviewsCount} ẩn)
+              </span>
+            )}
           </ReviewStats>
         </div>
         
@@ -667,6 +732,39 @@ const ReviewSection = ({ houseId }) => {
             <MessageCircle size={16} />
             Viết đánh giá
           </AddReviewButton>
+        </div>
+      )}
+
+      {/* Nút quản lý review cho chủ nhà */}
+      {user && user.roleName === 'HOST' && (
+        <div style={{ 
+          marginBottom: '1.5rem', 
+          padding: '1rem',
+          background: '#f8fafc',
+          border: '1px solid #e2e8f0',
+          borderRadius: '0.5rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <div style={{ fontSize: '0.875rem', color: '#374151' }}>
+            <strong>Quản lý đánh giá:</strong> Bạn có thể ẩn/hiện hoặc xóa đánh giá
+          </div>
+          <button
+            onClick={() => setShowHiddenReviews(!showHiddenReviews)}
+            style={{
+              padding: '0.5rem 1rem',
+              background: showHiddenReviews ? '#ef4444' : '#10b981',
+              color: 'white',
+              border: 'none',
+              borderRadius: '0.375rem',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              fontWeight: '500'
+            }}
+          >
+            {showHiddenReviews ? 'Chỉ hiện review đang hiển thị' : 'Hiện tất cả review (kể cả ẩn)'}
+          </button>
         </div>
       )}
 
@@ -745,8 +843,20 @@ const ReviewSection = ({ houseId }) => {
         </NoReviews>
       ) : (
         <ReviewsList>
-          {reviews.map((review) => (
-            <ReviewItem key={review.id}>
+          {reviews
+            .filter(review => {
+              // Chủ nhà có thể toggle hiển thị review ẩn
+              if (user && user.roleName === 'HOST') {
+                return showHiddenReviews ? true : review.isVisible !== false;
+              }
+              // User thường chỉ thấy review visible
+              return review.isVisible !== false;
+            })
+            .map((review) => (
+            <ReviewItem key={review.id} style={{
+              opacity: review.isVisible === false ? 0.6 : 1,
+              background: review.isVisible === false ? '#f9fafb' : 'white'
+            }}>
               <ReviewHeaderItem>
                 <UserInfo>
                   <UserAvatar>
@@ -768,6 +878,19 @@ const ReviewSection = ({ houseId }) => {
                   <UserDetails>
                     <div className="username">
                       {review.reviewerFullName || review.reviewerName || 'Người dùng'}
+                      {review.isVisible === false && (
+                        <span style={{
+                          marginLeft: '0.5rem',
+                          background: '#fef3c7',
+                          color: '#92400e',
+                          padding: '0.125rem 0.375rem',
+                          borderRadius: '0.25rem',
+                          fontSize: '0.75rem',
+                          fontWeight: '500'
+                        }}>
+                          ĐÃ ẨN
+                        </span>
+                      )}
                     </div>
                     <div className="date">
                       {new Date(review.createdAt).toLocaleDateString('vi-VN')}
@@ -775,22 +898,47 @@ const ReviewSection = ({ houseId }) => {
                   </UserDetails>
                 </UserInfo>
                 
-                {user && (user.id === review.reviewerId || user.roleName === 'ADMIN') && (
+                {user && (
                   <ReviewActions>
-                    <ActionButton
-                      className="edit"
-                      onClick={() => handleEdit(review)}
-                      title="Chỉnh sửa"
-                    >
-                      <Edit size={16} />
-                    </ActionButton>
-                    <ActionButton
-                      className="delete"
-                      onClick={() => handleDelete(review.id)}
-                      title="Xóa"
-                    >
-                      <Trash2 size={16} />
-                    </ActionButton>
+                    {/* User có thể edit/delete review của mình */}
+                    {(user.id === review.reviewerId || user.roleName === 'ADMIN') && (
+                      <>
+                        <ActionButton
+                          className="edit"
+                          onClick={() => handleEdit(review)}
+                          title="Chỉnh sửa"
+                        >
+                          <Edit size={16} />
+                        </ActionButton>
+                        <ActionButton
+                          className="delete"
+                          onClick={() => handleDelete(review.id)}
+                          title="Xóa"
+                        >
+                          <Trash2 size={16} />
+                        </ActionButton>
+                      </>
+                    )}
+                    
+                    {/* Chủ nhà có thể quản lý review của nhà mình */}
+                    {user.roleName === 'HOST' && (
+                      <>
+                        <ActionButton
+                          className="hide"
+                          onClick={() => handleToggleVisibility(review.id, !review.isVisible)}
+                          title={review.isVisible ? "Ẩn đánh giá" : "Hiện đánh giá"}
+                        >
+                          {review.isVisible ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </ActionButton>
+                        <ActionButton
+                          className="delete"
+                          onClick={() => handleHostDelete(review.id)}
+                          title="Xóa đánh giá"
+                        >
+                          <Trash2 size={16} />
+                        </ActionButton>
+                      </>
+                    )}
                   </ReviewActions>
                 )}
               </ReviewHeaderItem>
@@ -805,6 +953,11 @@ const ReviewSection = ({ houseId }) => {
           ))}
         </ReviewsList>
       )}
+
+      {/* Debug Form - Đã comment out sau khi test thành công */}
+      {/* {process.env.NODE_ENV === 'development' && (
+        <ReviewDebugForm />
+      )} */}
       
 
     </ReviewSectionContainer>
