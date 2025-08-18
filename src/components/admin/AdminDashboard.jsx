@@ -30,6 +30,8 @@ import UserDetailPage from "./UserDetailPage";
 import HostApplicationDetailPage from "./HostApplicationDetailPage";
 import HostDetailPage from "./HostDetailPage";
 import HouseDetailPage from "./HouseDetailPage";
+import { dashboardApi } from "../../api/adminApi";
+import LoadingSpinner from "../common/LoadingSpinner";
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -405,6 +407,46 @@ const Badge = styled.span`
     background-color: #fed7d7;
     color: #742a2a;
   }
+
+  &.pending {
+    background-color: #fef5e7;
+    color: #92400e;
+  }
+
+  &.approved {
+    background-color: #d1fae5;
+    color: #065f46;
+  }
+
+  &.scheduled {
+    background-color: #dbeafe;
+    color: #1e40af;
+  }
+
+  &.checked-in {
+    background-color: #e0e7ff;
+    color: #3730a3;
+  }
+
+  &.checked-out {
+    background-color: #f3e8ff;
+    color: #581c87;
+  }
+
+  &.rejected {
+    background-color: #fee2e2;
+    color: #991b1b;
+  }
+
+  &.canceled {
+    background-color: #f3f4f6;
+    color: #374151;
+  }
+
+  &.default {
+    background-color: #e5e7eb;
+    color: #374151;
+  }
 `;
 
 const Button = styled.button`
@@ -594,6 +636,10 @@ const AdminDashboard = () => {
     }).format(price);
   };
 
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('vi-VN');
+  };
+
   const sidebarItems = [
     {
       id: "dashboard",
@@ -768,12 +814,233 @@ const AdminDashboard = () => {
   );
 };
 
-const DashboardContent = () => (
-  <div>
-    <p>Nội dung trang tổng quan (Dashboard)...</p>
-  </div>
-);
+const DashboardContent = () => {
+  const [stats, setStats] = useState(null);
+  const [recentHouses, setRecentHouses] = useState([]);
+  const [recentRentals, setRecentRentals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const [statsData, housesData, rentalsData] = await Promise.all([
+          dashboardApi.getStats(),
+          dashboardApi.getRecentHouses(),
+          dashboardApi.getRecentRentals()
+        ]);
+        
+        setStats(statsData);
+        setRecentHouses(housesData);
+        setRecentRentals(rentalsData);
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError('Không thể tải dữ liệu dashboard');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(price);
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('vi-VN');
+  };
+
+  const getStatusBadge = (status) => {
+    const statusConfig = {
+      AVAILABLE: { label: "Có sẵn", className: "available" },
+      RENTED: { label: "Đã thuê", className: "rented" },
+      INACTIVE: { label: "Không hoạt động", className: "maintenance" },
+      PENDING: { label: "Chờ duyệt", className: "pending" },
+      APPROVED: { label: "Đã duyệt", className: "approved" },
+      SCHEDULED: { label: "Đã lên lịch", className: "scheduled" },
+      CHECKED_IN: { label: "Đã nhận phòng", className: "checked-in" },
+      CHECKED_OUT: { label: "Đã trả phòng", className: "checked-out" },
+      REJECTED: { label: "Từ chối", className: "rejected" },
+      CANCELED: { label: "Đã hủy", className: "canceled" }
+    };
+    return statusConfig[status] || { label: status, className: "default" };
+  };
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ textAlign: 'center', color: '#ef4444', padding: '2rem' }}>
+        <p>{error}</p>
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <div style={{ textAlign: 'center', color: '#6b7280', padding: '2rem' }}>
+        <p>Không có dữ liệu để hiển thị</p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {/* Statistics Cards */}
+      <StatsGrid>
+        <StatCard>
+          <div className="stat-header">
+            <span className="stat-title">Tổng người dùng</span>
+            <div className="stat-icon total">
+              <Users size={20} />
+            </div>
+          </div>
+          <div className="stat-value">{stats.users?.total || 0}</div>
+          <div className="stat-change">
+            <span>Chủ nhà: {stats.users?.hosts || 0} | Admin: {stats.users?.admins || 0}</span>
+          </div>
+        </StatCard>
+
+        <StatCard>
+          <div className="stat-header">
+            <span className="stat-title">Tổng nhà cho thuê</span>
+            <div className="stat-icon available">
+              <Home size={20} />
+            </div>
+          </div>
+          <div className="stat-value">{stats.houses?.total || 0}</div>
+          <div className="stat-change">
+            <span>Có sẵn: {stats.houses?.available || 0} | Đã thuê: {stats.houses?.rented || 0}</span>
+          </div>
+        </StatCard>
+
+        <StatCard>
+          <div className="stat-header">
+            <span className="stat-title">Tổng đơn thuê</span>
+            <div className="stat-icon rented">
+              <FileText size={20} />
+            </div>
+          </div>
+          <div className="stat-value">{stats.rentals?.total || 0}</div>
+          <div className="stat-change">
+            <span>Chờ duyệt: {stats.rentals?.pending || 0} | Hoạt động: {stats.rentals?.active || 0}</span>
+          </div>
+        </StatCard>
+
+        <StatCard>
+          <div className="stat-header">
+            <span className="stat-title">Doanh thu tháng</span>
+            <div className="stat-icon revenue">
+              <DollarSign size={20} />
+            </div>
+          </div>
+          <div className="stat-value">{formatPrice(stats.revenue?.monthly || 0)}</div>
+          <div className="stat-change">
+            <span>Tổng: {formatPrice(stats.revenue?.total || 0)}</span>
+          </div>
+        </StatCard>
+      </StatsGrid>
+
+      {/* Recent Houses */}
+      <Card style={{ marginBottom: '2rem' }}>
+        <CardHeader>
+          <h3>Nhà mới đăng gần đây</h3>
+          <p>Danh sách 5 nhà được đăng gần đây nhất</p>
+        </CardHeader>
+        <CardContent>
+          {recentHouses.length > 0 ? (
+            <div>
+              {recentHouses.map((house) => (
+                <HouseItem key={house.id}>
+                  <img 
+                    src={house.imageUrl || "/default-house.jpg"} 
+                    alt={house.title}
+                    onError={(e) => {
+                      e.target.src = "/default-house.jpg";
+                    }}
+                  />
+                  <div className="house-info">
+                    <h4>{house.title}</h4>
+                    <p className="address">{house.address}</p>
+                    <p className="price">{formatPrice(house.price)}</p>
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <Badge className={getStatusBadge(house.status).className}>
+                        {getStatusBadge(house.status).label}
+                      </Badge>
+                      <span style={{ marginLeft: '1rem', fontSize: '0.75rem', color: '#6b7280' }}>
+                        Chủ nhà: {house.hostName}
+                      </span>
+                    </div>
+                  </div>
+                </HouseItem>
+              ))}
+            </div>
+          ) : (
+            <p style={{ textAlign: 'center', color: '#6b7280' }}>
+              Chưa có nhà nào được đăng
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Recent Rentals */}
+      <Card>
+        <CardHeader>
+          <h3>Đơn thuê gần đây</h3>
+          <p>Danh sách 5 đơn thuê gần đây nhất</p>
+        </CardHeader>
+        <CardContent>
+          {recentRentals.length > 0 ? (
+            <Table>
+              <thead>
+                <tr>
+                  <th>Nhà</th>
+                  <th>Người thuê</th>
+                  <th>Ngày thuê</th>
+                  <th>Giá</th>
+                  <th>Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentRentals.map((rental) => (
+                  <tr key={rental.id}>
+                    <td>{rental.houseTitle}</td>
+                    <td>{rental.renterName}</td>
+                    <td>
+                      {formatDate(rental.startDate)} - {formatDate(rental.endDate)}
+                    </td>
+                    <td>{formatPrice(rental.totalPrice)}</td>
+                    <td>
+                      <Badge className={getStatusBadge(rental.status).className}>
+                        {getStatusBadge(rental.status).label}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          ) : (
+            <p style={{ textAlign: 'center', color: '#6b7280' }}>
+              Chưa có đơn thuê nào
+            </p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
 
 
 const DevelopingFeaturePage = ({ featureName }) => (
