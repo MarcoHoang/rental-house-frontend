@@ -6,6 +6,7 @@ import propertyApi from '../api/propertyApi';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { getHouseTypeLabel, getHouseStatusLabel, getHouseStatusColor } from '../utils/constants';
 import RentHouseModal from '../components/house/RentHouseModal';
+import ReviewSection from '../components/house/ReviewSection';
 import { extractHouseFromResponse } from '../utils/apiHelpers';
 import { useAuthContext } from '../contexts/AuthContext';
 
@@ -916,6 +917,9 @@ const HouseDetailPage = () => {
               </div>
             </div>
           </MapSection>
+
+          {/* Section Đánh giá */}
+          <ReviewSection houseId={house.id} />
 
           {/* Section Liên hệ chủ nhà */}
           {house.hostName && (house.hostPhone || house.hostAvatar) && (
