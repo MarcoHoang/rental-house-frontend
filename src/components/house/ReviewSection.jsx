@@ -419,6 +419,10 @@ const ReviewSection = ({ houseId }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    console.log('Form data before validation:', formData);
+    console.log('House ID:', houseId, 'Type:', typeof houseId);
+    console.log('User ID:', user?.id, 'Type:', typeof user?.id);
+    
     if (formData.rating === 0) {
       alert('Vui lòng chọn số sao đánh giá');
       return;
@@ -429,17 +433,7 @@ const ReviewSection = ({ houseId }) => {
       return;
     }
 
-    if (formData.comment.trim().length < 1) {
-      alert('Nội dung đánh giá không được để trống');
-      return;
-    }
-
-    if (formData.comment.trim().length > 1000) {
-      alert('Nội dung đánh giá không được quá 1000 ký tự');
-      return;
-    }
-
-    // Validation bổ sung
+    // Validation cơ bản
     if (!houseId || isNaN(houseId)) {
       alert('House ID không hợp lệ');
       return;
@@ -455,48 +449,104 @@ const ReviewSection = ({ houseId }) => {
       return;
     }
 
-    // Kiểm tra rating có phải là số không
-    if (isNaN(formData.rating)) {
-      alert('Rating không hợp lệ');
-      return;
-    }
-
     try {
+      // Đảm bảo dữ liệu hợp lệ trước khi gửi
+      const houseIdNum = Number(houseId);
+      const reviewerIdNum = Number(user.id);
+      const ratingNum = Number(formData.rating);
+      const commentTrimmed = formData.comment.trim();
+
+      // Kiểm tra lại một lần nữa
+      if (isNaN(houseIdNum) || houseIdNum <= 0) {
+        console.error('Invalid house ID:', houseId, '->', houseIdNum);
+        alert('House ID không hợp lệ');
+        return;
+      }
+
+      if (isNaN(reviewerIdNum) || reviewerIdNum <= 0) {
+        console.error('Invalid user ID:', user?.id, '->', reviewerIdNum);
+        alert('User ID không hợp lệ');
+        return;
+      }
+
+      // Đảm bảo cả hai ID đều là số nguyên
+      if (!Number.isInteger(houseIdNum)) {
+        console.error('House ID must be integer:', houseIdNum);
+        alert('House ID phải là số nguyên');
+        return;
+      }
+
+      if (!Number.isInteger(reviewerIdNum)) {
+        console.error('User ID must be integer:', reviewerIdNum);
+        alert('User ID phải là số nguyên');
+        return;
+      }
+
+      if (isNaN(ratingNum) || ratingNum < 1 || ratingNum > 5) {
+        console.error('Invalid rating:', formData.rating, '->', ratingNum);
+        alert('Rating không hợp lệ (phải từ 1-5)');
+        return;
+      }
+
+      // Đảm bảo rating là số nguyên
+      if (!Number.isInteger(ratingNum)) {
+        console.error('Rating must be integer:', ratingNum);
+        alert('Rating phải là số nguyên từ 1-5');
+        return;
+      }
+
+      if (!commentTrimmed || commentTrimmed.length === 0) {
+        console.error('Invalid comment:', formData.comment, '->', commentTrimmed);
+        alert('Nội dung đánh giá không được để trống');
+        return;
+      }
+
+      if (commentTrimmed.length > 1000) {
+        console.error('Comment too long:', commentTrimmed.length);
+        alert('Nội dung đánh giá không được quá 1000 ký tự');
+        return;
+      }
+
+      // Kiểm tra comment cơ bản
+      if (typeof commentTrimmed !== 'string') {
+        console.error('Comment is not a string:', typeof commentTrimmed);
+        alert('Nội dung đánh giá phải là chuỗi văn bản');
+        return;
+      }
+
+      // Kiểm tra comment có chứa ký tự đặc biệt không mong muốn
+      if (commentTrimmed.includes('\0') || commentTrimmed.includes('\r') || commentTrimmed.includes('\n') || commentTrimmed.includes('\t')) {
+        console.error('Comment contains control characters');
+        alert('Nội dung đánh giá không được chứa ký tự đặc biệt');
+        return;
+      }
+
       const reviewData = {
-        houseId: Number(houseId),  // Đảm bảo houseId là number
-        reviewerId: Number(user.id),  // Đảm bảo reviewerId là number
-        userName: user.fullName || user.username || 'User',
-        rating: Number(formData.rating),  // Đảm bảo rating là number
-        comment: formData.comment.trim()
+        houseId: houseIdNum,
+        reviewerId: reviewerIdNum,
+        rating: ratingNum,
+        comment: commentTrimmed
       };
 
-      // Log cơ bản cho debugging (có thể bỏ trong production)
-      console.log('Submitting review:', { houseId, reviewerId: user?.id, rating: formData.rating });
+      console.log('Sending review data:', reviewData);
 
       if (editingReview) {
         await reviewApi.updateReview(editingReview.id, reviewData);
       } else {
-        const result = await reviewApi.createReview(reviewData);
-        console.log('Review created successfully:', result);
+        await reviewApi.createReview(reviewData);
       }
 
-      // Reset form and refresh reviews
-      setFormData({ rating: 0, comment: '' });
-      setShowForm(false);
-      setEditingReview(null);
-      await fetchReviews();
-      await checkUserReview();
-      
+             // Reset form and refresh reviews
+       setFormData({ rating: 0, comment: '' });
+       setShowForm(false);
+       setEditingReview(null);
+       await fetchReviews();
+       await checkUserReview();
 
     } catch (error) {
       console.error('Error saving review:', error);
-      console.error('Error type:', error.constructor.name);
-      console.error('Error message:', error.message);
       console.error('Error response:', error.response);
-      console.error('Error status:', error.response?.status);
       console.error('Error data:', error.response?.data);
-      console.error('Error config:', error.config);
-      console.error('Error request:', error.request);
       
       // Hiển thị thông báo lỗi chi tiết hơn
       let errorMessage = 'Có lỗi xảy ra khi lưu đánh giá. ';
@@ -504,7 +554,19 @@ const ReviewSection = ({ houseId }) => {
       if (error.response?.status === 401) {
         errorMessage += 'Vui lòng đăng nhập lại.';
       } else if (error.response?.status === 400) {
-        errorMessage += 'Dữ liệu không hợp lệ.';
+        const errorData = error.response?.data;
+        console.log('Error data from backend:', errorData);
+        
+        if (errorData?.message) {
+          errorMessage += errorData.message;
+        } else if (errorData?.errors) {
+          const errorMessages = Object.values(errorData.errors).flat();
+          errorMessage += 'Dữ liệu không hợp lệ: ' + errorMessages.join(', ');
+        } else if (errorData?.data?.message) {
+          errorMessage += errorData.data.message;
+        } else {
+          errorMessage += 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin.';
+        }
       } else if (error.response?.status === 404) {
         errorMessage += 'Không tìm thấy nhà hoặc user.';
       } else if (error.response?.status === 500) {
@@ -582,8 +644,7 @@ const ReviewSection = ({ houseId }) => {
   };
 
   const canReview = user && 
-                   user.roleName !== 'HOST' && 
-                   userReview === null;
+                   (user.roleName === 'ADMIN' || (user.roleName !== 'HOST' && userReview === null));
 
   const getReviewPermissionMessage = () => {
     if (!user) {
@@ -599,6 +660,14 @@ const ReviewSection = ({ houseId }) => {
         type: 'info',
         message: 'Chủ nhà không thể đánh giá nhà của mình',
         icon: <AlertCircle size={16} />
+      };
+    }
+    
+    if (user.roleName === 'ADMIN') {
+      return {
+        type: 'success',
+        message: 'Admin có thể tạo và quản lý tất cả đánh giá',
+        icon: <MessageCircle size={16} />
       };
     }
     
@@ -624,9 +693,6 @@ const ReviewSection = ({ houseId }) => {
     : 0;
 
   const visibleReviewsCount = reviews.filter(review => review.isVisible !== false).length;
-
-  // Debug log cơ bản (có thể bỏ trong production)
-  // console.log('ReviewSection Debug:', { user: user?.id, userRole: user?.roleName, hasUserReview: !!userReview, canReview });
 
   const renderStars = (rating, interactive = false, onStarClick = null) => {
     return Array.from({ length: 5 }, (_, index) => (
@@ -687,8 +753,8 @@ const ReviewSection = ({ houseId }) => {
         </div>
       </ReviewHeader>
 
-      {/* Form đánh giá - chỉ hiển thị khi user có thể đánh giá */}
-      {canReview && showForm && (
+      {/* Form đánh giá - hiển thị khi user có thể đánh giá HOẶC khi đang edit review */}
+      {((canReview && showForm) || (editingReview && showForm)) && (
         <ReviewForm>
           <FormTitle>
             {editingReview ? 'Chỉnh sửa đánh giá' : 'Viết đánh giá của bạn'}
@@ -724,8 +790,8 @@ const ReviewSection = ({ houseId }) => {
         </ReviewForm>
       )}
 
-      {/* Nút viết đánh giá - chỉ hiển thị khi user có thể đánh giá */}
-      {canReview && !showForm && (
+      {/* Nút viết đánh giá - chỉ hiển thị khi user có thể đánh giá và không đang edit */}
+      {canReview && !showForm && !editingReview && (
         <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
           <AddReviewButton onClick={() => setShowForm(true)}>
             <MessageCircle size={16} />
@@ -734,8 +800,8 @@ const ReviewSection = ({ houseId }) => {
         </div>
       )}
 
-      {/* Nút quản lý review cho chủ nhà */}
-      {user && user.roleName === 'HOST' && (
+      {/* Nút quản lý review cho chủ nhà và admin */}
+      {user && (user.roleName === 'HOST' || user.roleName === 'ADMIN') && (
         <div style={{ 
           marginBottom: '1.5rem', 
           padding: '1rem',
@@ -747,7 +813,7 @@ const ReviewSection = ({ houseId }) => {
           alignItems: 'center'
         }}>
           <div style={{ fontSize: '0.875rem', color: '#374151' }}>
-            <strong>Quản lý đánh giá:</strong> Bạn có thể ẩn/hiện hoặc xóa đánh giá
+            <strong>Quản lý đánh giá:</strong> {user.roleName === 'ADMIN' ? 'Admin có thể quản lý tất cả đánh giá' : 'Bạn có thể ẩn/hiện hoặc xóa đánh giá'}
           </div>
           <button
             onClick={() => setShowHiddenReviews(!showHiddenReviews)}
@@ -827,7 +893,7 @@ const ReviewSection = ({ houseId }) => {
             </div>
           )}
 
-      {/* Danh sách đánh giá */}
+            {/* Danh sách đánh giá */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '2rem' }}>
           Đang tải đánh giá...
@@ -844,8 +910,8 @@ const ReviewSection = ({ houseId }) => {
         <ReviewsList>
           {reviews
             .filter(review => {
-              // Chủ nhà có thể toggle hiển thị review ẩn
-              if (user && user.roleName === 'HOST') {
+              // Chủ nhà và Admin có thể toggle hiển thị review ẩn
+              if (user && (user.roleName === 'HOST' || user.roleName === 'ADMIN')) {
                 return showHiddenReviews ? true : review.isVisible !== false;
               }
               // User thường chỉ thấy review visible
@@ -899,8 +965,8 @@ const ReviewSection = ({ houseId }) => {
                 
                 {user && (
                   <ReviewActions>
-                    {/* User có thể edit/delete review của mình */}
-                    {(user.id === review.reviewerId || user.roleName === 'ADMIN') && (
+                    {/* User có thể edit/delete review của mình, Admin có thể edit/delete tất cả review */}
+                    {(Number(user.id) === Number(review.reviewerId) || user.roleName === 'ADMIN') && (
                       <>
                         <ActionButton
                           className="edit"
@@ -919,13 +985,13 @@ const ReviewSection = ({ houseId }) => {
                       </>
                     )}
                     
-                    {/* Chủ nhà có thể quản lý review của nhà mình */}
-                    {user.roleName === 'HOST' && (
+                    {/* Chủ nhà và Admin có thể quản lý review */}
+                    {(user.roleName === 'HOST' || user.roleName === 'ADMIN') && (
                       <>
                         <ActionButton
                           className="hide"
                           onClick={() => handleToggleVisibility(review.id, !review.isVisible)}
-                          title={review.isVisible ? "Ẩn đánh giá" : "Hiện đánh giá"}
+                          title={review.isVisible ? "Ẩn đánh giá" : "Hiển thị đánh giá"}
                         >
                           {review.isVisible ? <EyeOff size={16} /> : <Eye size={16} />}
                         </ActionButton>
@@ -952,8 +1018,6 @@ const ReviewSection = ({ houseId }) => {
           ))}
         </ReviewsList>
       )}
-
-
     </ReviewSectionContainer>
   );
 };
