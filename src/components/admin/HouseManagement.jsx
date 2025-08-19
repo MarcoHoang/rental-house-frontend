@@ -108,6 +108,7 @@ const Grid = styled.div`
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.5rem;
   padding: 1.5rem;
+  align-items: stretch;
 `;
 
 const HouseCard = styled.div`
@@ -117,6 +118,10 @@ const HouseCard = styled.div`
   overflow: hidden;
   transition: all 0.2s;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 500px;
 
   &:hover {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -135,6 +140,7 @@ const HouseImage = styled.div`
   font-size: 3rem;
   position: relative;
   overflow: hidden;
+  flex-shrink: 0;
 
   img {
     width: 100%;
@@ -145,6 +151,10 @@ const HouseImage = styled.div`
 
 const HouseInfo = styled.div`
   padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 `;
 
 const HouseTitle = styled.h3`
@@ -156,6 +166,9 @@ const HouseTitle = styled.h3`
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  flex-shrink: 0;
+  min-height: 2.5rem;
+  line-height: 1.25;
 `;
 
 const HouseDetails = styled.div`
@@ -163,6 +176,7 @@ const HouseDetails = styled.div`
   flex-direction: column;
   gap: 0.5rem;
   margin-bottom: 1rem;
+  flex-shrink: 0;
 `;
 
 const DetailRow = styled.div`
@@ -171,6 +185,7 @@ const DetailRow = styled.div`
   gap: 0.5rem;
   color: #4a5568;
   font-size: 0.875rem;
+  min-height: 1.25rem;
 `;
 
 const Price = styled.div`
@@ -187,6 +202,9 @@ const Status = styled.span`
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+  min-height: 1.5rem;
 
   &.available {
     background-color: #c6f6d5;
@@ -207,6 +225,45 @@ const Actions = styled.div`
   gap: 0.5rem;
   padding-top: 1rem;
   border-top: 1px solid #e2e8f0;
+  margin-top: auto;
+  flex-shrink: 0;
+`;
+
+const ActionButton = styled.button`
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  background: white;
+  color: #4a5568;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 0;
+  white-space: nowrap;
+  height: 2.5rem;
+  min-height: 2.5rem;
+
+  &:hover {
+    background: #f7fafc;
+    border-color: #cbd5e0;
+  }
+
+  &.danger {
+    color: #e53e3e;
+    &:hover {
+      background: #fed7d7;
+    }
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
 `;
 
 const LoadingSpinner = styled.div`
@@ -444,17 +501,17 @@ const HouseManagement = () => {
                   </Status>
 
                   <Actions>
-                    <Button onClick={() => handleViewHouse(house.id)}>
+                    <ActionButton onClick={() => handleViewHouse(house.id)}>
                       <Eye size={16} />
                       Xem chi tiết
-                    </Button>
-                    <Button 
+                    </ActionButton>
+                    <ActionButton 
                       className="danger" 
                       onClick={() => handleDeleteHouse(house.id)}
                     >
                       <Trash2 size={16} />
                       Xóa
-                    </Button>
+                    </ActionButton>
                   </Actions>
                 </HouseInfo>
               </HouseCard>
