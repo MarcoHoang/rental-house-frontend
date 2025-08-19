@@ -588,7 +588,7 @@ const propertyApi = {
     try {
 
       
-      const response = await hostApiClient.put(`/houses/${id}`, houseData, {
+      const response = await hostApiClient.put(`/houses/${id}/edit`, houseData, {
         headers: {
           'Content-Type': 'application/json',
         },

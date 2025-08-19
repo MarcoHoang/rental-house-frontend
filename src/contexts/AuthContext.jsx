@@ -31,28 +31,17 @@ export const AuthProvider = ({ children }) => {
         const token = localStorage.getItem('token');
         const userData = getUserFromStorage();
         
-        console.log('=== AUTH PROVIDER DEBUG ===');
-        console.log('AuthProvider.checkAuth - Token exists:', !!token);
-        console.log('AuthProvider.checkAuth - Token value:', token ? token.substring(0, 20) + '...' : 'null');
-        console.log('AuthProvider.checkAuth - User data from storage:', userData);
-        console.log('AuthProvider.checkAuth - User data ID:', userData?.id);
-        console.log('AuthProvider.checkAuth - User data role:', userData?.roleName);
-        console.log('AuthProvider.checkAuth - User data valid:', !!(userData && userData.id));
-        console.log('=====================================');
+
         
         if (token) {
           if (userData && userData.id) {
             // Có token và user data hợp lệ
-            console.log('AuthProvider.checkAuth - Setting user state with valid data:', userData);
             setUser(userData);
-            console.log('AuthProvider.checkAuth - User state set successfully');
           } else {
             // Có token nhưng không có user data hoặc thiếu ID - thử gọi API
-            console.log('AuthProvider.checkAuth - Token exists but no valid user data, trying to fetch from API...');
             try {
               const freshUserData = await authService.getCurrentUser();
               if (freshUserData && freshUserData.id) {
-                console.log('AuthProvider.checkAuth - Successfully fetched user data from API:', freshUserData);
                 setUser(freshUserData);
               } else {
                 console.error('AuthProvider.checkAuth - API returned invalid user data, clearing auth');
@@ -63,8 +52,6 @@ export const AuthProvider = ({ children }) => {
               clearAuthData();
             }
           }
-        } else {
-          console.log('AuthProvider.checkAuth - No token found');
         }
       } catch (err) {
         console.error('AuthProvider.checkAuth - Error checking auth:', err);
@@ -87,11 +74,11 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     
-    console.log('AuthProvider.login - Starting login process for:', email);
+
     
     try {
       const response = await authService.login(email, password);
-      console.log('AuthProvider.login - Response from authService:', response);
+
       
       if (!response.success) {
         throw new Error(response.message || 'Đăng nhập thất bại');
@@ -99,7 +86,7 @@ export const AuthProvider = ({ children }) => {
 
       // Lấy user data từ response
       const { token, user: userData } = response.data;
-      console.log('AuthProvider.login - Extracted token and user:', { token: !!token, userData });
+
 
       if (token && userData) {
         // Lưu token và user data vào localStorage
@@ -107,19 +94,14 @@ export const AuthProvider = ({ children }) => {
         safeSetToStorage('user', userData);
         
         // Cập nhật state
-        console.log('AuthProvider.login - Setting user state:', userData);
         setUser(userData);
         
         // Redirect based on role
-        console.log('AuthProvider.login - User role:', userData.roleName);
         if (userData.roleName === 'HOST') {
-          console.log('AuthProvider.login - Redirecting to /host');
           navigate("/host");
         } else if (userData.roleName === 'ADMIN') {
-          console.log('AuthProvider.login - Redirecting to /admin');
           navigate("/admin");
         } else {
-          console.log('AuthProvider.login - Redirecting to /');
           navigate("/");
         }
       } else {
@@ -181,11 +163,9 @@ export const AuthProvider = ({ children }) => {
         safeSetToStorage('user', hostData);
         
         // Cập nhật state
-        console.log('AuthProvider.loginAsHost - Setting user state:', hostData);
         setUser(hostData);
         
         // Redirect to host dashboard
-        console.log('AuthProvider.loginAsHost - Redirecting to /host');
         navigate("/host");
       } else {
         throw new Error('Không nhận được thông tin đăng nhập host từ server');
@@ -269,16 +249,11 @@ export const AuthProvider = ({ children }) => {
     setError(null);
     
     try {
-      console.log('AuthProvider.updateProfile - Starting update for user:', userId);
-      console.log('AuthProvider.updateProfile - Profile data:', profileData);
-      
       const response = await authService.updateProfile(userId, profileData);
-      console.log('AuthProvider.updateProfile - Response from authService:', response);
       
       if (response && response.success) {
         // Cập nhật user state với user data mới
         if (response.data) {
-          console.log('AuthProvider.updateProfile - Updating user state with:', response.data);
           setUser(response.data);
         }
         return { success: true, data: response.data, message: response.message };
@@ -300,14 +275,7 @@ export const AuthProvider = ({ children }) => {
   const isAdmin = user?.roleName === 'ADMIN';
   const isUser = user?.roleName === 'USER';
 
-  // Debug user state
-  console.log('=== AUTH PROVIDER STATE ===');
-  console.log('Current user state:', user);
-  console.log('isAuthenticated:', isAuthenticated);
-  console.log('isHost:', isHost);
-  console.log('isAdmin:', isAdmin);
-  console.log('isUser:', isUser);
-  console.log('==========================');
+
 
   const value = {
     user,

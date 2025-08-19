@@ -8,6 +8,8 @@ import FormField from "../common/FormField";
 import Button from "../common/Button";
 import ErrorMessage from "../common/ErrorMessage";
 import { useToast } from "../common/Toast";
+import GoogleLoginButton from "../common/GoogleLoginButton";
+import googleAuthApi from "../../api/googleAuthApi";
 
 const LoginContainer = styled.div`
   min-height: 100vh;
@@ -116,10 +118,11 @@ const SuccessMessage = styled.div`
 
 const Login = () => {
   const { login, loading, error } = useAuth();
-  const { showSuccess } = useToast();
+  const { showSuccess, showError } = useToast();
 
   const [searchParams] = useSearchParams();
   const [roleChangedMessage, setRoleChangedMessage] = useState("");
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const { formData, errors, handleChange, handleBlur, validateForm } = useForm(
     {
@@ -162,6 +165,51 @@ const Login = () => {
       );
     }
   };
+
+  const handleGoogleLogin = async (googleData) => {
+    try {
+      setGoogleLoading(true);
+      const apiRes = await googleAuthApi.loginWithGoogle(googleData);
+
+      const payload = apiRes?.data;
+      if (!payload?.token) {
+        throw new Error(apiRes?.message || 'Không nhận được token từ máy chủ');
+      }
+
+      // Store the token and user data
+      localStorage.setItem('token', payload.token);
+      localStorage.setItem('user', JSON.stringify(payload.user));
+      localStorage.setItem('role', payload.role);
+
+      showSuccess(
+        "Đăng nhập Google thành công!",
+        `Chào mừng bạn, ${payload.user?.fullName || "Người dùng"}!`
+      );
+
+      // Redirect based on role
+      setTimeout(() => {
+        if (payload.role === 'HOST') {
+          window.location.href = '/host';
+        } else if (payload.role === 'ADMIN') {
+          window.location.href = '/admin';
+        } else {
+          window.location.href = '/';
+        }
+      }, 600);
+    } catch (error) {
+      console.error('Google login error:', error);
+      const errorMessage = error.response?.data?.message || 'Đăng nhập Google thất bại. Vui lòng thử lại.';
+      showError("Lỗi đăng nhập", errorMessage);
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  const handleGoogleError = (error) => {
+    console.error('Google OAuth error:', error);
+    showError("Lỗi Google OAuth", "Không thể kết nối với Google. Vui lòng thử lại.");
+  };
+
 
   return (
     <LoginContainer>
@@ -213,6 +261,12 @@ const Login = () => {
           <Button type="submit" fullWidth loading={loading} disabled={loading}>
             {loading ? "Đang đăng nhập..." : "Đăng nhập"}
           </Button>
+
+          <GoogleLoginButton 
+            onSuccess={handleGoogleLogin}
+            onError={handleGoogleError}
+            disabled={googleLoading}
+          />
         </Form>
 
         <FooterLinks>
