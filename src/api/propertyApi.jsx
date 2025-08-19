@@ -428,18 +428,25 @@ const propertyApi = {
         params: { limit }
       });
 
-      // Backend trả về ApiResponse format, cần extract data
-      if (response.data && response.data.data) {
+      // Backend trả về ApiResponse format: { code: "04", message: "...", data: [...] }
+      if (response.data && response.data.code && response.data.data) {
+        return response.data; // Trả về nguyên response.data để extractHousesFromResponse xử lý
+      }
+
+      // Fallback
+      if (response.data && Array.isArray(response.data)) {
         return {
-          content: response.data.data,
-          totalElements: response.data.data.length,
-          totalPages: 1,
-          size: response.data.data.length,
-          number: 0
+          code: '00',
+          message: 'Success',
+          data: response.data
         };
       }
 
-      return response.data;
+      return {
+        code: '00',
+        message: 'No data',
+        data: []
+      };
     } catch (error) {
       console.error('Error fetching top houses by favorites:', error);
       throw error;
@@ -469,58 +476,49 @@ const propertyApi = {
   // Lấy danh sách bài đăng công khai (cho người dùng) - công khai - không cần authentication
   getPublicProperties: async (params = {}) => {
     try {
-
-      
       // Sử dụng publicApiClient vì GET /houses là công khai
       const response = await publicApiClient.get('/houses', { params });
 
-
-      // Backend trả về ApiResponse format, cần extract data
-      if (response.data && response.data.data) {
-        return {
-          content: response.data.data,
-          totalElements: response.data.data.length,
-          totalPages: 1,
-          size: response.data.data.length,
-          number: 0
-        };
+      // Backend trả về ApiResponse format: { code: "04", message: "...", data: [...] }
+      if (response.data && response.data.code && response.data.data) {
+        return response.data; // Trả về nguyên response.data để extractHousesFromResponse xử lý
       }
 
       // Nếu không có response.data.data, kiểm tra response.data trực tiếp
       if (response.data && Array.isArray(response.data)) {
         return {
-          content: response.data,
-          totalElements: response.data.length,
-          totalPages: 1,
-          size: response.data.length,
-          number: 0
+          code: '00',
+          message: 'Success',
+          data: response.data
         };
       }
 
       // Nếu có response.data.content
       if (response.data && response.data.content) {
         return {
-          content: response.data.content,
-          totalElements: response.data.content.length,
-          totalPages: response.data.totalPages || 1,
-          size: response.data.size || response.data.content.length,
-          number: response.data.number || 0
+          code: '00',
+          message: 'Success',
+          data: response.data.content
         };
       }
 
-      return response.data;
+      return {
+        code: '00',
+        message: 'No data',
+        data: []
+      };
     } catch (error) {
-      console.error('❌ Error fetching public properties:', error);
+      console.error('Error fetching public properties:', error);
 
       // Log chi tiết lỗi
       if (error.response) {
-        console.error('❌ Response status:', error.response.status);
-        console.error('❌ Response data:', error.response.data);
-        console.error('❌ Response headers:', error.response.headers);
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+        console.error('Response headers:', error.response.headers);
       } else if (error.request) {
-        console.error('❌ Request error:', error.request);
+        console.error('Request error:', error.request);
       } else {
-        console.error('❌ Error message:', error.message);
+        console.error('Error message:', error.message);
       }
 
       throw error;
@@ -555,28 +553,39 @@ const propertyApi = {
   // Lấy chi tiết nhà theo ID (công khai - không cần authentication)
   getHouseById: async (id) => {
     try {
-
       const response = await publicApiClient.get(`/houses/${id}`);
 
-
-      // Backend trả về ApiResponse format, cần extract data
-      if (response.data && response.data.data) {
-        return response.data.data;
+      // Backend trả về ApiResponse format: { code: "00", message: "...", data: {...} }
+      if (response.data && response.data.code && response.data.data) {
+        return response.data; // Trả về nguyên response.data để extractHouseFromResponse xử lý
       }
 
-      return response.data;
+      // Fallback
+      if (response.data && response.data.id) {
+        return {
+          code: '00',
+          message: 'Success',
+          data: response.data
+        };
+      }
+
+      return {
+        code: '00',
+        message: 'No data',
+        data: null
+      };
     } catch (error) {
       console.error(`Error fetching house ${id}:`, error);
       
       // Log chi tiết lỗi
       if (error.response) {
-        console.error(`❌ Response status:`, error.response.status);
-        console.error(`❌ Response data:`, error.response.data);
-        console.error(`❌ Response headers:`, error.response.headers);
+        console.error(`Response status:`, error.response.status);
+        console.error(`Response data:`, error.response.data);
+        console.error(`Response headers:`, error.response.headers);
       } else if (error.request) {
-        console.error(`❌ Request error:`, error.request);
+        console.error(`Request error:`, error.request);
       } else {
-        console.error(`❌ Error message:`, error.message);
+        console.error(`Error message:`, error.message);
       }
       
       throw error;

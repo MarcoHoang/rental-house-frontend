@@ -633,32 +633,16 @@ const HouseDetailPage = () => {
   const [showChatModal, setShowChatModal] = useState(false);
   const [showPhoneNumber, setShowPhoneNumber] = useState(false);
 
-  console.log('=== HOUSE DETAIL PAGE DEBUG ===');
-  console.log('Component rendered');
-  console.log('User object:', user);
-  console.log('User exists:', !!user);
-  console.log('User role:', user?.roleName);
-  console.log('User ID:', user?.id);
-  console.log('Token exists:', !!localStorage.getItem('token'));
-  console.log('================================');
-
   useEffect(() => {
     const fetchHouseDetails = async () => {
       try {
         setLoading(true);
-        console.log('Fetching house details for ID:', id);
-        console.log('Current user:', {
-          user: user,
-          roleName: user?.roleName,
-          id: user?.id
-        });
         
+        console.log('Testing API call for house ID:', id);
         const response = await propertyApi.getHouseById(id);
+        console.log('API response:', response);
         const houseData = extractHouseFromResponse(response);
-        
-        console.log('House details:', houseData);
-        console.log('House status:', houseData?.status);
-        console.log('House status type:', typeof houseData?.status);
+        console.log('Extracted house data:', houseData);
         
         // Nếu người dùng đang đăng nhập với vai trò chủ nhà và đang xem nhà của mình
         if (user && user.roleName === 'HOST' && houseData.hostId === user.id) {
@@ -671,16 +655,6 @@ const HouseDetailPage = () => {
         setError(null);
       } catch (err) {
         console.error('Error fetching house details:', err);
-        
-        // Log chi tiết lỗi để debug
-        if (err.response) {
-          console.error('Response status:', err.response.status);
-          console.error('Response data:', err.response.data);
-        } else if (err.request) {
-          console.error('Request error:', err.request);
-        } else {
-          console.error('Error message:', err.message);
-        }
         
         if (err.response?.status === 404) {
           setError('Không tìm thấy nhà với ID này. Vui lòng kiểm tra lại.');
@@ -765,13 +739,6 @@ const HouseDetailPage = () => {
   const images = getImages();
   const mainImage = images[selectedImage] || "https://via.placeholder.com/600x400/6B7280/FFFFFF?text=Không+có+ảnh";
   
-  console.log('Images debug:', {
-    totalImages: images.length,
-    selectedImage: selectedImage,
-    mainImage: mainImage,
-    allImages: images
-  });
-
   const handleBackClick = () => {
     // Kiểm tra xem người dùng đến từ trang nào
     if (location.state?.from === 'all-houses') {
@@ -780,13 +747,6 @@ const HouseDetailPage = () => {
       navigate(-1);
     }
   };
-
-  console.log('=== HOUSE DETAIL PAGE RENDER ===');
-  console.log('User exists:', !!user);
-  console.log('User role:', user?.roleName);
-  console.log('House exists:', !!house);
-  console.log('Should show rent button:', !!user);
-  console.log('================================');
   
   return (
     <Container>

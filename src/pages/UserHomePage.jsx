@@ -223,7 +223,9 @@ const HomePage = () => {
     }
     if (houses.length === 0) {
       return (
-        <p style={{ textAlign: "center" }}>Hiện chưa có nhà nào để hiển thị.</p>
+        <div>
+          <p style={{ textAlign: "center" }}>Hiện chưa có nhà nào để hiển thị.</p>
+        </div>
       );
     }
     if (filteredHouses.length === 0) {
@@ -290,9 +292,9 @@ const HomePage = () => {
               <HouseList houses={topHouses} />
             </div>
           ) : (
-            <p style={{ textAlign: "center", color: "#64748b" }}>
-              Đang tải nhà nổi bật...
-            </p>
+            <div style={{ textAlign: "center", color: "#64748b" }}>
+              <p>Đang tải nhà nổi bật...</p>
+            </div>
           )}
         </FeaturedSection>
 
