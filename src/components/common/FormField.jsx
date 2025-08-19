@@ -48,16 +48,6 @@ const StyledInput = styled.input`
   }
 `;
 
-// Tạo component wrapper để filter props
-const Input = React.forwardRef(({ hasError, fullWidth, loading, variant, size, ...props }, ref) => {
-  // Filter out all custom props before passing to StyledInput
-  const { hasError: __, fullWidth: ___, loading: ____, variant: _____, size: ______, ...cleanProps } = props;
-  // Chỉ truyền hasError cho StyledInput, không truyền xuống DOM
-  return <StyledInput ref={ref} hasError={hasError} {...cleanProps} />;
-});
-
-Input.displayName = 'Input';
-
 const IconWrapper = styled.div`
   position: absolute;
   left: 0.875rem;
@@ -114,15 +104,23 @@ const FormField = ({
   showToggle = false,
   onToggle,
   toggleIcon: ToggleIcon,
-  hasError, // Extract hasError from props
-  fullWidth, // Extract fullWidth from props
-  loading, // Extract loading from props
-  variant, // Extract variant from props
-  size, // Extract size from props
+  // Filter out custom props that shouldn't be passed to DOM
+  hasError,
+  fullWidth,
+  loading,
+  variant,
+  size,
   ...domProps
 }) => {
-  // Filter out custom props from domProps
-  const { hasError: _, fullWidth: __, loading: ___, variant: ____, size: _____, ...cleanDomProps } = domProps;
+  // Filter out all custom props from domProps to prevent React warnings
+  const {
+    hasError: _hasError,
+    fullWidth: _fullWidth,
+    loading: _loading,
+    variant: _variant,
+    size: _size,
+    ...cleanDomProps
+  } = domProps;
   
   return (
     <FieldContainer>
@@ -139,7 +137,6 @@ const FormField = ({
         )}
         
         <StyledInput
-          ref={null}
           id={name}
           name={name}
           type={type}

@@ -25,7 +25,26 @@ publicApiClient.interceptors.request.use(
 publicApiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error('Public API Error:', error);
+    // Log error for debugging but don't spam console
+    if (error.response?.status !== 401) {
+      console.error('Public API Error:', {
+        status: error.response?.status,
+        url: error.config?.url,
+        method: error.config?.method,
+        message: error.message
+      });
+    }
+    
+    // Handle specific error cases
+    if (error.response?.status === 401) {
+      // Silent handling for unauthenticated requests
+      return Promise.reject(error);
+    } else if (error.response?.status === 403) {
+      console.warn('Access forbidden:', error.config?.url);
+    } else if (error.response?.status === 500) {
+      console.error('Server error:', error.config?.url);
+    }
+    
     return Promise.reject(error);
   }
 );

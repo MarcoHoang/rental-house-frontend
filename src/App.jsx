@@ -80,75 +80,75 @@ const RoleBasedRedirect = () => {
 
 function App() {
   return (
-    <ErrorBoundary>
-      <ToastProvider>
-        <Router>
-          <AuthProvider>
-            <Routes>
-            {/* Các route công khai */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/admin/login" element={<AdminLogin />} />
+      <ErrorBoundary>
+        <ToastProvider>
+          <Router>
+            <AuthProvider>
+              <Routes>
+              {/* Các route công khai */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/admin/login" element={<AdminLogin />} />
 
-            {/* Trang chủ chung cho tất cả người dùng */}
-            <Route
-              path="/"
-              element={<UserHomePage />}
-            />
+              {/* Trang chủ chung cho tất cả người dùng */}
+              <Route
+                path="/"
+                element={<UserHomePage />}
+              />
 
-            {/* Trang chi tiết nhà - công khai cho tất cả */}
-            <Route
-              path="/houses/:id"
-              element={<HouseDetailPage />}
-            />
+              {/* Trang chi tiết nhà - công khai cho tất cả */}
+              <Route
+                path="/houses/:id"
+                element={<HouseDetailPage />}
+              />
 
-            {/* Trang tất cả nhà cho thuê - công khai */}
-            <Route
-              path="/all-houses"
-              element={<AllHousesPage />}
-            />
+              {/* Trang tất cả nhà cho thuê - công khai */}
+              <Route
+                path="/all-houses"
+                element={<AllHousesPage />}
+              />
 
-            {/* Trang đơn thuê của user */}
-            <Route
-              path="/my-rentals"
-              element={
-                <ProtectedRoute requireUser={true}>
-                  <MyRentalsPage />
-                </ProtectedRoute>
-              }
-            />
+              {/* Trang đơn thuê của user */}
+              <Route
+                path="/my-rentals"
+                element={
+                  <ProtectedRoute requireUser={true}>
+                    <MyRentalsPage />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Các route yêu cầu đăng nhập (chỉ dành cho user thường) */}
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute requireUser={true}>
-                  <UserProfilePage />
-                </ProtectedRoute>
-              }
-            />
+              {/* Các route yêu cầu đăng nhập (chỉ dành cho user thường) */}
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute requireUser={true}>
+                    <UserProfilePage />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Trang đổi mật khẩu */}
-            <Route
-              path="/change-password"
-              element={
-                <ProtectedRoute requireUser={true}>
-                  <ChangePasswordPage />
-                </ProtectedRoute>
-              }
-            />
+              {/* Trang đổi mật khẩu */}
+              <Route
+                path="/change-password"
+                element={
+                  <ProtectedRoute requireUser={true}>
+                    <ChangePasswordPage />
+                  </ProtectedRoute>
+                }
+              />
 
 
-            {/* Trang admin */}
-            <Route
-              path="/admin/*"
-              element={
-                <AdminRoute>
-                  <AdminDashboard />
-                </AdminRoute>
-              }
-            />
+              {/* Trang admin */}
+              <Route
+                path="/admin/*"
+                element={
+                  <AdminRoute>
+                    <AdminDashboard />
+                  </AdminRoute>
+                }
+              />
 
             {/* Các route dành cho chủ nhà */}
             <Route
@@ -202,16 +202,16 @@ function App() {
               />
             </Route>
 
-            {/* Chuyển hướng dựa trên vai trò */}
-            <Route path="/redirect" element={<RoleBasedRedirect />} />
+              {/* Chuyển hướng dựa trên vai trò */}
+              <Route path="/redirect" element={<RoleBasedRedirect />} />
 
-            {/* Chuyển hướng các đường dẫn không xác định về trang chủ */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-                      </Routes>
-          </AuthProvider>
-          </Router>
-        </ToastProvider>
-      </ErrorBoundary>
+              {/* Chuyển hướng các đường dẫn không xác định về trang chủ */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+                        </Routes>
+            </AuthProvider>
+            </Router>
+          </ToastProvider>
+        </ErrorBoundary>
     );
   }
 

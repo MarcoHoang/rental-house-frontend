@@ -20,33 +20,15 @@ api.interceptors.request.use(
     // Thêm token nếu có và đang bật xác thực
     if (AUTH_CONFIG.ENABLE_AUTH) {
       const token = localStorage.getItem('token');
-      console.log('Request interceptor - Token exists:', !!token);
-      console.log('Request interceptor - Token value:', token ? token.substring(0, 20) + '...' : 'null');
       
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
-        console.log('Request interceptor - Added Authorization header');
-      } else {
-        console.warn('Request interceptor - No token found in localStorage');
       }
     }
     
     // Không set Content-Type cho FormData (để browser tự set với boundary)
     if (config.data instanceof FormData) {
       delete config.headers['Content-Type'];
-      console.log('Request interceptor - FormData detected, removed Content-Type header');
-    }
-    
-    // Chỉ debug khi không phải production và không phải request lặp lại
-    if (process.env.NODE_ENV === 'development' && !config._retry) {
-      console.group(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
-      console.log('Request Config:', {
-        method: config.method,
-        url: config.url,
-        headers: config.headers,
-        data: config.data instanceof FormData ? 'FormData' : config.data
-      });
-      console.groupEnd();
     }
     
     return config;
@@ -77,15 +59,10 @@ const authService = {
     // Đăng nhập với vai trò host (riêng biệt)
     loginAsHost: async (email, password) => {
         try {
-            console.log('authService.loginAsHost - Starting host login for:', email);
-            
             const response = await api.post('/auth/host/login', {
                 email,
                 password
             });
-
-            console.log('authService.loginAsHost - Raw response:', response);
-            console.log('authService.loginAsHost - Response data:', response.data);
 
             // Xử lý response format từ backend
             let loginData, token, hostData;
@@ -101,16 +78,11 @@ const authService = {
                 token = response.data.accessToken;
                 hostData = response.data.host || response.data.user;
             } else {
-                console.log('authService.loginAsHost - Unknown response format:', response.data);
                 throw new Error('Format response không được hỗ trợ');
             }
 
-            console.log('authService.loginAsHost - Extracted token:', token);
-            console.log('authService.loginAsHost - Extracted host data:', hostData);
-
             // Lưu token
             if (token) {
-                console.log('authService.loginAsHost - Storing token in localStorage');
                 localStorage.setItem('token', token);
             } else {
                 throw new Error('Không nhận được token từ server');
@@ -445,44 +417,24 @@ const authService = {
     // Đăng ký user
     register: async (userData) => {
         try {
-            console.log('authService.register - Starting registration with data:', userData);
+            console.log('authService.register - Starting registration for:', userData.email);
             
-            // Chuyển đổi dữ liệu để phù hợp với backend
-            // Thử gửi cả username và fullName để backend có thể map đúng
-            const registerData = {
-                email: userData.email,
-                username: userData.username, // Tên người dùng thật (Marco)
-                fullName: userData.username, // Thêm fullName để backend map vào entity
-                password: userData.password,
-                phone: userData.phone,
-                address: userData.address || null
+            const response = await api.post('/auth/register', userData);
+            console.log('authService.register - Response:', response.data);
+            
+            return {
+                success: true,
+                data: response.data.data,
+                message: response.data.message || 'Đăng ký thành công'
             };
-            
-            console.log('=== DEBUG REGISTRATION MAPPING ===');
-            console.log('authService.register - userData.username (tên người dùng từ form):', userData.username);
-            console.log('authService.register - userData.email (email từ form):', userData.email);
-            console.log('authService.register - registerData.username (sẽ gửi đến backend):', registerData.username);
-            console.log('authService.register - registerData.email (sẽ gửi đến backend):', registerData.email);
-            console.log('authService.register - registerData object:', registerData);
-            console.log('=== END DEBUG ===');
-
-            console.log('authService.register - Register data to send:', registerData);
-
-            const response = await api.post('/auth/register', registerData);
-            
-            console.log('authService.register - Response:', response);
-            console.log('authService.register - Response data:', response.data);
-            console.log('authService.register - Response status:', response.status);
-            console.log('authService.register - Response headers:', response.headers);
-            
-            return response.data;
         } catch (error) {
             console.error('authService.register - Error:', error);
-            console.error('authService.register - Error response:', error.response);
             logApiError(error, 'register');
             throw error;
         }
     },
+
+    // Google OAuth login (tạm thời loại bỏ)
 
     // Upload avatar - sử dụng fileUploadService
     uploadAvatar: async (file) => {

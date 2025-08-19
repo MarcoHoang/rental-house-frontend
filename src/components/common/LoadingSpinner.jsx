@@ -31,9 +31,23 @@ const SpinnerWrapper = styled.div`
   padding: 2rem;
 `;
 
-const LoadingSpinner = () => {
+const LoadingSpinner = ({ 
+  // Filter out custom props to prevent React warnings
+  loading,
+  size,
+  color,
+  ...props 
+}) => {
+  // Filter out all custom props
+  const {
+    loading: _loading,
+    size: _size,
+    color: _color,
+    ...cleanProps
+  } = props;
+
   return (
-    <SpinnerWrapper>
+    <SpinnerWrapper {...cleanProps}>
       <Spinner />
     </SpinnerWrapper>
   );

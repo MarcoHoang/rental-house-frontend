@@ -1,4 +1,4 @@
-import { privateApiClient } from "./apiClient.jsx"; 
+import { privateApiClient } from "./apiClient"; 
 
 export const adminGetAllUsers = (params) => privateApiClient.get(`/users`, { params });
 

@@ -17,6 +17,8 @@ import FormField from "../common/FormField";
 import Button from "../common/Button";
 import ErrorMessage from "../common/ErrorMessage";
 import { useToast } from "../common/Toast";
+import GoogleLoginButton from "../common/GoogleLoginButton";
+import googleAuthApi from "../../api/googleAuthApi";
 
 const RegisterContainer = styled.div`
   min-height: 100vh;
@@ -112,7 +114,8 @@ const FooterLinks = styled.div`
 const Register = () => {
   const { register, loading, error } = useAuth();
   const navigate = useNavigate();
-  const { showSuccess } = useToast();
+  const { showSuccess, showError } = useToast();
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -184,6 +187,47 @@ const Register = () => {
         navigate(`/login?email=${encodeURIComponent(formData.email)}`);
       }, 2000);
     }
+  };
+
+  const handleGoogleLogin = async (googleData) => {
+    try {
+      setGoogleLoading(true);
+      const response = await googleAuthApi.loginWithGoogle(googleData);
+      
+      if (response.success) {
+        // Store the token and user data
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem('role', response.data.role);
+        
+        showSuccess(
+          "Đăng ký Google thành công!",
+          `Chào mừng bạn, ${response.data.user?.fullName || "Người dùng"}!`
+        );
+        
+        // Redirect based on role
+        setTimeout(() => {
+          if (response.data.role === 'HOST') {
+            window.location.href = '/host';
+          } else if (response.data.role === 'ADMIN') {
+            window.location.href = '/admin';
+          } else {
+            window.location.href = '/';
+          }
+        }, 1000);
+      }
+    } catch (error) {
+      console.error('Google registration error:', error);
+      const errorMessage = error.response?.data?.message || 'Đăng ký Google thất bại. Vui lòng thử lại.';
+      showError("Lỗi đăng ký", errorMessage);
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  const handleGoogleError = (error) => {
+    console.error('Google OAuth error:', error);
+    showError("Lỗi Google OAuth", "Không thể kết nối với Google. Vui lòng thử lại.");
   };
 
   return (
@@ -288,6 +332,12 @@ const Register = () => {
           <Button type="submit" fullWidth loading={loading} disabled={loading}>
             {loading ? "Đang xử lý..." : "Đăng ký"}
           </Button>
+
+          <GoogleLoginButton 
+            onSuccess={handleGoogleLogin}
+            onError={handleGoogleError}
+            disabled={googleLoading}
+          />
         </Form>
 
         <FooterLinks>

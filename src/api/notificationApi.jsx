@@ -1,4 +1,4 @@
-import { hostApiClient } from "./apiClient.jsx";
+import { hostApiClient } from "./apiClient";
 
 // Lấy danh sách notification của user
 export const getUserNotifications = async (userId) => {

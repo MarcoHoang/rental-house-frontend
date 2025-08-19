@@ -55,6 +55,7 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete }) => {
     if (user && id) {
       const checkFavoriteStatus = async () => {
         try {
+          setFavoriteLoading(true);
           const response = await favoriteApi.checkFavorite(id);
           // Xử lý response format từ API
           let isFavorited = false;
@@ -71,9 +72,18 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete }) => {
           setIsFavorite(isFavorited);
         } catch (error) {
           console.error('Error checking favorite status:', error);
+          // Don't show error for unauthenticated users, just set to false
+          if (error.response?.status === 401) {
+            setIsFavorite(false);
+          }
+        } finally {
+          setFavoriteLoading(false);
         }
       };
       checkFavoriteStatus();
+    } else {
+      // Reset favorite status when user is not logged in
+      setIsFavorite(false);
     }
   }, [user, id]);
 
