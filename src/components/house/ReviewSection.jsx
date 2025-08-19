@@ -419,6 +419,10 @@ const ReviewSection = ({ houseId }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    console.log('Form data before validation:', formData);
+    console.log('House ID:', houseId, 'Type:', typeof houseId);
+    console.log('User ID:', user?.id, 'Type:', typeof user?.id);
+    
     if (formData.rating === 0) {
       alert('Vui lòng chọn số sao đánh giá');
       return;
@@ -429,17 +433,7 @@ const ReviewSection = ({ houseId }) => {
       return;
     }
 
-    if (formData.comment.trim().length < 1) {
-      alert('Nội dung đánh giá không được để trống');
-      return;
-    }
-
-    if (formData.comment.trim().length > 1000) {
-      alert('Nội dung đánh giá không được quá 1000 ký tự');
-      return;
-    }
-
-    // Validation bổ sung
+    // Validation cơ bản
     if (!houseId || isNaN(houseId)) {
       alert('House ID không hợp lệ');
       return;
@@ -455,20 +449,86 @@ const ReviewSection = ({ houseId }) => {
       return;
     }
 
-    // Kiểm tra rating có phải là số không
-    if (isNaN(formData.rating)) {
-      alert('Rating không hợp lệ');
-      return;
-    }
-
     try {
+      // Đảm bảo dữ liệu hợp lệ trước khi gửi
+      const houseIdNum = Number(houseId);
+      const reviewerIdNum = Number(user.id);
+      const ratingNum = Number(formData.rating);
+      const commentTrimmed = formData.comment.trim();
+
+      // Kiểm tra lại một lần nữa
+      if (isNaN(houseIdNum) || houseIdNum <= 0) {
+        console.error('Invalid house ID:', houseId, '->', houseIdNum);
+        alert('House ID không hợp lệ');
+        return;
+      }
+
+      if (isNaN(reviewerIdNum) || reviewerIdNum <= 0) {
+        console.error('Invalid user ID:', user?.id, '->', reviewerIdNum);
+        alert('User ID không hợp lệ');
+        return;
+      }
+
+      // Đảm bảo cả hai ID đều là số nguyên
+      if (!Number.isInteger(houseIdNum)) {
+        console.error('House ID must be integer:', houseIdNum);
+        alert('House ID phải là số nguyên');
+        return;
+      }
+
+      if (!Number.isInteger(reviewerIdNum)) {
+        console.error('User ID must be integer:', reviewerIdNum);
+        alert('User ID phải là số nguyên');
+        return;
+      }
+
+      if (isNaN(ratingNum) || ratingNum < 1 || ratingNum > 5) {
+        console.error('Invalid rating:', formData.rating, '->', ratingNum);
+        alert('Rating không hợp lệ (phải từ 1-5)');
+        return;
+      }
+
+      // Đảm bảo rating là số nguyên
+      if (!Number.isInteger(ratingNum)) {
+        console.error('Rating must be integer:', ratingNum);
+        alert('Rating phải là số nguyên từ 1-5');
+        return;
+      }
+
+      if (!commentTrimmed || commentTrimmed.length === 0) {
+        console.error('Invalid comment:', formData.comment, '->', commentTrimmed);
+        alert('Nội dung đánh giá không được để trống');
+        return;
+      }
+
+      if (commentTrimmed.length > 1000) {
+        console.error('Comment too long:', commentTrimmed.length);
+        alert('Nội dung đánh giá không được quá 1000 ký tự');
+        return;
+      }
+
+      // Kiểm tra comment cơ bản
+      if (typeof commentTrimmed !== 'string') {
+        console.error('Comment is not a string:', typeof commentTrimmed);
+        alert('Nội dung đánh giá phải là chuỗi văn bản');
+        return;
+      }
+
+      // Kiểm tra comment có chứa ký tự đặc biệt không mong muốn
+      if (commentTrimmed.includes('\0') || commentTrimmed.includes('\r') || commentTrimmed.includes('\n') || commentTrimmed.includes('\t')) {
+        console.error('Comment contains control characters');
+        alert('Nội dung đánh giá không được chứa ký tự đặc biệt');
+        return;
+      }
+
       const reviewData = {
-        houseId: Number(houseId),  // Đảm bảo houseId là number
-        reviewerId: Number(user.id),  // Đảm bảo reviewerId là number
-        userName: user.fullName || user.username || 'User',
-        rating: Number(formData.rating),  // Đảm bảo rating là number
-        comment: formData.comment.trim()
+        houseId: houseIdNum,
+        reviewerId: reviewerIdNum,
+        rating: ratingNum,
+        comment: commentTrimmed
       };
+
+      console.log('Sending review data:', reviewData);
 
       if (editingReview) {
         await reviewApi.updateReview(editingReview.id, reviewData);
@@ -485,6 +545,8 @@ const ReviewSection = ({ houseId }) => {
 
     } catch (error) {
       console.error('Error saving review:', error);
+      console.error('Error response:', error.response);
+      console.error('Error data:', error.response?.data);
       
       // Hiển thị thông báo lỗi chi tiết hơn
       let errorMessage = 'Có lỗi xảy ra khi lưu đánh giá. ';
@@ -492,7 +554,19 @@ const ReviewSection = ({ houseId }) => {
       if (error.response?.status === 401) {
         errorMessage += 'Vui lòng đăng nhập lại.';
       } else if (error.response?.status === 400) {
-        errorMessage += 'Dữ liệu không hợp lệ.';
+        const errorData = error.response?.data;
+        console.log('Error data from backend:', errorData);
+        
+        if (errorData?.message) {
+          errorMessage += errorData.message;
+        } else if (errorData?.errors) {
+          const errorMessages = Object.values(errorData.errors).flat();
+          errorMessage += 'Dữ liệu không hợp lệ: ' + errorMessages.join(', ');
+        } else if (errorData?.data?.message) {
+          errorMessage += errorData.data.message;
+        } else {
+          errorMessage += 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin.';
+        }
       } else if (error.response?.status === 404) {
         errorMessage += 'Không tìm thấy nhà hoặc user.';
       } else if (error.response?.status === 500) {
