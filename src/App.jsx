@@ -32,6 +32,7 @@ import HouseListPage from "./pages/HouseListPage";
 import HouseDetailPage from "./pages/HouseDetailPage";
 import AllHousesPage from "./pages/AllHousesPage";
 import MyRentalsPage from "./pages/MyRentalsPage";
+import MyFavoritesPage from "./pages/MyFavoritesPage";
 import ChatPage from "./pages/ChatPage";
 
 // Protected Route Component (đã cải thiện)
@@ -117,6 +118,16 @@ function App() {
                 element={
                   <ProtectedRoute requireUser={true}>
                     <MyRentalsPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Trang yêu thích của user */}
+              <Route
+                path="/my-favorites"
+                element={
+                  <ProtectedRoute requireUser={true}>
+                    <MyFavoritesPage />
                   </ProtectedRoute>
                 }
               />

@@ -632,6 +632,53 @@ const HouseDetailPage = () => {
   const [showRentModal, setShowRentModal] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
   const [showPhoneNumber, setShowPhoneNumber] = useState(false);
+  const [previousPage, setPreviousPage] = useState(null);
+
+  // Lưu trang trước đó khi component mount
+  useEffect(() => {
+    console.log('HouseDetailPage mounted, location state:', location.state);
+    console.log('Current pathname:', location.pathname);
+    console.log('Current search:', location.search);
+    
+    // Đọc URL parameter 'from'
+    const urlParams = new URLSearchParams(location.search);
+    const fromParam = urlParams.get('from');
+    console.log('URL parameter "from":', fromParam);
+    
+    // Lưu trang trước đó
+    if (fromParam) {
+      setPreviousPage(fromParam);
+      console.log('Set previous page to:', fromParam, 'from URL parameter');
+    } else if (location.state?.from) {
+      setPreviousPage(location.state.from);
+      console.log('Set previous page to:', location.state.from, 'from location state');
+    } else {
+      // Fallback: kiểm tra referrer
+      const referrer = document.referrer;
+      console.log('Referrer:', referrer);
+      
+      if (referrer && referrer.includes(window.location.origin)) {
+        try {
+          const referrerUrl = new URL(referrer);
+          const referrerPath = referrerUrl.pathname;
+          console.log('Referrer path:', referrerPath);
+          
+          // Chỉ lưu referrer nếu nó là một trang hợp lệ
+          if (referrerPath === '/my-favorites' || 
+              referrerPath === '/all-houses' || 
+              referrerPath === '/host' || 
+              referrerPath === '/') {
+            setPreviousPage(referrerPath);
+            console.log('Set previous page to:', referrerPath, 'from referrer');
+          } else {
+            console.log('Referrer path not recognized, not setting previous page');
+          }
+        } catch (error) {
+          console.error('Error parsing referrer URL:', error);
+        }
+      }
+    }
+  }, [location.state, location.pathname, location.search]);
 
   useEffect(() => {
     const fetchHouseDetails = async () => {
@@ -740,10 +787,67 @@ const HouseDetailPage = () => {
   const mainImage = images[selectedImage] || "https://via.placeholder.com/600x400/6B7280/FFFFFF?text=Không+có+ảnh";
   
   const handleBackClick = () => {
-    // Kiểm tra xem người dùng đến từ trang nào
-    if (location.state?.from === 'all-houses') {
+    console.log('Current location state:', location.state);
+    console.log('Current pathname:', location.pathname);
+    console.log('Previous page state:', previousPage);
+    console.log('Referrer:', document.referrer);
+    
+    // Ưu tiên sử dụng previousPage state (được set từ URL parameter)
+    if (previousPage) {
+      console.log('Navigating to previous page:', previousPage);
+      navigate(previousPage);
+      return;
+    }
+    
+    // Fallback: kiểm tra URL parameter 'from'
+    const urlParams = new URLSearchParams(location.search);
+    const fromParam = urlParams.get('from');
+    if (fromParam) {
+      console.log('Navigating to from URL parameter:', fromParam);
+      navigate(fromParam);
+      return;
+    }
+    
+    // Fallback: kiểm tra location.state
+    if (location.state?.from === '/my-favorites') {
+      console.log('Navigating to /my-favorites');
+      navigate('/my-favorites');
+    } else if (location.state?.from === '/all-houses') {
+      console.log('Navigating to /all-houses');
       navigate('/all-houses');
+    } else if (location.state?.from === '/host') {
+      console.log('Navigating to /host');
+      navigate('/host');
+    } else if (location.state?.from === '/') {
+      console.log('Navigating to /');
+      navigate('/');
     } else {
+      // Fallback cuối cùng: sử dụng document.referrer hoặc navigate(-1)
+      const referrer = document.referrer;
+      console.log('Using referrer:', referrer);
+      
+      if (referrer && referrer.includes(window.location.origin)) {
+        // Nếu referrer là từ cùng domain, thử parse URL
+        try {
+          const referrerUrl = new URL(referrer);
+          const referrerPath = referrerUrl.pathname;
+          console.log('Referrer path:', referrerPath);
+          
+          // Kiểm tra xem referrer có phải là trang hợp lệ không
+          if (referrerPath === '/my-favorites' || 
+              referrerPath === '/all-houses' || 
+              referrerPath === '/host' || 
+              referrerPath === '/') {
+            navigate(referrerPath);
+            return;
+          }
+        } catch (error) {
+          console.error('Error parsing referrer URL:', error);
+        }
+      }
+      
+      // Fallback cuối cùng: quay lại trang trước đó
+      console.log('Using navigate(-1) as final fallback');
       navigate(-1);
     }
   };

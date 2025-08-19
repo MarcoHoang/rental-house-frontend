@@ -11,10 +11,10 @@ import favoriteApi from "../../api/favoriteApi";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../common/Toast";
 
-const HouseCard = ({ house, showActions = false, onEdit, onDelete }) => {
+const HouseCard = ({ house, showActions = false, onEdit, onDelete, fromPage }) => {
   const { id, title, name, address, price, area, houseType, status, imageUrls, imageUrl, createdAt, favoriteCount } = house;
   const { user } = useAuth();
-  const { showError } = useToast();
+  const { showError, showSuccess } = useToast();
   
   // Sử dụng title nếu có, nếu không thì dùng name
   const displayName = title || name || 'Không có tên';
@@ -23,6 +23,28 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete }) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   
+  // Xác định trang quay lại
+  const getBackPage = () => {
+    console.log('getBackPage called with fromPage:', fromPage);
+    let backPage;
+    
+    if (fromPage === 'favorites') {
+      backPage = '/my-favorites';
+    } else if (fromPage === 'all-houses') {
+      backPage = '/all-houses';
+    } else if (fromPage === 'host') {
+      backPage = '/host';
+    } else if (fromPage === 'home') {
+      backPage = '/';
+    } else {
+      // Nếu không có fromPage, sử dụng URL hiện tại
+      backPage = window.location.pathname;
+    }
+    
+    console.log('getBackPage returning:', backPage);
+    return backPage;
+  };
+
   // Cải thiện logic lấy ảnh
   const getDisplayImage = () => {
     // Ưu tiên imageUrls array
@@ -57,18 +79,22 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete }) => {
         try {
           setFavoriteLoading(true);
           const response = await favoriteApi.checkFavorite(id);
+          console.log('Check favorite response:', response);
+          
           // Xử lý response format từ API
           let isFavorited = false;
           if (typeof response === 'boolean') {
             isFavorited = response;
           } else if (response && typeof response.data === 'boolean') {
             isFavorited = response.data;
-          } else if (response && response.data && typeof response.data.isFavorite === 'boolean') {
-            isFavorited = response.data.isFavorite;
+          } else if (response && response.data && typeof response.data.data === 'boolean') {
+            isFavorited = response.data.data;
           } else {
             console.warn('Unexpected favorite response format:', response);
             isFavorited = false;
           }
+          
+          console.log('Setting initial favorite status to:', isFavorited);
           setIsFavorite(isFavorited);
         } catch (error) {
           console.error('Error checking favorite status:', error);
@@ -98,25 +124,34 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete }) => {
       return;
     }
 
-
-
     try {
       setFavoriteLoading(true);
       const response = await favoriteApi.toggleFavorite(id);
+      console.log('Toggle favorite response:', response);
+      
       // Xử lý response format từ API
       let isFavorited = false;
       if (typeof response === 'boolean') {
         isFavorited = response;
       } else if (response && typeof response.data === 'boolean') {
         isFavorited = response.data;
-      } else if (response && response.data && typeof response.data.isFavorite === 'boolean') {
-        isFavorited = response.data.isFavorite;
+      } else if (response && response.data && typeof response.data.data === 'boolean') {
+        isFavorited = response.data.data;
       } else {
         console.warn('Unexpected favorite toggle response format:', response);
         // Toggle trạng thái hiện tại nếu không biết response format
         isFavorited = !isFavorite;
       }
+      
+      console.log('Setting favorite status to:', isFavorited);
       setIsFavorite(isFavorited);
+      
+      // Hiển thị thông báo thành công
+      if (isFavorited) {
+        showSuccess('Thành công', 'Đã thêm vào danh sách yêu thích');
+      } else {
+        showSuccess('Thành công', 'Đã bỏ khỏi danh sách yêu thích');
+      }
     } catch (error) {
       console.error('Error toggling favorite:', error);
       
@@ -219,7 +254,7 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete }) => {
             {/* Nút xem chi tiết */}
             <Link
               to={`/houses/${id}`}
-              state={{ from: window.location.pathname }}
+              state={{ from: getBackPage() }}
               className="group relative flex-1 flex items-center justify-center p-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all duration-200 hover:scale-105"
               onClick={(e) => {
                 e.stopPropagation();
@@ -305,23 +340,20 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete }) => {
       
       {/* Overlay click để xem chi tiết nhà - chỉ áp dụng cho ảnh và tiêu đề */}
       <Link
-        to={`/houses/${id}`}
-        state={{ from: window.location.pathname }}
+        to={`/houses/${id}?from=${encodeURIComponent(getBackPage())}`}
         className="absolute inset-0 z-0 pointer-events-none"
         aria-label={`Xem chi tiết nhà ${displayName}`}
       />
       
       {/* Clickable areas cho ảnh và tiêu đề */}
       <Link
-        to={`/houses/${id}`}
-        state={{ from: window.location.pathname }}
+        to={`/houses/${id}?from=${encodeURIComponent(getBackPage())}`}
         className="absolute top-0 left-0 w-full h-48 z-10 pointer-events-auto"
         aria-label={`Xem chi tiết nhà ${displayName}`}
       />
       
       <Link
-        to={`/houses/${id}`}
-        state={{ from: window.location.pathname }}
+        to={`/houses/${id}?from=${encodeURIComponent(getBackPage())}`}
         className="absolute top-48 left-0 w-full h-16 z-10 pointer-events-auto"
         aria-label={`Xem chi tiết nhà ${displayName}`}
       />

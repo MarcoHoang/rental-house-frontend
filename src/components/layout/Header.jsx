@@ -417,8 +417,7 @@ const Header = () => {
               </NavLink>
             )}
             <NavLink to="/all-houses">Tất cả nhà</NavLink>
-            <NavLink to="/cho-thue-can-ho">Căn hộ</NavLink>
-            <NavLink to="/cho-thue-nha-pho">Nhà phố</NavLink>
+            <NavLink to="/my-favorites">Nhà yêu thích</NavLink>
             <NavLink to="/blog">Blog</NavLink>
             {isLoggedIn && userData?.roleName === "USER" && (
               <NavLink to="/my-rentals">Đơn thuê của tôi</NavLink>
@@ -551,6 +550,18 @@ const Header = () => {
                         Đơn thuê của tôi
                       </Link>
                     )}
+
+                    {/* Link đến trang yêu thích */}
+                    <Link
+                      to="/my-favorites"
+                      onClick={() => setShowDropdown(false)}
+                      className="w-full text-left flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                      </svg>
+                      Nhà yêu thích
+                    </Link>
 
                     <button
                       onClick={handleLogout}

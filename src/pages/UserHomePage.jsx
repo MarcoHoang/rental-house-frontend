@@ -236,7 +236,7 @@ const HomePage = () => {
         </div>
       );
     }
-    return <HouseList houses={filteredHouses} />;
+    return <HouseList houses={filteredHouses} fromPage="home" />;
   };
 
   // --- JSX to Render ---
@@ -289,7 +289,7 @@ const HomePage = () => {
               <p style={{ textAlign: "center", marginBottom: "2rem", color: "#64748b" }}>
                 Top 5 nhà được yêu thích nhiều nhất
               </p>
-              <HouseList houses={topHouses} />
+              <HouseList houses={topHouses} fromPage="home" />
             </div>
           ) : (
             <div style={{ textAlign: "center", color: "#64748b" }}>

@@ -2,7 +2,7 @@
 import React from "react";
 import HouseCard from "./HouseCard";
 
-const HouseList = ({ houses, showActions = false, onEdit, onDelete }) => {
+const HouseList = ({ houses, showActions = false, onEdit, onDelete, fromPage }) => {
   // Logic không thay đổi
   if (!houses || houses.length === 0) {
     return (
@@ -22,6 +22,7 @@ const HouseList = ({ houses, showActions = false, onEdit, onDelete }) => {
           showActions={showActions}
           onEdit={onEdit}
           onDelete={onDelete}
+          fromPage={fromPage}
         />
       ))}
     </div>

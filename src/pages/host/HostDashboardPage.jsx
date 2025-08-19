@@ -511,6 +511,7 @@ const HostDashboardPage = () => {
             showActions={true}
             onEdit={handleEditHouse}
             onDelete={handleDeleteHouse}
+            fromPage="host"
           />
         )}
       </>

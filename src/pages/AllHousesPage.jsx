@@ -387,7 +387,7 @@ const AllHousesPage = () => {
       );
     }
 
-    return <HouseList houses={filteredHouses} />;
+    return <HouseList houses={filteredHouses} fromPage="all-houses" />;
   };
 
   return (
