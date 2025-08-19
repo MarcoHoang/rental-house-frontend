@@ -7,6 +7,8 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 import { getHouseTypeLabel, getHouseStatusLabel, getHouseStatusColor } from '../utils/constants';
 import RentHouseModal from '../components/house/RentHouseModal';
 import ReviewSection from '../components/house/ReviewSection';
+import ChatButton from '../components/chat/ChatButton';
+import ChatModal from '../components/chat/ChatModal';
 import { extractHouseFromResponse } from '../utils/apiHelpers';
 import { useAuthContext } from '../contexts/AuthContext';
 import GoogleMap from '../components/map/GoogleMap';
@@ -628,6 +630,7 @@ const HouseDetailPage = () => {
   const [error, setError] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [showRentModal, setShowRentModal] = useState(false);
+  const [showChatModal, setShowChatModal] = useState(false);
   const [showPhoneNumber, setShowPhoneNumber] = useState(false);
 
   console.log('=== HOUSE DETAIL PAGE DEBUG ===');
@@ -1131,6 +1134,38 @@ const HouseDetailPage = () => {
                   🏠 Thuê nhà ngay
                 </button>
               )}
+
+              {/* Nút chat với chủ nhà */}
+              {user && house && house.hostId && user.id !== house.hostId && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <ChatButton
+                    hostId={house.hostId}
+                    houseId={house.id}
+                    onClick={() => setShowChatModal(true)}
+                    className="w-full"
+                  />
+                </div>
+              )}
+              
+              {/* Thông báo cho chủ nhà */}
+              {user && house && house.hostId && user.id === house.hostId && (
+                <div style={{ 
+                  marginBottom: '1rem',
+                  padding: '1rem',
+                  backgroundColor: '#f0f9ff',
+                  border: '1px solid #0ea5e9',
+                  borderRadius: '0.5rem',
+                  textAlign: 'center',
+                  color: '#0369a1'
+                }}>
+                  <div style={{ fontSize: '0.875rem', fontWeight: '500' }}>
+                    🏠 Đây là nhà của bạn
+                  </div>
+                  <div style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                    Bạn có thể quản lý nhà này trong trang chủ nhà
+                  </div>
+                </div>
+              )}
               
               {/* Thông tin bổ sung */}
               <div style={{ 
@@ -1169,6 +1204,18 @@ const HouseDetailPage = () => {
           // Có thể thêm logic redirect hoặc cập nhật UI ở đây
         }}
       />
+
+      {/* Modal chat */}
+      {house && (
+        <ChatModal
+          isOpen={showChatModal}
+          onClose={() => setShowChatModal(false)}
+          hostId={house.hostId}
+          houseId={house.id}
+          hostName={house.hostName}
+          houseTitle={house.title}
+        />
+      )}
     </Container>
   );
 };

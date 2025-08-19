@@ -13,6 +13,7 @@ import HostDashboardPageOld from "./pages/host/HostDashboardPage";
 import HostRentalRequests from "./components/host/HostRentalRequests";
 import PostPropertyPage from "./pages/host/PostPropertyPage";
 import HostProfilePage from "./pages/host/HostProfilePage";
+import HostMessagesPage from "./pages/host/HostMessagesPage";
 import Register from "./components/login-register/Register";
 import Login from "./components/login-register/Login";
 import ForgotPassword from "./components/login-register/ForgotPassword";
@@ -31,6 +32,7 @@ import HouseListPage from "./pages/HouseListPage";
 import HouseDetailPage from "./pages/HouseDetailPage";
 import AllHousesPage from "./pages/AllHousesPage";
 import MyRentalsPage from "./pages/MyRentalsPage";
+import ChatPage from "./pages/ChatPage";
 
 // Protected Route Component (đã cải thiện)
 const ProtectedRoute = ({
@@ -119,6 +121,16 @@ function App() {
                 }
               />
 
+              {/* Trang tin nhắn */}
+              <Route
+                path="/messages"
+                element={
+                  <ProtectedRoute requireUser={true}>
+                    <ChatPage />
+                  </ProtectedRoute>
+                }
+              />
+
               {/* Các route yêu cầu đăng nhập (chỉ dành cho user thường) */}
               <Route
                 path="/profile"
@@ -199,6 +211,10 @@ function App() {
                     <ChangePasswordHostPage />
                   </div>
                 }
+              />
+              <Route
+                path="messages"
+                element={<HostMessagesPage />}
               />
             </Route>
 

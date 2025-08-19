@@ -4,7 +4,6 @@ import { Star, MessageCircle, Edit, Trash2, User, Calendar, AlertCircle, Eye, Ey
 import reviewApi from '../../api/reviewApi';
 import rentalApi from '../../api/rentalApi';
 import { useAuthContext } from '../../contexts/AuthContext';
-import ReviewDebugForm from '../debug/ReviewDebugForm';
 
 const ReviewSectionContainer = styled.div`
   margin-top: 2rem;
@@ -954,11 +953,6 @@ const ReviewSection = ({ houseId }) => {
         </ReviewsList>
       )}
 
-      {/* Debug Form - Đã comment out sau khi test thành công */}
-      {/* {process.env.NODE_ENV === 'development' && (
-        <ReviewDebugForm />
-      )} */}
-      
 
     </ReviewSectionContainer>
   );

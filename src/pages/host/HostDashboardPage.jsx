@@ -11,7 +11,8 @@ import {
   Calendar,
   TrendingUp,
   Settings,
-  User
+  User,
+  MessageCircle
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import propertyApi from '../../api/propertyApi';
@@ -20,6 +21,7 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EditHouseModal from '../../components/admin/EditHouseModal';
 import ToastContainer from '../../components/common/ToastContainer';
 import ConfirmModal from '../../components/common/ConfirmModal';
+import HostChatManager from '../../components/host/HostChatManager';
 import { extractHousesFromResponse } from '../../utils/apiHelpers';
 import { HOUSE_STATUS_LABELS } from '../../utils/constants';
 
@@ -227,6 +229,9 @@ const HostDashboardPage = () => {
   // Confirm delete modal state
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [houseToDelete, setHouseToDelete] = useState(null);
+  
+  // Chat manager state
+  const [showChatManager, setShowChatManager] = useState(false);
 
   // Toast helper functions
   const showToast = (type, title, message) => {
@@ -568,14 +573,43 @@ const HostDashboardPage = () => {
           <SectionTitle>
             <Home size={20} />
             Nhà đã đăng ({filteredHouses.length}/{houses.length})
-            {houses.length > 0 && (
-              <span style={{ marginLeft: 'auto', fontSize: '0.875rem', color: '#718096' }}>
-                Tổng cộng {houses.length} nhà
-              </span>
-            )}
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <button
+                onClick={() => setShowChatManager(!showChatManager)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 1rem',
+                  background: showChatManager ? '#3b82f6' : '#f3f4f6',
+                  color: showChatManager ? 'white' : '#374151',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <MessageCircle size={16} />
+                {showChatManager ? 'Ẩn tin nhắn' : 'Xem tin nhắn'}
+              </button>
+              {houses.length > 0 && (
+                <span style={{ fontSize: '0.875rem', color: '#718096' }}>
+                  Tổng cộng {houses.length} nhà
+                </span>
+              )}
+            </div>
           </SectionTitle>
           {renderPropertiesContent()}
         </PropertiesSection>
+
+        {/* Chat Manager Section */}
+        {showChatManager && (
+          <div style={{ marginTop: '2rem' }}>
+            <HostChatManager />
+          </div>
+        )}
       </MainContent>
 
       {/* Modal chỉnh sửa nhà */}

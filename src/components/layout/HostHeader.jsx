@@ -5,10 +5,12 @@ import {
   ArrowRightOnRectangleIcon,
   PlusIcon,
 } from "@heroicons/react/24/outline";
+import { MessageCircle } from "lucide-react";
 import authService from "../../api/authService";
 import { getAvatarUrl } from "../../utils/avatarHelper";
 import Avatar from "../common/Avatar";
 import NotificationBell from "../common/NotificationBell";
+import ChatNotificationBadge from "../common/ChatNotificationBadge";
 import styled from "styled-components";
 import ConfirmDialog from "../common/ConfirmDialog";
 import { useToast } from "../common/Toast";
@@ -362,6 +364,15 @@ const HostHeader = () => {
                   return null;
                 }
               })()} />
+              <ChatNotificationBadge>
+                <Link
+                  to="/host/messages"
+                  className="flex items-center space-x-2 px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-100 rounded-md transition-colors"
+                >
+                  <MessageCircle className="h-5 w-5" />
+                  <span className="hidden md:inline">Tin nhắn</span>
+                </Link>
+              </ChatNotificationBadge>
               <div className="flex items-center space-x-2 px-3 py-1 rounded-full">
                 <Avatar
                   src={userData.avatar}

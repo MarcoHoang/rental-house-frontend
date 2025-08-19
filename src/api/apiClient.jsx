@@ -7,6 +7,10 @@ const API_PREFIX = import.meta.env.VITE_API_PREFIX || "/api";
 // Client cho các API công khai (public)
 const publicApiClient = axios.create({
   baseURL: `${API_BASE_URL}${API_PREFIX}`,
+  timeout: 10000, // 10 seconds timeout
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
 // Gắn token cho public API nếu có (để user đã đăng nhập có thể truy cập dữ liệu của mình)
@@ -15,34 +19,61 @@ publicApiClient.interceptors.request.use(
     const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('Request with token:', {
+        url: config.url,
+        method: config.method,
+        hasToken: !!token
+      });
+    } else {
+      console.log('Request without token:', {
+        url: config.url,
+        method: config.method
+      });
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    console.error('Request interceptor error:', error);
+    return Promise.reject(error);
+  }
 );
 
 // Gắn interceptor cho publicApiClient để xử lý lỗi
 publicApiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('Response received:', {
+      url: response.config.url,
+      status: response.status,
+      data: response.data
+    });
+    return response;
+  },
   (error) => {
-    // Log error for debugging but don't spam console
-    if (error.response?.status !== 401) {
-      console.error('Public API Error:', {
-        status: error.response?.status,
-        url: error.config?.url,
-        method: error.config?.method,
-        message: error.message
-      });
-    }
+    // Log error for debugging
+    console.error('Public API Error:', {
+      status: error.response?.status,
+      url: error.config?.url,
+      method: error.config?.method,
+      message: error.message,
+      data: error.response?.data
+    });
     
     // Handle specific error cases
     if (error.response?.status === 401) {
-      // Silent handling for unauthenticated requests
-      return Promise.reject(error);
+      console.warn('Unauthorized request:', error.config?.url);
+      // Don't redirect automatically for chat API
+      if (!error.config?.url?.includes('/chat/')) {
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+      }
     } else if (error.response?.status === 403) {
       console.warn('Access forbidden:', error.config?.url);
     } else if (error.response?.status === 500) {
       console.error('Server error:', error.config?.url);
+    } else if (error.code === 'ECONNABORTED') {
+      console.error('Request timeout:', error.config?.url);
+    } else if (!error.response) {
+      console.error('Network error:', error.message);
     }
     
     return Promise.reject(error);
@@ -52,11 +83,19 @@ publicApiClient.interceptors.response.use(
 // Client cho các API của Admin (private, cần token)
 const privateApiClient = axios.create({
   baseURL: `${API_BASE_URL}${API_PREFIX}/admin`,
+  timeout: 10000,
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
 // Client cho các API của Host (private, cần token)
 const hostApiClient = axios.create({
   baseURL: `${API_BASE_URL}${API_PREFIX}`,
+  timeout: 10000,
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
 // Gắn token vào mỗi request của admin

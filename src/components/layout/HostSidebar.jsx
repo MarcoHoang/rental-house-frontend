@@ -10,7 +10,8 @@ import {
   User,
   Building2,
   LogOut,
-  Lock
+  Lock,
+  MessageCircle
 } from 'lucide-react';
 import ConfirmDialog from '../common/ConfirmDialog';
 import { useToast } from '../common/Toast';
@@ -174,6 +175,15 @@ const HostSidebar = () => {
           <NavItem to="/host/bookings" $active={isActive('/host/bookings')}>
             <Users className="icon" />
             Quản lý đơn đặt
+            <HostNotificationBadge isInline={true} hideWhenViewed={true} />
+          </NavItem>
+        </NavSection>
+
+        <NavSection>
+          <NavTitle>Giao tiếp</NavTitle>
+          <NavItem to="/host/messages" $active={isActive('/host/messages')}>
+            <MessageCircle className="icon" />
+            Tin nhắn từ người thuê
             <HostNotificationBadge isInline={true} hideWhenViewed={true} />
           </NavItem>
         </NavSection>
