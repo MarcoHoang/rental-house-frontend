@@ -4,9 +4,11 @@ import { mockHouses } from "./mockData";
 
 // Toggle between mock data and real API
 // In Vite, use import.meta.env.MODE or import.meta.env.DEV
-const USE_MOCK_DATA = import.meta.env.DEV;  // true in development, false in production
+const USE_MOCK_DATA = false;  // Tắt mock data để test với backend thật
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api/v1";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+const API_PREFIX = import.meta.env.VITE_API_PREFIX || "/api";
+const API_URL = `${API_BASE_URL}${API_PREFIX}`;
 
 // Create axios instance with common configuration
 const apiClient = axios.create({
@@ -160,6 +162,40 @@ export const getHouseById = async (id) => {
     return response.data;
   } catch (error) {
     console.error(`Error fetching house with ID ${id}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Geocode address to get coordinates
+ * @param {string} address - Address to geocode
+ * @returns {Promise<Object>} Geocoding result with coordinates
+ */
+export const geocodeAddress = async (address) => {
+  try {
+    const response = await apiClient.get('/houses/geocode', {
+      params: { address }
+    });
+    return response;
+  } catch (error) {
+    console.error('Error geocoding address:', error);
+    throw error;
+  }
+};
+
+/**
+ * Validate address
+ * @param {string} address - Address to validate
+ * @returns {Promise<Object>} Validation result
+ */
+export const validateAddress = async (address) => {
+  try {
+    const response = await apiClient.get('/houses/validate-address', {
+      params: { address }
+    });
+    return response;
+  } catch (error) {
+    console.error('Error validating address:', error);
     throw error;
   }
 };

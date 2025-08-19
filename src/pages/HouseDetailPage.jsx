@@ -8,6 +8,7 @@ import { getHouseTypeLabel, getHouseStatusLabel, getHouseStatusColor } from '../
 import RentHouseModal from '../components/house/RentHouseModal';
 import { extractHouseFromResponse } from '../utils/apiHelpers';
 import { useAuthContext } from '../contexts/AuthContext';
+import GoogleMap from '../components/map/GoogleMap';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -904,16 +905,17 @@ const HouseDetailPage = () => {
           <MapSection>
             <h2>Bản đồ</h2>
             <div className="map-container">
-              <div className="map-placeholder">
-                <div className="map-icon">
-                  <MapPin size={48} />
-                </div>
-                <div className="map-text">
-                  <h3>Bản đồ vị trí</h3>
-                  <p>Bản đồ sẽ được hiển thị tại đây</p>
-                  <span className="coming-soon">Sắp có</span>
-                </div>
-              </div>
+              <GoogleMap
+                latitude={house.latitude}
+                longitude={house.longitude}
+                address={house.address}
+                height="400px"
+                width="100%"
+                showMarker={true}
+                zoom={15}
+                className="house-map"
+                lazyLoad={true}
+              />
             </div>
           </MapSection>
 
