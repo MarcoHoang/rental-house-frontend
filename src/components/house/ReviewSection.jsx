@@ -470,33 +470,21 @@ const ReviewSection = ({ houseId }) => {
         comment: formData.comment.trim()
       };
 
-      // Log cơ bản cho debugging (có thể bỏ trong production)
-      console.log('Submitting review:', { houseId, reviewerId: user?.id, rating: formData.rating });
-
       if (editingReview) {
         await reviewApi.updateReview(editingReview.id, reviewData);
       } else {
-        const result = await reviewApi.createReview(reviewData);
-        console.log('Review created successfully:', result);
+        await reviewApi.createReview(reviewData);
       }
 
-      // Reset form and refresh reviews
-      setFormData({ rating: 0, comment: '' });
-      setShowForm(false);
-      setEditingReview(null);
-      await fetchReviews();
-      await checkUserReview();
-      
+             // Reset form and refresh reviews
+       setFormData({ rating: 0, comment: '' });
+       setShowForm(false);
+       setEditingReview(null);
+       await fetchReviews();
+       await checkUserReview();
 
     } catch (error) {
       console.error('Error saving review:', error);
-      console.error('Error type:', error.constructor.name);
-      console.error('Error message:', error.message);
-      console.error('Error response:', error.response);
-      console.error('Error status:', error.response?.status);
-      console.error('Error data:', error.response?.data);
-      console.error('Error config:', error.config);
-      console.error('Error request:', error.request);
       
       // Hiển thị thông báo lỗi chi tiết hơn
       let errorMessage = 'Có lỗi xảy ra khi lưu đánh giá. ';
@@ -582,8 +570,7 @@ const ReviewSection = ({ houseId }) => {
   };
 
   const canReview = user && 
-                   user.roleName !== 'HOST' && 
-                   userReview === null;
+                   (user.roleName === 'ADMIN' || (user.roleName !== 'HOST' && userReview === null));
 
   const getReviewPermissionMessage = () => {
     if (!user) {
@@ -599,6 +586,14 @@ const ReviewSection = ({ houseId }) => {
         type: 'info',
         message: 'Chủ nhà không thể đánh giá nhà của mình',
         icon: <AlertCircle size={16} />
+      };
+    }
+    
+    if (user.roleName === 'ADMIN') {
+      return {
+        type: 'success',
+        message: 'Admin có thể tạo và quản lý tất cả đánh giá',
+        icon: <MessageCircle size={16} />
       };
     }
     
@@ -624,9 +619,6 @@ const ReviewSection = ({ houseId }) => {
     : 0;
 
   const visibleReviewsCount = reviews.filter(review => review.isVisible !== false).length;
-
-  // Debug log cơ bản (có thể bỏ trong production)
-  // console.log('ReviewSection Debug:', { user: user?.id, userRole: user?.roleName, hasUserReview: !!userReview, canReview });
 
   const renderStars = (rating, interactive = false, onStarClick = null) => {
     return Array.from({ length: 5 }, (_, index) => (
@@ -687,8 +679,8 @@ const ReviewSection = ({ houseId }) => {
         </div>
       </ReviewHeader>
 
-      {/* Form đánh giá - chỉ hiển thị khi user có thể đánh giá */}
-      {canReview && showForm && (
+      {/* Form đánh giá - hiển thị khi user có thể đánh giá HOẶC khi đang edit review */}
+      {((canReview && showForm) || (editingReview && showForm)) && (
         <ReviewForm>
           <FormTitle>
             {editingReview ? 'Chỉnh sửa đánh giá' : 'Viết đánh giá của bạn'}
@@ -724,8 +716,8 @@ const ReviewSection = ({ houseId }) => {
         </ReviewForm>
       )}
 
-      {/* Nút viết đánh giá - chỉ hiển thị khi user có thể đánh giá */}
-      {canReview && !showForm && (
+      {/* Nút viết đánh giá - chỉ hiển thị khi user có thể đánh giá và không đang edit */}
+      {canReview && !showForm && !editingReview && (
         <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
           <AddReviewButton onClick={() => setShowForm(true)}>
             <MessageCircle size={16} />
@@ -734,8 +726,8 @@ const ReviewSection = ({ houseId }) => {
         </div>
       )}
 
-      {/* Nút quản lý review cho chủ nhà */}
-      {user && user.roleName === 'HOST' && (
+      {/* Nút quản lý review cho chủ nhà và admin */}
+      {user && (user.roleName === 'HOST' || user.roleName === 'ADMIN') && (
         <div style={{ 
           marginBottom: '1.5rem', 
           padding: '1rem',
@@ -747,7 +739,7 @@ const ReviewSection = ({ houseId }) => {
           alignItems: 'center'
         }}>
           <div style={{ fontSize: '0.875rem', color: '#374151' }}>
-            <strong>Quản lý đánh giá:</strong> Bạn có thể ẩn/hiện hoặc xóa đánh giá
+            <strong>Quản lý đánh giá:</strong> {user.roleName === 'ADMIN' ? 'Admin có thể quản lý tất cả đánh giá' : 'Bạn có thể ẩn/hiện hoặc xóa đánh giá'}
           </div>
           <button
             onClick={() => setShowHiddenReviews(!showHiddenReviews)}
@@ -827,7 +819,7 @@ const ReviewSection = ({ houseId }) => {
             </div>
           )}
 
-      {/* Danh sách đánh giá */}
+            {/* Danh sách đánh giá */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '2rem' }}>
           Đang tải đánh giá...
@@ -844,8 +836,8 @@ const ReviewSection = ({ houseId }) => {
         <ReviewsList>
           {reviews
             .filter(review => {
-              // Chủ nhà có thể toggle hiển thị review ẩn
-              if (user && user.roleName === 'HOST') {
+              // Chủ nhà và Admin có thể toggle hiển thị review ẩn
+              if (user && (user.roleName === 'HOST' || user.roleName === 'ADMIN')) {
                 return showHiddenReviews ? true : review.isVisible !== false;
               }
               // User thường chỉ thấy review visible
@@ -899,8 +891,8 @@ const ReviewSection = ({ houseId }) => {
                 
                 {user && (
                   <ReviewActions>
-                    {/* User có thể edit/delete review của mình */}
-                    {(user.id === review.reviewerId || user.roleName === 'ADMIN') && (
+                    {/* User có thể edit/delete review của mình, Admin có thể edit/delete tất cả review */}
+                    {(Number(user.id) === Number(review.reviewerId) || user.roleName === 'ADMIN') && (
                       <>
                         <ActionButton
                           className="edit"
@@ -919,13 +911,13 @@ const ReviewSection = ({ houseId }) => {
                       </>
                     )}
                     
-                    {/* Chủ nhà có thể quản lý review của nhà mình */}
-                    {user.roleName === 'HOST' && (
+                    {/* Chủ nhà và Admin có thể quản lý review */}
+                    {(user.roleName === 'HOST' || user.roleName === 'ADMIN') && (
                       <>
                         <ActionButton
                           className="hide"
                           onClick={() => handleToggleVisibility(review.id, !review.isVisible)}
-                          title={review.isVisible ? "Ẩn đánh giá" : "Hiện đánh giá"}
+                          title={review.isVisible ? "Ẩn đánh giá" : "Hiển thị đánh giá"}
                         >
                           {review.isVisible ? <EyeOff size={16} /> : <Eye size={16} />}
                         </ActionButton>
@@ -952,8 +944,6 @@ const ReviewSection = ({ houseId }) => {
           ))}
         </ReviewsList>
       )}
-
-
     </ReviewSectionContainer>
   );
 };
