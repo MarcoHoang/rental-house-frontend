@@ -42,14 +42,17 @@ const reviewApi = {
   // Cập nhật đánh giá
   updateReview: async (reviewId, reviewData) => {
     try {
+      console.log('API: Updating review with ID:', reviewId);
+      console.log('API: Update data:', reviewData);
       const response = await publicApiClient.put(`/reviews/${reviewId}`, {
         rating: reviewData.rating,
         comment: reviewData.comment
       });
+      console.log('API: Update response:', response);
       
       return response.data;
     } catch (error) {
-      console.error('Error updating review:', error);
+      console.error('API: Error updating review:', error);
       throw error;
     }
   },
