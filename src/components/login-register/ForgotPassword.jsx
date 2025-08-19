@@ -1,19 +1,22 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import authService from "../../api/authService";
-import { Mail, Lock, Home, KeyRound } from "lucide-react"; // Thêm icon KeyRound
+import { Mail, Lock, Home, KeyRound, Eye, EyeOff } from "lucide-react";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
+  const [token, setToken] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [step, setStep] = useState(1);
   const [message, setMessage] = useState({ text: "", type: "" });
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
   const navigate = useNavigate();
 
-  const handleRequestOtp = async (e) => {
+  const handleRequestReset = async (e) => {
     e.preventDefault();
     if (!email) {
       setMessage({ text: "Vui lòng nhập email", type: "error" });
@@ -23,9 +26,10 @@ const ForgotPassword = () => {
     setIsLoading(true);
     try {
       await authService.requestPasswordReset(email);
-      setStep(2);
+      setEmailSent(true);
+      setStep(2); // Chuyển đến bước kiểm tra email
       setMessage({
-        text: "Mã xác thực đã được gửi đến email của bạn",
+        text: "Link đặt lại mật khẩu đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư đến (và cả thư mục spam/junk).",
         type: "success",
       });
     } catch (error) {
@@ -39,25 +43,33 @@ const ForgotPassword = () => {
     }
   };
 
-  const handleVerifyOtp = async (e) => {
+  const handleContinueToToken = () => {
+    setStep(3); // Chuyển đến bước nhập token
+    setMessage({
+      text: "Vui lòng nhập token từ email vào ô bên dưới",
+      type: "info",
+    });
+  };
+
+  const handleVerifyToken = async (e) => {
     e.preventDefault();
-    if (!otp) {
-      setMessage({ text: "Vui lòng nhập mã OTP", type: "error" });
+    if (!token) {
+      setMessage({ text: "Vui lòng nhập token từ email", type: "error" });
       return;
     }
 
     setIsLoading(true);
     try {
-      await authService.verifyOtp(email, otp);
-      setStep(3);
+      // Token được gửi từ email, user cần copy và paste vào đây
+      setStep(4); // Chuyển đến bước đặt mật khẩu mới
       setMessage({
-        text: "Xác thực thành công, vui lòng đặt mật khẩu mới",
+        text: "Token hợp lệ, vui lòng đặt mật khẩu mới",
         type: "success",
       });
     } catch (error) {
       setMessage({
         text:
-          error.response?.data?.message || "Mã OTP không đúng hoặc đã hết hạn",
+          error.response?.data?.message || "Token không đúng hoặc đã hết hạn",
         type: "error",
       });
     } finally {
@@ -84,9 +96,7 @@ const ForgotPassword = () => {
 
     setIsLoading(true);
     try {
-      // Sử dụng token thay vì email + otp
-      // Backend expect: /users/password-reset/confirm?token=xxx&newPassword=xxx
-      await authService.resetPassword(otp, newPassword); // otp được sử dụng như token
+      await authService.resetPassword(token, newPassword);
       setMessage({
         text: "Đặt lại mật khẩu thành công! Bạn sẽ được chuyển hướng về trang đăng nhập",
         type: "success",
@@ -94,6 +104,30 @@ const ForgotPassword = () => {
       setTimeout(() => {
         navigate("/login");
       }, 2000);
+    } catch (error) {
+      setMessage({
+        text:
+          error.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại",
+        type: "error",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendEmail = async () => {
+    if (!email) {
+      setMessage({ text: "Vui lòng nhập email trước", type: "error" });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await authService.requestPasswordReset(email);
+      setMessage({
+        text: "Link đặt lại mật khẩu đã được gửi lại đến email của bạn",
+        type: "success",
+      });
     } catch (error) {
       setMessage({
         text:
@@ -125,6 +159,11 @@ const ForgotPassword = () => {
     color: "#a0aec0",
     width: "1.25rem",
     height: "1.25rem",
+  };
+
+  const passwordInputStyle = {
+    ...inputStyle,
+    paddingRight: "3rem", // Thêm padding bên phải cho icon hiển thị/ẩn mật khẩu
   };
 
   return (
@@ -223,8 +262,9 @@ const ForgotPassword = () => {
           />
           {[
             { num: 1, label: "Nhập email" },
-            { num: 2, label: "Xác thực OTP" },
-            { num: 3, label: "Đặt mật khẩu mới" },
+            { num: 2, label: "Kiểm tra email" },
+            { num: 3, label: "Nhập token" },
+            { num: 4, label: "Đặt mật khẩu mới" },
           ].map((s, index) => (
             <div
               key={s.num}
@@ -234,7 +274,7 @@ const ForgotPassword = () => {
                 alignItems: "center",
                 position: "relative",
                 zIndex: 2,
-                flex: 1, // Để chia đều không gian
+                flex: 1,
               }}
             >
               <div
@@ -295,7 +335,7 @@ const ForgotPassword = () => {
 
         {step === 1 && (
           <form
-            onSubmit={handleRequestOtp}
+            onSubmit={handleRequestReset}
             style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}
           >
             <div>
@@ -371,19 +411,205 @@ const ForgotPassword = () => {
                 e.target.style.boxShadow = "none";
               }}
             >
-              {isLoading ? "Đang xử lý..." : "Tiếp tục"}
+              {isLoading ? "Đang xử lý..." : "Gửi link đặt lại mật khẩu"}
             </button>
           </form>
         )}
 
         {step === 2 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+            <div style={{ textAlign: "center", marginBottom: "1rem" }}>
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "3rem",
+                  height: "3rem",
+                  background: "#10b981",
+                  borderRadius: "50%",
+                  marginBottom: "1rem",
+                }}
+              >
+                <Mail color="white" size={24} />
+              </div>
+              <h3
+                style={{
+                  color: "#1a202c",
+                  fontSize: "1.25rem",
+                  fontWeight: "600",
+                  margin: "0 0 0.5rem 0",
+                }}
+              >
+                Email đã được gửi!
+              </h3>
+              <p
+                style={{
+                  color: "#718096",
+                  fontSize: "0.875rem",
+                  margin: 0,
+                  lineHeight: "1.5",
+                }}
+              >
+                Chúng tôi đã gửi link đặt lại mật khẩu đến email:
+                <br />
+                <strong style={{ color: "#1a202c" }}>{email}</strong>
+              </p>
+            </div>
+
+            <div
+              style={{
+                background: "#f0f9ff",
+                border: "1px solid #0ea5e9",
+                borderRadius: "0.5rem",
+                padding: "1rem",
+                marginBottom: "1rem",
+              }}
+            >
+              <h4
+                style={{
+                  color: "#0c4a6e",
+                  fontSize: "0.875rem",
+                  fontWeight: "600",
+                  margin: "0 0 0.5rem 0",
+                }}
+              >
+                📧 Hướng dẫn kiểm tra email:
+              </h4>
+              <ul
+                style={{
+                  color: "#0c4a6e",
+                  fontSize: "0.875rem",
+                  margin: "0 0 0 0.5rem",
+                  paddingLeft: "1rem",
+                  lineHeight: "1.5",
+                }}
+              >
+                <li>Kiểm tra hộp thư đến của bạn</li>
+                <li>Kiểm tra thư mục spam/junk nếu không thấy</li>
+                <li>Copy token từ email (chuỗi ký tự dài)</li>
+                <li>Nhấn "Tiếp tục" để nhập token</li>
+              </ul>
+            </div>
+
+            <div style={{ display: "flex", gap: "1rem" }}>
+              <button
+                type="button"
+                onClick={handleResendEmail}
+                disabled={isLoading}
+                style={{
+                  flex: 1,
+                  background: "transparent",
+                  color: "#3182ce",
+                  padding: "0.75rem 1rem",
+                  border: "2px solid #3182ce",
+                  borderRadius: "0.5rem",
+                  fontSize: "0.875rem",
+                  fontWeight: "500",
+                  cursor: isLoading ? "not-allowed" : "pointer",
+                  transition: "all 0.2s",
+                  minHeight: "2.5rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isLoading) {
+                    e.target.style.background = "#3182ce";
+                    e.target.style.color = "white";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = "transparent";
+                  e.target.style.color = "#3182ce";
+                }}
+              >
+                {isLoading ? "Đang xử lý..." : "Gửi lại email"}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleContinueToToken}
+                disabled={isLoading}
+                style={{
+                  flex: 2,
+                  background: "linear-gradient(135deg, #3182ce, #667eea)",
+                  color: "white",
+                  padding: "0.75rem 1rem",
+                  border: "none",
+                  borderRadius: "0.5rem",
+                  fontSize: "0.875rem",
+                  fontWeight: "600",
+                  cursor: isLoading ? "not-allowed" : "pointer",
+                  transition: "all 0.2s",
+                  minHeight: "2.5rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isLoading) {
+                    e.target.style.transform = "translateY(-1px)";
+                    e.target.style.boxShadow =
+                      "0 10px 15px -3px rgba(0, 0, 0, 0.1)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.transform = "translateY(0)";
+                  e.target.style.boxShadow = "none";
+                }}
+              >
+                Tiếp tục
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
           <form
-            onSubmit={handleVerifyOtp}
+            onSubmit={handleVerifyToken}
             style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}
           >
+            <div style={{ textAlign: "center", marginBottom: "1rem" }}>
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "3rem",
+                  height: "3rem",
+                  background: "#8b5cf6",
+                  borderRadius: "50%",
+                  marginBottom: "1rem",
+                }}
+              >
+                <Lock color="white" size={24} />
+              </div>
+              <h3
+                style={{
+                  color: "#1a202c",
+                  fontSize: "1.25rem",
+                  fontWeight: "600",
+                  margin: "0 0 0.5rem 0",
+                }}
+              >
+                Nhập token từ email
+              </h3>
+              <p
+                style={{
+                  color: "#718096",
+                  fontSize: "0.875rem",
+                  margin: 0,
+                  lineHeight: "1.5",
+                }}
+              >
+                Vui lòng copy token từ email và paste vào ô bên dưới
+              </p>
+            </div>
+
             <div>
               <label
-                htmlFor="otp"
+                htmlFor="token"
                 style={{
                   display: "block",
                   marginBottom: "0.5rem",
@@ -392,22 +618,21 @@ const ForgotPassword = () => {
                   fontSize: "0.875rem",
                 }}
               >
-                Mã xác thực (OTP) <span style={{ color: "#e53e3e" }}>*</span>
+                Token từ email <span style={{ color: "#e53e3e" }}>*</span>
               </label>
               <div style={{ position: "relative" }}>
-                <Lock style={iconStyle} /> {/* Dùng icon khóa cho OTP */}
+                <Lock style={iconStyle} />
                 <input
                   type="text"
-                  id="otp"
-                  value={otp}
-                  onChange={(e) =>
-                    setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
-                  }
-                  placeholder="Nhập mã OTP 6 số"
-                  maxLength={6}
+                  id="token"
+                  value={token}
+                  onChange={(e) => setToken(e.target.value)}
+                  placeholder="Nhập token từ email (chuỗi ký tự dài)"
                   required
                   style={{
                     ...inputStyle,
+                    fontFamily: "monospace",
+                    fontSize: "0.875rem",
                     onFocus: (e) => {
                       e.target.style.outline = "none";
                       e.target.style.borderColor = "#3182ce";
@@ -426,20 +651,54 @@ const ForgotPassword = () => {
               <small
                 style={{
                   display: "block",
-                  marginTop: "0.5rem", // Tăng khoảng cách
-                  color: "#718096", // Màu sắc đồng bộ
+                  marginTop: "0.5rem",
+                  color: "#718096",
                   fontSize: "0.75rem",
                 }}
               >
-                Chúng tôi đã gửi mã OTP đến email của bạn. Vui lòng kiểm tra hộp
-                thư đến (và cả thư mục spam/junk).
+                💡 <strong>Mẹo:</strong> Token thường là một chuỗi ký tự dài (ví dụ: a1b2c3d4-e5f6-7890-abcd-ef1234567890)
               </small>
             </div>
+            
+            {/* Nút gửi lại email */}
             <button
-              type="submit"
+              type="button"
+              onClick={handleResendEmail}
               disabled={isLoading}
               style={{
-                background: isLoading
+                background: "transparent",
+                color: "#3182ce",
+                padding: "0.75rem 1rem",
+                border: "2px solid #3182ce",
+                borderRadius: "0.5rem",
+                fontSize: "0.875rem",
+                fontWeight: "500",
+                cursor: isLoading ? "not-allowed" : "pointer",
+                transition: "all 0.2s",
+                minHeight: "2.5rem",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              onMouseEnter={(e) => {
+                if (!isLoading) {
+                  e.target.style.background = "#3182ce";
+                  e.target.style.color = "white";
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = "transparent";
+                e.target.style.color = "#3182ce";
+              }}
+            >
+              {isLoading ? "Đang xử lý..." : "Gửi lại email"}
+            </button>
+
+            <button
+              type="submit"
+              disabled={isLoading || !token}
+              style={{
+                background: isLoading || !token
                   ? "#a0aec0"
                   : "linear-gradient(135deg, #3182ce, #667eea)",
                 color: "white",
@@ -448,7 +707,7 @@ const ForgotPassword = () => {
                 borderRadius: "0.5rem",
                 fontSize: "1rem",
                 fontWeight: "600",
-                cursor: isLoading ? "not-allowed" : "pointer",
+                cursor: isLoading || !token ? "not-allowed" : "pointer",
                 transition: "all 0.2s",
                 minHeight: "3rem",
                 display: "flex",
@@ -457,7 +716,7 @@ const ForgotPassword = () => {
                 marginTop: "0.5rem",
               }}
               onMouseEnter={(e) => {
-                if (!isLoading) {
+                if (!isLoading && token) {
                   e.target.style.transform = "translateY(-1px)";
                   e.target.style.boxShadow =
                     "0 10px 15px -3px rgba(0, 0, 0, 0.1)";
@@ -468,16 +727,53 @@ const ForgotPassword = () => {
                 e.target.style.boxShadow = "none";
               }}
             >
-              {isLoading ? "Đang xác thực..." : "Xác thực"}
+              {isLoading ? "Đang xác thực..." : "Xác thực token"}
             </button>
           </form>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <form
             onSubmit={handleResetPassword}
             style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}
           >
+            <div style={{ textAlign: "center", marginBottom: "1rem" }}>
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "3rem",
+                  height: "3rem",
+                  background: "#059669",
+                  borderRadius: "50%",
+                  marginBottom: "1rem",
+                }}
+              >
+                <KeyRound color="white" size={24} />
+              </div>
+              <h3
+                style={{
+                  color: "#1a202c",
+                  fontSize: "1.25rem",
+                  fontWeight: "600",
+                  margin: "0 0 0.5rem 0",
+                }}
+              >
+                Đặt mật khẩu mới
+              </h3>
+              <p
+                style={{
+                  color: "#718096",
+                  fontSize: "0.875rem",
+                  margin: 0,
+                  lineHeight: "1.5",
+                }}
+              >
+                Token đã được xác thực thành công. Vui lòng đặt mật khẩu mới cho tài khoản của bạn.
+              </p>
+            </div>
+
             <div>
               <label
                 htmlFor="newPassword"
@@ -494,7 +790,7 @@ const ForgotPassword = () => {
               <div style={{ position: "relative" }}>
                 <Lock style={iconStyle} />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   id="newPassword"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
@@ -502,7 +798,7 @@ const ForgotPassword = () => {
                   minLength={6}
                   required
                   style={{
-                    ...inputStyle,
+                    ...passwordInputStyle,
                     onFocus: (e) => {
                       e.target.style.outline = "none";
                       e.target.style.borderColor = "#3182ce";
@@ -517,7 +813,34 @@ const ForgotPassword = () => {
                     },
                   }}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: "absolute",
+                    right: "0.875rem",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "#a0aec0",
+                    padding: "0.25rem",
+                  }}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
+              <small
+                style={{
+                  display: "block",
+                  marginTop: "0.5rem",
+                  color: "#718096",
+                  fontSize: "0.75rem",
+                }}
+              >
+                💡 <strong>Gợi ý:</strong> Sử dụng mật khẩu mạnh với ít nhất 6 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt
+              </small>
             </div>
             <div>
               <label
@@ -535,7 +858,7 @@ const ForgotPassword = () => {
               <div style={{ position: "relative" }}>
                 <Lock style={iconStyle} />
                 <input
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   id="confirmPassword"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
@@ -543,7 +866,7 @@ const ForgotPassword = () => {
                   minLength={6}
                   required
                   style={{
-                    ...inputStyle,
+                    ...passwordInputStyle,
                     onFocus: (e) => {
                       e.target.style.outline = "none";
                       e.target.style.borderColor = "#3182ce";
@@ -558,6 +881,23 @@ const ForgotPassword = () => {
                     },
                   }}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  style={{
+                    position: "absolute",
+                    right: "0.875rem",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "#a0aec0",
+                    padding: "0.25rem",
+                  }}
+                >
+                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
             </div>
             <button

@@ -686,7 +686,7 @@ const authService = {
         }
     },
 
-    // Quên mật khẩu
+    // Quên mật khẩu - Gửi request để nhận token reset password
     forgotPassword: async (email) => {
         try {
             const response = await api.post('/users/password-reset/request', null, {
@@ -712,11 +712,12 @@ const authService = {
         }
     },
 
-    // Verify OTP - Backend có thể không có endpoint này, cần check
+    // Verify OTP - Backend hiện tại không có endpoint này, sử dụng token thay thế
     verifyOtp: async (email, otp) => {
         try {
-            // Tạm thời return success nếu backend chưa có endpoint này
-            console.warn('verifyOtp: Backend endpoint not implemented yet');
+            // Backend hiện tại sử dụng token thay vì OTP
+            // Method này được giữ lại để tương thích ngược
+            console.warn('verifyOtp: Backend endpoint not implemented yet, using token instead');
             return { success: true, message: 'OTP verified' };
         } catch (error) {
             logApiError(error, 'verifyOtp');
