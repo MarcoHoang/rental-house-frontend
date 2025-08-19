@@ -969,23 +969,23 @@ const HouseDetailPage = () => {
             </div>
           </PropertyCharacteristicsSection>
 
-          {/* Section Bản đồ */}
-          <MapSection>
-            <h2>Bản đồ</h2>
-            <div className="map-container">
-              <GoogleMap
-                latitude={house.latitude}
-                longitude={house.longitude}
-                address={house.address}
-                height="400px"
-                width="100%"
-                showMarker={true}
-                zoom={15}
-                className="house-map"
-                lazyLoad={true}
-              />
-            </div>
-          </MapSection>
+                     {/* Section Bản đồ */}
+           <MapSection>
+             <h2>Bản đồ</h2>
+             <div className="map-container">
+               <GoogleMap
+                 latitude={house.latitude}
+                 longitude={house.longitude}
+                 address={house.address}
+                 height="400px"
+                 width="100%"
+                 showMarker={true}
+                 zoom={15}
+                 className="house-map"
+                 lazyLoad={true}
+               />
+             </div>
+           </MapSection>
 
           {/* Section Đánh giá */}
           <ReviewSection houseId={house.id} />

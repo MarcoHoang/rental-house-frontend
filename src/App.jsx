@@ -229,6 +229,9 @@ function App() {
               />
             </Route>
 
+              {/* Test route cho bản đồ */}
+              
+
               {/* Chuyển hướng dựa trên vai trò */}
               <Route path="/redirect" element={<RoleBasedRedirect />} />
 

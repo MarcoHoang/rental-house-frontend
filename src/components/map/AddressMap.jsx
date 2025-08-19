@@ -19,6 +19,7 @@ const AddressMap = ({
   const [isLoading, setIsLoading] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [searchAddress, setSearchAddress] = useState(address || '');
+  const [coordinates, setCoordinates] = useState(null);
 
   // Load Leaflet CSS
   useEffect(() => {
@@ -54,55 +55,64 @@ const AddressMap = ({
     };
   }, []);
 
+  // Determine initial coordinates
+  useEffect(() => {
+    const determineInitialCoordinates = async () => {
+      // If we have valid coordinates, use them
+      if (latitude && longitude && !isNaN(latitude) && !isNaN(longitude)) {
+        console.log('Using provided coordinates:', { latitude, longitude });
+        setCoordinates({ lat: parseFloat(latitude), lng: parseFloat(longitude) });
+        return;
+      }
+
+      // If we have address but no coordinates, try to geocode
+      if (address && (!latitude || !longitude || isNaN(latitude) || isNaN(longitude))) {
+        console.log('Geocoding initial address:', address);
+        setIsLoading(true);
+        try {
+          const coords = await handleGeocodeAddress(address);
+          if (coords) {
+            console.log('Initial geocoded coordinates:', coords);
+            setCoordinates(coords);
+            if (onLocationSelect) {
+              onLocationSelect({
+                latitude: coords.lat,
+                longitude: coords.lng,
+                address: address
+              });
+            }
+          } else {
+            console.log('Initial geocoding failed, using default coordinates');
+            setCoordinates({ lat: 21.0285, lng: 105.8542 }); // Hanoi default
+          }
+        } catch (error) {
+          console.error('Initial geocoding error:', error);
+          setCoordinates({ lat: 21.0285, lng: 105.8542 }); // Hanoi default
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        // Use default coordinates
+        console.log('Using default coordinates');
+        setCoordinates({ lat: 21.0285, lng: 105.8542 }); // Hanoi default
+      }
+    };
+
+    determineInitialCoordinates();
+  }, [latitude, longitude, address, onLocationSelect]);
+
   // Initialize map
   useEffect(() => {
-    if (!mapLoaded || !mapRef.current) return;
+    if (!mapLoaded || !mapRef.current || !coordinates) return;
 
     const L = window.L;
     if (!L) return;
 
+    console.log('Initializing AddressMap with coordinates:', coordinates);
+
     // Destroy existing map
     if (mapInstanceRef.current) {
       mapInstanceRef.current.remove();
-    }
-
-    // Default coordinates (Hanoi, Vietnam)
-    const defaultLat = 21.0285;
-    const defaultLng = 105.8542;
-
-    let mapLat = latitude || defaultLat;
-    let mapLng = longitude || defaultLng;
-
-    // If no coordinates but have address, try to geocode
-    if ((!latitude || !longitude) && address) {
-      setIsLoading(true);
-      geocodeAddress(address)
-        .then(response => {
-          if (response.data && response.data.isValid) {
-            mapLat = response.data.latitude;
-            mapLng = response.data.longitude;
-            initializeMap(L, mapLat, mapLng);
-            if (onLocationSelect) {
-              onLocationSelect({
-                latitude: mapLat,
-                longitude: mapLng,
-                address: response.data.formattedAddress || address
-              });
-            }
-          } else {
-            // Use default coordinates if geocoding fails
-            initializeMap(L, defaultLat, defaultLng);
-          }
-        })
-        .catch(() => {
-          // Use default coordinates if geocoding fails
-          initializeMap(L, defaultLat, defaultLng);
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
-    } else {
-      initializeMap(L, mapLat, mapLng);
     }
 
     function initializeMap(L, lat, lng) {
@@ -157,7 +167,29 @@ const AddressMap = ({
 
       mapInstanceRef.current = map;
     }
-  }, [mapLoaded, latitude, longitude, address, onLocationSelect]);
+
+    initializeMap(L, coordinates.lat, coordinates.lng);
+  }, [mapLoaded, coordinates, address, onLocationSelect]);
+
+  // Geocode address using our backend API
+  const handleGeocodeAddress = async (address) => {
+    try {
+      console.log('Calling geocoding API for address:', address);
+      const response = await geocodeAddress(address);
+      console.log('Geocoding API response:', response);
+      
+      if (response.data && response.data.isValid) {
+        return {
+          lat: response.data.latitude,
+          lng: response.data.longitude
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Geocoding failed:', error);
+      return null;
+    }
+  };
 
   // Handle search
   const handleSearch = async () => {
@@ -168,23 +200,23 @@ const AddressMap = ({
 
     setIsLoading(true);
     try {
-      const response = await geocodeAddress(searchAddress);
-      if (response.data && response.data.isValid) {
-        const { latitude: lat, longitude: lng } = response.data;
+      const coords = await handleGeocodeAddress(searchAddress);
+      if (coords) {
+        console.log('Search geocoded coordinates:', coords);
         
         if (mapInstanceRef.current && markerRef.current) {
-          const newLatLng = [lat, lng];
+          const newLatLng = [coords.lat, coords.lng];
           markerRef.current.setLatLng(newLatLng);
           mapInstanceRef.current.setView(newLatLng, 15);
           
           // Update popup
-          markerRef.current.bindPopup(response.data.formattedAddress || searchAddress).openPopup();
+          markerRef.current.bindPopup(searchAddress).openPopup();
           
           if (onLocationSelect) {
             onLocationSelect({
-              latitude: lat,
-              longitude: lng,
-              address: response.data.formattedAddress || searchAddress
+              latitude: coords.lat,
+              longitude: coords.lng,
+              address: searchAddress
             });
           }
           
