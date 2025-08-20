@@ -365,7 +365,7 @@ const ReviewSection = ({ houseId, house }) => {
       console.log('fetchReviews - houseId:', houseId);
       
       // Chủ nhà và Admin có thể thấy tất cả reviews (bao gồm ẩn)
-      if (user && ((user.roleName === 'HOST' && house && house.hostId === user.id) || user.roleName === 'ADMIN')) {
+      if (user && ((user.roleName === 'HOST' && house && Number(house.hostId) === Number(user.id)) || user.roleName === 'ADMIN')) {
         console.log('Fetching all reviews for HOST/ADMIN');
         const response = await reviewApi.getAllHouseReviews(houseId);
         console.log('getAllHouseReviews response:', response);
@@ -847,7 +847,7 @@ const ReviewSection = ({ houseId, house }) => {
       )}
 
              {/* Nút quản lý review cho chủ nhà và admin */}
-       {user && ((user.roleName === 'HOST' && house && house.hostId === user.id) || user.roleName === 'ADMIN') && (
+       {user && ((user.roleName === 'HOST' && house && Number(house.hostId) === Number(user.id)) || user.roleName === 'ADMIN') && (
         <div style={{ 
           marginBottom: '1.5rem', 
           padding: '1rem',
@@ -957,7 +957,7 @@ const ReviewSection = ({ houseId, house }) => {
                      {reviews
              .filter(review => {
                // Chủ nhà của ngôi nhà này và Admin có thể toggle hiển thị review ẩn
-               if (user && ((user.roleName === 'HOST' && house && house.hostId === user.id) || user.roleName === 'ADMIN')) {
+               if (user && ((user.roleName === 'HOST' && house && Number(house.hostId) === Number(user.id)) || user.roleName === 'ADMIN')) {
                  return showHiddenReviews ? true : review.isVisible !== false;
                }
                // User thường chỉ thấy review visible
@@ -1032,7 +1032,7 @@ const ReviewSection = ({ houseId, house }) => {
                     )}
                     
                     {/* Chủ nhà và Admin có thể quản lý review */}
-                    {((user.roleName === 'HOST' && house && house.hostId === user.id) || user.roleName === 'ADMIN') && (
+                    {((user.roleName === 'HOST' && house && Number(house.hostId) === Number(user.id)) || user.roleName === 'ADMIN') && (
                       <>
                         <ActionButton
                           className="hide"

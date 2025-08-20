@@ -18,7 +18,7 @@ const HouseList = ({ houses, showActions = false, onEdit, onDelete, fromPage }) 
     }
 
     if (currentFilter === "my-houses" && user && user.id) {
-      return houses.filter(house => house.hostId === user.id);
+      return houses.filter(house => Number(house.hostId) === Number(user.id));
     }
 
     return houses;
@@ -29,7 +29,7 @@ const HouseList = ({ houses, showActions = false, onEdit, onDelete, fromPage }) 
     
     // Hiển thị thông báo khi chủ nhà chọn xem nhà của mình lần đầu
     if (filterType === "my-houses" && user && user.id && !hasShownMyHousesMessage) {
-      const myHousesCount = houses.filter(house => house.hostId === user.id).length;
+      const myHousesCount = houses.filter(house => Number(house.hostId) === Number(user.id)).length;
       if (myHousesCount > 0) {
         showSuccess('Nhà của bạn', `Bạn có ${myHousesCount} nhà được đăng. Các nhà của bạn được đánh dấu bằng badge màu vàng.`);
         setHasShownMyHousesMessage(true);
