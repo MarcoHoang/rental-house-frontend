@@ -10,14 +10,12 @@ import {
   Eye,
   Edit,
   Trash2,
-  Plus,
-  Search,
-  Filter,
   Home,
   MapPin,
   DollarSign,
 } from "lucide-react";
 import { useToast } from "../common/Toast";
+import AdminSearchBar from "./AdminSearchBar";
 
 const Card = styled.div`
   background: white;
@@ -30,11 +28,6 @@ const Card = styled.div`
 const Header = styled.div`
   padding: 1.5rem;
   border-bottom: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
 `;
 
 const Title = styled.h2`
@@ -44,167 +37,40 @@ const Title = styled.h2`
   margin: 0;
 `;
 
-const SearchBar = styled.div`
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  flex: 1;
-  max-width: 400px;
-`;
 
-const SearchInput = styled.input`
-  flex: 1;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
-  
-  &:focus {
-    outline: none;
-    border-color: #3182ce;
-    box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
-  }
-`;
 
-const Button = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.375rem;
-  background: white;
-  color: #4a5568;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    background: #f7fafc;
-    border-color: #cbd5e0;
-  }
-
-  &.primary {
-    background: #3182ce;
-    color: white;
-    border-color: #3182ce;
-
-    &:hover {
-      background: #2c5aa0;
-    }
-  }
-
-  &.danger {
-    color: #e53e3e;
-    &:hover {
-      background: #fed7d7;
-    }
-  }
-`;
-
-const Grid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
-  padding: 1.5rem;
-  align-items: stretch;
-`;
-
-const HouseCard = styled.div`
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.75rem;
-  overflow: hidden;
-  transition: all 0.2s;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 500px;
-
-  &:hover {
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
-  }
-`;
-
-const HouseImage = styled.div`
+const Table = styled.table`
   width: 100%;
-  height: 200px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 3rem;
-  position: relative;
-  overflow: hidden;
-  flex-shrink: 0;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+  border-collapse: collapse;
+  th,
+  td {
+    padding: 1rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  th {
+    background-color: #f7fafc;
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+  td {
+    font-size: 0.875rem;
+  }
+  tbody tr:hover {
+    background-color: #f7fafc;
   }
 `;
 
-const HouseInfo = styled.div`
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-`;
-
-const HouseTitle = styled.h3`
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #2d3748;
-  margin: 0 0 0.5rem 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  flex-shrink: 0;
-  min-height: 2.5rem;
-  line-height: 1.25;
-`;
-
-const HouseDetails = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  flex-shrink: 0;
-`;
-
-const DetailRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #4a5568;
-  font-size: 0.875rem;
-  min-height: 1.25rem;
-`;
-
-const Price = styled.div`
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #2f855a;
-`;
-
-const Status = styled.span`
+const Badge = styled.span`
   display: inline-flex;
   align-items: center;
-  padding: 0.25rem 0.5rem;
+  padding: 0.375rem 0.75rem;
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 600;
-  text-transform: uppercase;
-  margin-bottom: 1rem;
-  flex-shrink: 0;
-  min-height: 1.5rem;
 
   &.available {
     background-color: #c6f6d5;
@@ -220,124 +86,65 @@ const Status = styled.span`
   }
 `;
 
-const Actions = styled.div`
+const ActionContainer = styled.div`
   display: flex;
   gap: 0.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid #e2e8f0;
-  margin-top: auto;
-  flex-shrink: 0;
-`;
-
-const ActionButton = styled.button`
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.375rem;
-  background: white;
-  color: #4a5568;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  min-width: 0;
-  white-space: nowrap;
-  height: 2.5rem;
-  min-height: 2.5rem;
-
-  &:hover {
-    background: #f7fafc;
-    border-color: #cbd5e0;
-  }
-
-  &.danger {
-    color: #e53e3e;
-    &:hover {
-      background: #fed7d7;
-    }
-  }
-
-  svg {
-    flex-shrink: 0;
-  }
 `;
 
 const LoadingSpinner = styled.div`
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   padding: 4rem;
-  color: #4a5568;
-
   .spinner {
     animation: spin 1s linear infinite;
-    margin-right: 0.5rem;
+    width: 2rem;
+    height: 2rem;
+    border: 2px solid #e2e8f0;
+    border-top: 2px solid #3b82f6;
+    border-radius: 50%;
   }
-
   @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
-`;
-
-const ErrorMessage = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem;
-  color: #e53e3e;
-  background-color: #fed7d7;
-  border-radius: 0.5rem;
-  margin: 1.5rem;
 `;
 
 const EmptyState = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem;
-  color: #718096;
   text-align: center;
-
-  svg {
-    width: 4rem;
-    height: 4rem;
-    margin-bottom: 1rem;
-    opacity: 0.5;
-  }
+  padding: 3rem;
+  color: #718096;
 `;
 
-// Helper để format tiền tệ
-const formatCurrency = (amount) => {
-  if (amount === null || amount === undefined) return "0 ₫";
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-  }).format(amount);
-};
-
-// Helper để format giá theo tháng
-const formatPricePerMonth = (price) => {
-  if (price === null || price === undefined) return "0 ₫/tháng";
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-  }).format(price) + "/tháng";
-};
+const ResultsInfo = styled.div`
+  padding: 1rem 1.5rem;
+  background: #f7fafc;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.875rem;
+  color: #4a5568;
+  text-align: center;
+`;
 
 const HouseManagement = () => {
-  const navigate = useNavigate();
   const [houses, setHouses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  
+  // Search và filter states - tính năng mới
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    status: 'ALL',
+    houseType: 'ALL'
+  });
+  const [isSearchMode, setIsSearchMode] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+
+  const navigate = useNavigate();
   const { showSuccess, showError } = useToast();
 
+
+
+  // Fetch houses - logic cũ
   const fetchHouses = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -353,20 +160,40 @@ const HouseManagement = () => {
     }
   }, []);
 
+  // Local filter houses (giống trang chủ) - KHÔNG gọi API
   useEffect(() => {
-    fetchHouses();
-  }, [fetchHouses]);
+    if (!houses.length) return;
 
-  const filteredHouses = houses.filter(house =>
-    house.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    house.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    house.hostName?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    let filtered = houses;
 
-  const handleViewHouse = (houseId) => {
-    navigate(`/admin/houses/${houseId}`);
-  };
+    // Filter theo status
+    if (filters.status !== 'ALL') {
+      filtered = filtered.filter(house => house.status === filters.status);
+    }
 
+    // Filter theo houseType
+    if (filters.houseType !== 'ALL') {
+      filtered = filtered.filter(house => house.houseType === filters.houseType);
+    }
+
+    // Search theo tên, địa chỉ (local search)
+    if (searchTerm && searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(house => 
+        (house.title && house.title.toLowerCase().includes(term)) ||
+        (house.name && house.name.toLowerCase().includes(term)) ||
+        (house.address && house.address.toLowerCase().includes(term)) ||
+        (house.description && house.description.toLowerCase().includes(term))
+      );
+    }
+
+    setSearchResults(filtered);
+    setIsSearchMode(searchTerm.trim() || filters.status !== 'ALL' || filters.houseType !== 'ALL');
+  }, [houses, searchTerm, filters]);
+
+
+
+  // Handle delete house - logic cũ
   const handleDeleteHouse = async (houseId) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa nhà này?")) {
       try {
@@ -379,147 +206,182 @@ const HouseManagement = () => {
     }
   };
 
-  const getStatusDisplay = (status) => {
-    switch (status) {
-      case 'AVAILABLE':
-        return { text: 'Có sẵn', className: 'available' };
-      case 'RENTED':
-        return { text: 'Đã thuê', className: 'rented' };
-      case 'INACTIVE':
-        return { text: 'Không hoạt động', className: 'inactive' };
-      default:
-        return { text: 'Không xác định', className: 'inactive' };
-    }
-  };
+  // Initial load - logic cũ
+  useEffect(() => {
+    fetchHouses();
+  }, [fetchHouses]);
+
+
+
+  const displayHouses = isSearchMode ? searchResults : houses;
+  const hasResults = displayHouses && displayHouses.length > 0;
 
   if (loading) {
     return (
-      <Card>
-        <LoadingSpinner>
-          <RefreshCw className="spinner" />
-          <span>Đang tải danh sách nhà...</span>
-        </LoadingSpinner>
-      </Card>
+      <LoadingSpinner>
+        <div className="spinner"></div>
+      </LoadingSpinner>
     );
   }
 
   if (error) {
     return (
-      <Card>
-        <ErrorMessage>
-          <AlertTriangle style={{ marginRight: "0.5rem" }} />
-          {error}
-        </ErrorMessage>
-      </Card>
+      <EmptyState>
+        <AlertTriangle size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
+        <p>{error}</p>
+      </EmptyState>
     );
   }
 
   return (
-    <Card>
-      <Header>
-        <Title>Quản lý nhà cho thuê</Title>
-        <SearchBar>
-          <Search size={16} />
-          <SearchInput
-            type="text"
-            placeholder="Tìm kiếm theo tên, địa chỉ, chủ nhà..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </SearchBar>
-        <div style={{ display: "flex", gap: "0.5rem" }}>
-          <Button>
-            <Filter size={16} />
-            Lọc
-          </Button>
-          <Button className="primary">
-            <Plus size={16} />
-            Thêm nhà
-          </Button>
-        </div>
-      </Header>
+    <div>
+      <AdminSearchBar
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        filters={filters}
+        setFilters={setFilters}
+        onSearch={() => {}} // Không cần gọi API, chỉ local filtering
+        onClear={() => {
+          setSearchTerm("");
+          setFilters({ status: "ALL", houseType: "ALL" });
+          setIsSearchMode(false);
+        }}
+        filterOptions={{
+          status: [
+            { value: "ALL", label: "Tất cả trạng thái" },
+            { value: "ACTIVE", label: "Đang hoạt động" },
+            { value: "INACTIVE", label: "Không hoạt động" },
+            { value: "RENTED", label: "Đã cho thuê" },
+          ],
+          houseType: [
+            { value: "ALL", label: "Tất cả loại" },
+            { value: "APARTMENT", label: "Căn hộ" },
+            { value: "VILLA", label: "Biệt thự" },
+            { value: "TOWNHOUSE", label: "Nhà phố" },
+            { value: "BOARDING_HOUSE", label: "Nhà trọ" },
+            { value: "WHOLE_HOUSE", label: "Nhà nguyên căn" },
+          ],
+        }}
+        placeholder="Tìm kiếm theo tên, địa chỉ..."
+        $showFilters={true}
+        debounceMs={300}
+      />
 
-      {filteredHouses.length === 0 ? (
-        <EmptyState>
-          <Home />
-          <h3>Chưa có nhà nào</h3>
-          <p>Hệ thống chưa có nhà cho thuê nào được đăng ký.</p>
-        </EmptyState>
-      ) : (
-        <Grid>
-          {filteredHouses.map((house) => {
-            const status = getStatusDisplay(house.status);
-            const firstImage = house.imageUrls && house.imageUrls.length > 0 
-              ? house.imageUrls[0] 
-              : null;
+      <Card>
+        <Header>
+          <Title>Quản lý nhà cho thuê</Title>
+        </Header>
 
-            return (
-              <HouseCard key={house.id}>
-                <HouseImage>
-                  {firstImage ? (
-                    <img 
-                      src={firstImage} 
-                      alt={house.title}
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                      }}
-                    />
-                  ) : null}
-                  <div style={{ 
-                    display: firstImage ? 'none' : 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '100%',
-                    height: '100%'
-                  }}>
-                    <Home size={48} />
-                  </div>
-                </HouseImage>
-                
-                <HouseInfo>
-                  <HouseTitle>{house.title || "Không có tên"}</HouseTitle>
-                  
-                  <HouseDetails>
-                    <DetailRow>
-                      <DollarSign size={16} />
-                      <Price>{formatPricePerMonth(house.price)}</Price>
-                    </DetailRow>
-                    
-                    <DetailRow>
-                      <MapPin size={16} />
-                      <span>{house.address || "Chưa cập nhật địa chỉ"}</span>
-                    </DetailRow>
-                    
-                    <DetailRow>
-                      <span>Chủ nhà: {house.hostName || "Chưa cập nhật"}</span>
-                    </DetailRow>
-                  </HouseDetails>
+        <ResultsInfo>
+          <span>
+            {isSearchMode 
+              ? `Tìm thấy ${displayHouses.length} kết quả`
+              : `Hiển thị ${displayHouses.length} nhà`
+            }
+          </span>
+        </ResultsInfo>
 
-                  <Status className={status.className}>
-                    {status.text}
-                  </Status>
-
-                  <Actions>
-                    <ActionButton onClick={() => handleViewHouse(house.id)}>
-                      <Eye size={16} />
-                      Xem chi tiết
-                    </ActionButton>
-                    <ActionButton 
-                      className="danger" 
-                      onClick={() => handleDeleteHouse(house.id)}
-                    >
-                      <Trash2 size={16} />
-                      Xóa
-                    </ActionButton>
-                  </Actions>
-                </HouseInfo>
-              </HouseCard>
-            );
-          })}
-        </Grid>
-      )}
-    </Card>
+        {hasResults ? (
+          <Table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Tên nhà</th>
+                <th>Địa chỉ</th>
+                <th>Giá</th>
+                <th>Loại nhà</th>
+                <th>Trạng thái</th>
+                <th>Chủ nhà</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              {displayHouses.map((house) => (
+                <tr key={house.id}>
+                  <td>{house.id}</td>
+                  <td>{house.title || 'N/A'}</td>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <MapPin size={14} />
+                      {house.address || 'N/A'}
+                    </div>
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <DollarSign size={14} />
+                      {house.price ? `${house.price.toLocaleString()} VNĐ` : 'N/A'}
+                    </div>
+                  </td>
+                  <td>{house.houseType || 'N/A'}</td>
+                  <td>
+                    <Badge className={house.status?.toLowerCase()}>
+                      {house.status || 'N/A'}
+                    </Badge>
+                  </td>
+                  <td>{house.hostName || 'N/A'}</td>
+                  <td>
+                    <ActionContainer>
+                      <button
+                        onClick={() => navigate(`/admin/houses/${house.id}`)}
+                        title="Xem chi tiết"
+                        style={{
+                          padding: '0.5rem',
+                          background: 'white',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '0.375rem',
+                          cursor: 'pointer',
+                          color: '#2b6cb0'
+                        }}
+                      >
+                        <Eye size={14} />
+                      </button>
+                      <button
+                        onClick={() => navigate(`/admin/houses/${house.id}/edit`)}
+                        title="Chỉnh sửa"
+                        style={{
+                          padding: '0.5rem',
+                          background: 'white',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '0.375rem',
+                          cursor: 'pointer',
+                          color: '#4a5568'
+                        }}
+                      >
+                        <Edit size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteHouse(house.id)}
+                        title="Xóa"
+                        style={{
+                          padding: '0.5rem',
+                          background: 'white',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '0.375rem',
+                          cursor: 'pointer',
+                          color: '#e53e3e'
+                        }}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </ActionContainer>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        ) : (
+          <EmptyState>
+            <Home size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
+            <p>
+              {isSearchMode 
+                ? 'Không tìm thấy nhà nào phù hợp với điều kiện tìm kiếm'
+                : 'Không có nhà nào'
+              }
+            </p>
+          </EmptyState>
+        )}
+      </Card>
+    </div>
   );
 };
 

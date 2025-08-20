@@ -12,6 +12,7 @@ import {
   Eye,
 } from "lucide-react";
 import { useToast } from "../common/Toast";
+import AdminSearchBar from "./AdminSearchBar";
 
 const Card = styled.div`
   background: white;
@@ -108,6 +109,17 @@ const ActionContainer = styled.div`
   gap: 0.5rem; // Khoảng cách giữa các nút
 `;
 
+const ErrorMessage = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  color: #e53e3e;
+  background-color: #fed7d7;
+  border-radius: 0.5rem;
+  margin: 1.5rem;
+`;
+
 const PaginationContainer = styled.div`
   display: flex;
   justify-content: space-between;
@@ -149,26 +161,14 @@ const LoadingSpinner = styled.div`
     animation: spin 1s linear infinite;
     width: 2rem;
     height: 2rem;
-    color: #3182ce;
+    border: 2px solid #e2e8f0;
+    border-top: 2px solid #3b82f6;
+    border-radius: 50%;
   }
   @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
-`;
-
-const ErrorMessage = styled.div`
-  padding: 2rem;
-  text-align: center;
-  color: #c53030;
-  background: #fff5f5;
-  border: 1px solid #fed7d7;
-  border-radius: 0.5rem;
-  margin: 1rem;
 `;
 
 const UserManagement = () => {
@@ -176,8 +176,22 @@ const UserManagement = () => {
   const [pagination, setPagination] = useState({ number: 0, totalPages: 1 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Search và filter states - tính năng mới
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    role: 'ALL',
+    active: 'ALL'
+  });
+  const [isSearchMode, setIsSearchMode] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+
+  // Thêm processingId để theo dõi trạng thái xử lý
+  const [processingId, setProcessingId] = useState(null);
+
   const { showSuccess, showError } = useToast();
 
+  // Fetch users với phân trang - logic cũ
   const fetchUsers = useCallback(async (page = 0) => {
     try {
       setLoading(true);
@@ -203,16 +217,75 @@ const UserManagement = () => {
     }
   }, []);
 
+  // Local filter users (giống trang chủ) - KHÔNG gọi API
   useEffect(() => {
-    fetchUsers(0);
-  }, [fetchUsers]);
+    if (!users.length) return;
 
+    let filtered = users;
+
+    // Filter theo role
+    if (filters.role !== 'ALL') {
+      filtered = filtered.filter(user => user.roleName === filters.role);
+    }
+
+    // Filter theo active status  
+    if (filters.active !== 'ALL') {
+      const isActive = filters.active === 'true';
+      filtered = filtered.filter(user => user.active === isActive);
+    }
+
+    // Search theo tên, email, phone (local search)
+    if (searchTerm && searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(user => 
+        (user.fullName && user.fullName.toLowerCase().includes(term)) ||
+        (user.email && user.email.toLowerCase().includes(term)) ||
+        (user.phone && user.phone.toLowerCase().includes(term)) ||
+        (user.address && user.address.toLowerCase().includes(term))
+      );
+    }
+
+    setSearchResults(filtered);
+    setIsSearchMode(searchTerm.trim() || filters.role !== 'ALL' || filters.active !== 'ALL');
+  }, [users, searchTerm, filters]);
+
+  // Search users với API - chỉ khi bấm nút tìm kiếm
+  const searchUsers = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const data = await usersApi.searchUsers(
+        searchTerm.trim() || undefined,
+        filters.role !== 'ALL' ? filters.role : undefined,
+        filters.active !== 'ALL' ? filters.active === 'true' : undefined
+      );
+      
+      setUsers(Array.isArray(data) ? data : []);
+      // Local filter sẽ tự động chạy sau khi setUsers
+    } catch (err) {
+      console.error('Error searching users:', err);
+      setError('Không thể tìm kiếm người dùng. Vui lòng thử lại sau.');
+      showError('Lỗi tìm kiếm', 'Không thể tìm kiếm người dùng');
+    } finally {
+      setLoading(false);
+    }
+  }, [searchTerm, filters, showError]);
+
+  // Handle pagination - logic cũ
+  const handlePageChange = (newPage) => {
+    if (newPage >= 0 && newPage < pagination.totalPages) {
+      fetchUsers(newPage);
+    }
+  };
+
+  // Handle user status update - logic cũ
   const handleToggleStatus = async (userId, currentStatus) => {
     try {
+      setProcessingId(userId); // Bắt đầu xử lý
+      
       console.log(
-        "UserManagement.handleToggleStatus - Toggling status for user:",
-        userId,
-        "from",
+        "UserManagement.handleToggleStatus - Updating status from",
         currentStatus,
         "to",
         !currentStatus
@@ -245,19 +318,20 @@ const UserManagement = () => {
         "Cập nhật thất bại!",
         "Không thể cập nhật trạng thái người dùng. Vui lòng thử lại."
       );
+    } finally {
+      setProcessingId(null); // Kết thúc xử lý
     }
   };
 
-  const handlePageChange = (newPage) => {
-    if (newPage >= 0 && newPage < pagination.totalPages) {
-      fetchUsers(newPage);
-    }
-  };
+  // Initial load - logic cũ
+  useEffect(() => {
+    fetchUsers(0);
+  }, [fetchUsers]);
 
   if (loading) {
     return (
       <LoadingSpinner>
-        <RefreshCw className="spinner" />
+        <div className="spinner"></div>
       </LoadingSpinner>
     );
   }
@@ -271,85 +345,117 @@ const UserManagement = () => {
   }
 
   return (
-    <Card>
-      <Table>
-        <thead>
-          <tr>
-            <th>Họ và Tên</th>
-            <th>Email</th>
-            <th>Số điện thoại</th>
-            <th>Trạng thái</th>
-            <th>Hành động</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Array.isArray(users) && users.length > 0 ? (
-            users.map((user) => (
-              <tr key={user.id}>
-                <td>{user.fullName || "Chưa cập nhật"}</td>
-                <td>{user.email || "Chưa cập nhật"}</td>
-                <td>{user.phone || "Chưa cập nhật"}</td>
-                <td>
-                  {user.active ? (
-                    <Badge className="active">Đang hoạt động</Badge>
-                  ) : (
-                    <Badge className="locked">Đã khóa</Badge>
-                  )}
-                </td>
-                <td>
-                  {/* Bước 3: Thêm nút Xem chi tiết và nhóm các nút lại */}
-                  <ActionContainer>
-                    <Link
-                      to={`/admin/user-management/${user.id}`}
-                      title="Xem chi tiết"
-                    >
-                      <ActionButton className="view">
-                        <Eye size={16} />
+    <div>
+      <AdminSearchBar
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        filters={filters}
+        setFilters={setFilters}
+        onSearch={searchUsers}
+        onClear={() => {
+          setSearchTerm("");
+          setFilters({ role: "ALL", active: "ALL" });
+          setIsSearchMode(false);
+          fetchUsers(0);
+        }}
+        filterOptions={{
+          role: [
+            { value: "ALL", label: "Tất cả vai trò" },
+            { value: "USER", label: "Người dùng" },
+            { value: "HOST", label: "Chủ nhà" },
+            { value: "ADMIN", label: "Quản trị viên" },
+          ],
+          active: [
+            { value: "ALL", label: "Tất cả trạng thái" },
+            { value: "true", label: "Hoạt động" },
+            { value: "false", label: "Đã khóa" },
+          ],
+        }}
+        placeholder="Tìm kiếm theo tên, email, số điện thoại..."
+        $showFilters={true}
+        debounceMs={300}
+      />
+
+      <Card>
+        <Table>
+          <thead>
+            <tr>
+              <th>Họ và Tên</th>
+              <th>Email</th>
+              <th>Số điện thoại</th>
+              <th>Trạng thái</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(isSearchMode ? searchResults : users).length > 0 ? (
+              (isSearchMode ? searchResults : users).map((user) => (
+                <tr key={user.id}>
+                  <td>{user.fullName || "Chưa cập nhật"}</td>
+                  <td>{user.email}</td>
+                  <td>{user.phone || "Chưa cập nhật"}</td>
+                  <td>
+                    <Badge className={user.active ? "active" : "locked"}>
+                      {user.active ? "Đang hoạt động" : "Đã khóa"}
+                    </Badge>
+                  </td>
+                  <td>
+                    <ActionContainer>
+                      <Link to={`/admin/user-management/${user.id}`}>
+                        <ActionButton className="view" title="Xem chi tiết">
+                          <Eye size={16} />
+                        </ActionButton>
+                      </Link>
+                      <ActionButton
+                        className={user.active ? "lock" : "unlock"}
+                        onClick={() => handleToggleStatus(user.id, user.active)}
+                        disabled={processingId === user.id}
+                        title={user.active ? "Khóa tài khoản" : "Mở khóa tài khoản"}
+                      >
+                        {user.active ? "Khóa" : "Mở khóa"}
                       </ActionButton>
-                    </Link>
-                    <ActionButton
-                      title={
-                        user.active ? "Khóa tài khoản" : "Mở khóa tài khoản"
-                      }
-                      className={user.active ? "lock" : "unlock"}
-                      onClick={() => handleToggleStatus(user.id, user.active)}
-                    >
-                      {user.active ? "Khóa" : "Mở khóa"}
-                    </ActionButton>
-                  </ActionContainer>
+                    </ActionContainer>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td
+                  colSpan="5"
+                  style={{ textAlign: "center", padding: "2rem" }}
+                >
+                  {isSearchMode ? "Không tìm thấy người dùng nào." : "Không có người dùng nào."}
                 </td>
               </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="5" style={{ textAlign: "center", padding: "2rem" }}>
-                {loading ? "Đang tải..." : "Không có người dùng nào"}
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </Table>
-      <PaginationContainer>
-        <span>
-          Trang <strong>{pagination.number + 1}</strong> trên{" "}
-          <strong>{pagination.totalPages}</strong>
-        </span>
-        <PaginationControls>
-          <PageButton
-            onClick={() => handlePageChange(pagination.number - 1)}
-            disabled={pagination.number === 0}
-          >
-            <ChevronLeft size={16} />
-          </PageButton>
-          <PageButton
-            onClick={() => handlePageChange(pagination.number + 1)}
-            disabled={pagination.number + 1 >= pagination.totalPages}
-          >
-            <ChevronRight size={16} />
-          </PageButton>
-        </PaginationControls>
-      </PaginationContainer>
-    </Card>
+            )}
+          </tbody>
+        </Table>
+
+        {!isSearchMode && pagination.totalPages > 1 && (
+          <PaginationContainer>
+            <span>
+              Trang <strong>{pagination.number + 1}</strong> trên{" "}
+              <strong>{pagination.totalPages}</strong>
+            </span>
+            <PaginationControls>
+              <PageButton
+                onClick={() => handlePageChange(pagination.number - 1)}
+                disabled={pagination.number === 0}
+              >
+                <ChevronLeft size={16} />
+              </PageButton>
+              <PageButton
+                onClick={() => handlePageChange(pagination.number + 1)}
+                disabled={pagination.number + 1 >= pagination.totalPages}
+              >
+                <ChevronRight size={16} />
+              </PageButton>
+            </PaginationControls>
+          </PaginationContainer>
+        )}
+      </Card>
+    </div>
   );
 };
+
 export default UserManagement;

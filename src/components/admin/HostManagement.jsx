@@ -13,6 +13,7 @@ import {
   Eye,
 } from "lucide-react";
 import { useToast } from "../common/Toast";
+import AdminSearchBar from "./AdminSearchBar";
 
 // --- STYLED COMPONENTS (Đồng bộ 100% với UserManagement) ---
 const Card = styled.div`
@@ -173,6 +174,15 @@ const HostManagement = () => {
   const [pagination, setPagination] = useState({ number: 0, totalPages: 1 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Thêm state cho tìm kiếm
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filters, setFilters] = useState({
+    active: "ALL",
+  });
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearchMode, setIsSearchMode] = useState(false);
+
   const { showSuccess, showError } = useToast();
 
   const fetchHosts = useCallback(async (page = 0) => {
@@ -192,6 +202,54 @@ const HostManagement = () => {
       setLoading(false);
     }
   }, []);
+
+  // Local filter hosts (giống trang chủ) - KHÔNG gọi API
+  useEffect(() => {
+    if (!hosts.length) return;
+
+    let filtered = hosts;
+
+    // Filter theo active status  
+    if (filters.active !== 'ALL') {
+      const isActive = filters.active === 'true';
+      filtered = filtered.filter(host => host.active === isActive);
+    }
+
+    // Search theo tên, email, phone (local search)
+    if (searchTerm && searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(host => 
+        (host.fullName && host.fullName.toLowerCase().includes(term)) ||
+        (host.email && host.email.toLowerCase().includes(term)) ||
+        (host.phone && host.phone.toLowerCase().includes(term)) ||
+        (host.address && host.address.toLowerCase().includes(term))
+      );
+    }
+
+    setSearchResults(filtered);
+    setIsSearchMode(searchTerm.trim() || filters.active !== 'ALL');
+  }, [hosts, searchTerm, filters]);
+
+  // Search hosts với API - chỉ khi bấm nút tìm kiếm
+  const searchHosts = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await hostApplicationsApi.searchHosts(
+        searchTerm.trim() || undefined,
+        filters.active !== 'ALL' ? filters.active === 'true' : undefined,
+        { page: 0, size: 10 }
+      );
+      setHosts(Array.isArray(data.content) ? data.content : []);
+      // Local filter sẽ tự động chạy sau khi setHosts
+    } catch (err) {
+      console.error('Error searching hosts:', err);
+      setError('Không thể tìm kiếm chủ nhà. Vui lòng thử lại sau.');
+      showError('Lỗi tìm kiếm', 'Không thể tìm kiếm chủ nhà');
+    } finally {
+      setLoading(false);
+    }
+  }, [searchTerm, filters, showError]);
 
   useEffect(() => {
     fetchHosts(0);
@@ -252,79 +310,107 @@ const HostManagement = () => {
   }
 
   return (
-    <Card>
-      <Table>
-        <thead>
-          <tr>
-            <th>Họ và Tên</th>
-            <th>Email</th>
-            <th>Số điện thoại</th>
-            <th>Trạng thái</th>
-            <th>Hành động</th>
-          </tr>
-        </thead>
-        <tbody>
-          {hosts.length > 0 ? (
-            hosts.map((host) => (
-              <tr key={host.id}>
-                <td>{host.fullName || "Chưa cập nhật"}</td>
-                <td>{host.email}</td>
-                <td>{host.phone || "Chưa cập nhật"}</td>
-                <td>
-                  <Badge className={host.active ? "active" : "locked"}>
-                    {host.active ? "Đang hoạt động" : "Đã khóa"}
-                  </Badge>
-                </td>
-                <td>
-                  <ActionContainer>
-                    <Link to={`/admin/host-management/${host.id}`}>
-                      <ActionButton className="view">
-                        <Eye size={16} />
+    <>
+      <AdminSearchBar
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        filters={filters}
+        setFilters={setFilters}
+        onSearch={searchHosts}
+        onClear={() => {
+          setSearchTerm("");
+          setFilters({ active: "ALL" });
+          setIsSearchMode(false);
+          fetchHosts(0);
+        }}
+        filterOptions={{
+          active: [
+            { value: "ALL", label: "Tất cả trạng thái" },
+            { value: "true", label: "Đang hoạt động" },
+            { value: "false", label: "Đã khóa" },
+          ],
+        }}
+        placeholder="Tìm kiếm theo tên, email, số điện thoại..."
+        $showFilters={true}
+        debounceMs={300}
+      />
+
+      <Card>
+        <Table>
+          <thead>
+            <tr>
+              <th>Họ và Tên</th>
+              <th>Email</th>
+              <th>Số điện thoại</th>
+              <th>Trạng thái</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(isSearchMode ? searchResults : hosts).length > 0 ? (
+              (isSearchMode ? searchResults : hosts).map((host) => (
+                <tr key={host.id}>
+                  <td>{host.fullName || "Chưa cập nhật"}</td>
+                  <td>{host.email}</td>
+                  <td>{host.phone || "Chưa cập nhật"}</td>
+                  <td>
+                    <Badge className={host.active ? "active" : "locked"}>
+                      {host.active ? "Đang hoạt động" : "Đã khóa"}
+                    </Badge>
+                  </td>
+                  <td>
+                    <ActionContainer>
+                      <Link to={`/admin/host-management/${host.id}`}>
+                        <ActionButton className="view">
+                          <Eye size={16} />
+                        </ActionButton>
+                      </Link>
+                      <ActionButton
+                        title={
+                          host.active ? "Khóa tài khoản" : "Mở khóa tài khoản"
+                        }
+                        className={host.active ? "lock" : "unlock"}
+                        onClick={() => handleToggleStatus(host)}
+                      >
+                        {host.active ? "Khóa" : "Mở khóa"}
                       </ActionButton>
-                    </Link>
-                    <ActionButton
-                      title={
-                        host.active ? "Khóa tài khoản" : "Mở khóa tài khoản"
-                      }
-                      className={host.active ? "lock" : "unlock"}
-                      onClick={() => handleToggleStatus(host)} // <-- ĐÃ SỬA
-                    >
-                      {host.active ? "Khóa" : "Mở khóa"}
-                    </ActionButton>
-                  </ActionContainer>
+                    </ActionContainer>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5" style={{ textAlign: "center", padding: "2rem" }}>
+                  {isSearchMode ? "Không tìm thấy chủ nhà nào." : "Không có chủ nhà nào."}
                 </td>
               </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="5" style={{ textAlign: "center", padding: "2rem" }}>
-                Không có chủ nhà nào.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </Table>
-      <PaginationContainer>
-        <span>
-          Trang <strong>{pagination.number + 1}</strong> trên{" "}
-          <strong>{pagination.totalPages || 1}</strong>
-        </span>
-        <PaginationControls>
-          <PageButton
-            onClick={() => handlePageChange(pagination.number - 1)}
-            disabled={pagination.number === 0}
-          >
-            <ChevronLeft size={16} />
-          </PageButton>
-          <PageButton
-            onClick={() => handlePageChange(pagination.number + 1)}
-            disabled={pagination.number + 1 >= pagination.totalPages}
-          >
-            <ChevronRight size={16} />
-          </PageButton>
-        </PaginationControls>
-      </PaginationContainer>
-    </Card>
+            )}
+          </tbody>
+        </Table>
+        {!isSearchMode && (
+          <PaginationContainer>
+            <span>
+              Trang <strong>{pagination.number + 1}</strong> trên{" "}
+              <strong>{pagination.totalPages || 1}</strong>
+            </span>
+            <PaginationControls>
+              <PageButton
+                onClick={() => handlePageChange(pagination.number - 1)}
+                disabled={pagination.number === 0}
+              >
+                <ChevronLeft size={16} />
+              </PageButton>
+              <PageButton
+                onClick={() => handlePageChange(pagination.number + 1)}
+                disabled={pagination.number + 1 >= pagination.totalPages}
+              >
+                <ChevronRight size={16} />
+              </PageButton>
+            </PaginationControls>
+          </PaginationContainer>
+        )}
+      </Card>
+    </>
   );
 };
 

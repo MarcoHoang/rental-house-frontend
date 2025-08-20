@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useToast } from "../common/Toast";
 import ConfirmDialog from "../common/ConfirmDialog";
+import AdminSearchBar from "./AdminSearchBar";
 
 // --- STYLED COMPONENTS (Đồng bộ 100% với UserManagement) ---
 
@@ -213,6 +214,14 @@ const HostApplicationsManagement = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Thêm state cho tìm kiếm
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filters, setFilters] = useState({
+    status: "ALL",
+  });
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearchMode, setIsSearchMode] = useState(false);
+
   const [processingId, setProcessingId] = useState(null);
   const { showSuccess, showError } = useToast();
   const [confirm, setConfirm] = useState({ isOpen: false });
@@ -230,17 +239,68 @@ const HostApplicationsManagement = () => {
         page,
         size: 10,
       });
+      
+      // API trả về trực tiếp data, không có wrapper
       setApplications(data.content || []);
       setPagination({
         number: data.number || 0,
         totalPages: data.totalPages || 1,
       });
     } catch (err) {
+      console.error('Error fetching applications:', err);
       setError("Không thể tải danh sách đơn đăng ký.");
     } finally {
       setLoading(false);
     }
   }, []);
+
+  // Local filter applications (giống trang chủ) - KHÔNG gọi API
+  useEffect(() => {
+    if (!applications.length) return;
+
+    let filtered = applications;
+
+    // Filter theo status
+    if (filters.status !== 'ALL') {
+      filtered = filtered.filter(app => app.status === filters.status);
+    }
+
+    // Search theo tên, email, phone (local search)
+    if (searchTerm && searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(app => 
+        (app.fullName && app.fullName.toLowerCase().includes(term)) ||
+        (app.username && app.username.toLowerCase().includes(term)) ||
+        (app.userEmail && app.userEmail.toLowerCase().includes(term)) ||
+        (app.phone && app.phone.toLowerCase().includes(term)) ||
+        (app.address && app.address.toLowerCase().includes(term))
+      );
+    }
+
+    setSearchResults(filtered);
+    setIsSearchMode(searchTerm.trim() || filters.status !== 'ALL');
+  }, [applications, searchTerm, filters]);
+
+  // Search applications với API - chỉ khi bấm nút tìm kiếm
+  const searchApplications = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await hostApplicationsApi.searchRequests(
+        searchTerm.trim() || undefined,
+        filters.status !== 'ALL' ? filters.status : undefined,
+        { page: 0, size: 10 }
+      );
+      setApplications(Array.isArray(data.content) ? data.content : []);
+      // Local filter sẽ tự động chạy sau khi setApplications
+    } catch (err) {
+      console.error('Error searching applications:', err);
+      setError('Không thể tìm kiếm đơn đăng ký. Vui lòng thử lại sau.');
+      showError('Lỗi tìm kiếm', 'Không thể tìm kiếm đơn đăng ký');
+    } finally {
+      setLoading(false);
+    }
+  }, [searchTerm, filters, showError]);
 
   useEffect(() => {
     fetchApplications(0);
@@ -320,6 +380,31 @@ const HostApplicationsManagement = () => {
 
   return (
     <>
+      <AdminSearchBar
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        filters={filters}
+        setFilters={setFilters}
+        onSearch={searchApplications}
+        onClear={() => {
+          setSearchTerm("");
+          setFilters({ status: "ALL" });
+          setIsSearchMode(false);
+          fetchApplications(0);
+        }}
+        filterOptions={{
+          status: [
+            { value: "ALL", label: "Tất cả trạng thái" },
+            { value: "PENDING", label: "Đang chờ" },
+            { value: "APPROVED", label: "Đã duyệt" },
+            { value: "REJECTED", label: "Đã từ chối" },
+          ],
+        }}
+        placeholder="Tìm kiếm theo tên, email, số điện thoại..."
+        $showFilters={true}
+        debounceMs={300}
+      />
+
       <Card>
         <Table>
           <thead>
@@ -331,8 +416,8 @@ const HostApplicationsManagement = () => {
             </tr>
           </thead>
           <tbody>
-            {applications.length > 0 ? (
-              applications.map((app) => (
+            {(isSearchMode ? searchResults : applications).length > 0 ? (
+              (isSearchMode ? searchResults : applications).map((app) => (
                 <tr key={app.id}>
                   <td>{app.fullName || app.username || "Chưa cập nhật"}</td>
                   <td>{app.userEmail}</td>
@@ -370,32 +455,34 @@ const HostApplicationsManagement = () => {
                   colSpan="4"
                   style={{ textAlign: "center", padding: "2rem" }}
                 >
-                  Không có đơn đăng ký nào đang chờ duyệt.
+                  {isSearchMode ? "Không tìm thấy đơn đăng ký nào." : "Không có đơn đăng ký nào đang chờ duyệt."}
                 </td>
               </tr>
             )}
           </tbody>
         </Table>
-        <PaginationContainer>
-          <span>
-            Trang <strong>{pagination.number + 1}</strong> trên{" "}
-            <strong>{pagination.totalPages || 1}</strong>
-          </span>
-          <PaginationControls>
-            <PageButton
-              onClick={() => handlePageChange(pagination.number - 1)}
-              disabled={pagination.number === 0}
-            >
-              <ChevronLeft size={16} />
-            </PageButton>
-            <PageButton
-              onClick={() => handlePageChange(pagination.number + 1)}
-              disabled={pagination.number + 1 >= pagination.totalPages}
-            >
-              <ChevronRight size={16} />
-            </PageButton>
-          </PaginationControls>
-        </PaginationContainer>
+        {!isSearchMode && (
+          <PaginationContainer>
+            <span>
+              Trang <strong>{pagination.number + 1}</strong> trên{" "}
+              <strong>{pagination.totalPages || 1}</strong>
+            </span>
+            <PaginationControls>
+              <PageButton
+                onClick={() => handlePageChange(pagination.number - 1)}
+                disabled={pagination.number === 0}
+              >
+                <ChevronLeft size={16} />
+              </PageButton>
+              <PageButton
+                onClick={() => handlePageChange(pagination.number + 1)}
+                disabled={pagination.number + 1 >= pagination.totalPages}
+              >
+                <ChevronRight size={16} />
+              </PageButton>
+            </PaginationControls>
+          </PaginationContainer>
+        )}
       </Card>
 
       <ConfirmDialog

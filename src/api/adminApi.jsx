@@ -230,6 +230,24 @@ export const usersApi = {
       throw error;
     }
   },
+
+  // Tìm kiếm người dùng - tính năng mới
+  searchUsers: async (keyword, role, active) => {
+    try {
+      const response = await apiClient.get(`${API_PREFIX}/admin/users/search`, {
+        params: {
+          keyword,
+          role,
+          active
+        }
+      });
+      return response.data.data;
+    } catch (error) {
+      console.error('Error searching users:', error);
+      throw error;
+    }
+  },
+
   getById: async (userId) => {
     try {
       const response = await apiClient.get(`${API_PREFIX}/admin/users/${userId}`);
@@ -240,11 +258,12 @@ export const usersApi = {
       throw error;
     }
   },
+
   updateStatus: (id, active) =>
     apiClient.patch(`${API_PREFIX}/admin/users/${id}/status`, { active }),
 };
 
-// Houses Management
+// House Management
 export const housesApi = {
   getAll: async (params = {}) => {
     try {
@@ -255,6 +274,25 @@ export const housesApi = {
       throw error;
     }
   },
+
+  // Tìm kiếm nhà - tính năng mới
+  searchHouses: async (keyword, status, houseType, hostId) => {
+    try {
+      const response = await apiClient.get(`${API_PREFIX}/admin/houses/search`, {
+        params: {
+          keyword,
+          status,
+          houseType,
+          hostId
+        }
+      });
+      return response.data.data;
+    } catch (error) {
+      console.error('Error searching houses:', error);
+      throw error;
+    }
+  },
+
   getById: async (id) => {
     try {
       const response = await apiClient.get(`${API_PREFIX}/admin/houses/${id}`);
@@ -264,6 +302,7 @@ export const housesApi = {
       throw error;
     }
   },
+
   create: (houseData) =>
     apiClient.post(`${API_PREFIX}/admin/houses`, houseData),
   update: (id, houseData) =>
@@ -352,6 +391,22 @@ export const hostApplicationsApi = {
     }
   },
 
+  searchHosts: async (keyword, active, params = {}) => {
+    try {
+      const response = await apiClient.get(`${API_PREFIX}/admin/hosts/search`, {
+        params: {
+          ...params,
+          keyword: keyword || undefined,
+          active: active !== 'ALL' ? active : undefined,
+        },
+      });
+      return response.data.data;
+    } catch (error) {
+      logApiError(error, "searchHosts");
+      throw error;
+    }
+  },
+
   getPendingRequests: async (params = {}) => {
     try {
       const response = await apiClient.get(
@@ -361,6 +416,22 @@ export const hostApplicationsApi = {
       return response.data.data; // Dữ liệu trả về là một Page object
     } catch (error) {
       logApiError(error, "getPendingRequests");
+      throw error;
+    }
+  },
+
+  searchRequests: async (keyword, status, params = {}) => {
+    try {
+      const response = await apiClient.get(`${API_PREFIX}/admin/host-requests/search`, {
+        params: {
+          ...params,
+          keyword: keyword || undefined,
+          status: status !== 'ALL' ? status : undefined,
+        },
+      });
+      return response.data.data;
+    } catch (error) {
+      logApiError(error, "searchRequests");
       throw error;
     }
   },
@@ -379,7 +450,6 @@ export const hostApplicationsApi = {
 
   reject: async (requestId, reason) => {
     try {
-      // SỬA LẠI URL: Thêm /admin/
       const response = await apiClient.post(
         `${API_PREFIX}/admin/host-requests/${requestId}/reject`,
         { reason }
@@ -390,6 +460,7 @@ export const hostApplicationsApi = {
       throw error;
     }
   },
+
   updateStatus: async (userId, active) => {
     try {
       const response = await apiClient.patch(
@@ -402,6 +473,7 @@ export const hostApplicationsApi = {
       throw error;
     }
   },
+
   getRequestDetails: async (requestId) => {
     try {
       const response = await apiClient.get(
@@ -413,6 +485,7 @@ export const hostApplicationsApi = {
       throw error;
     }
   },
+
   getHostDetailsByUserId: async (userId) => {
     try {
       const response = await apiClient.get(
