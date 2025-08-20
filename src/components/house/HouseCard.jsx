@@ -300,7 +300,7 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete, fromPage }) =
             <Link
               to={`/houses/${id}`}
               state={{ from: getBackPage() }}
-              className="group relative flex-1 flex items-center justify-center p-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all duration-200 hover:scale-105"
+              className="relative flex-1 flex items-center justify-center p-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all duration-200 hover:scale-105"
               onClick={(e) => {
                 e.stopPropagation();
                 console.log('Clicking on house detail link for house ID:', id);
@@ -310,7 +310,7 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete, fromPage }) =
               <Eye size={18} />
               
               {/* Tooltip */}
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
                 Xem chi tiết nhà
                 <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
               </div>
@@ -322,13 +322,13 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete, fromPage }) =
                 e.stopPropagation();
                 onEdit && onEdit(house);
               }}
-              className="group relative flex-1 flex items-center justify-center p-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition-all duration-200 hover:scale-105"
+              className="relative flex-1 flex items-center justify-center p-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition-all duration-200 hover:scale-105"
               title="Chỉnh sửa nhà"
             >
               <Edit size={18} />
               
               {/* Tooltip */}
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
                 Chỉnh sửa nhà
                 <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
               </div>
@@ -340,13 +340,13 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete, fromPage }) =
                 e.stopPropagation();
                 onDelete && onDelete(house);
               }}
-              className="group relative flex-1 flex items-center justify-center p-3 bg-red-600 text-white rounded-md hover:bg-red-700 transition-all duration-200 hover:scale-105"
+              className="relative flex-1 flex items-center justify-center p-3 bg-red-600 text-white rounded-md hover:bg-red-700 transition-all duration-200 hover:scale-105"
               title="Xóa nhà"
             >
               <Trash2 size={18} />
               
               {/* Tooltip */}
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
                 Xóa nhà
                 <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
               </div>
