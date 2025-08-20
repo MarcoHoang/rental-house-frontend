@@ -74,7 +74,12 @@ const ProtectedRoute = ({
     }
   }
 
-  return children;
+  // Nếu không có yêu cầu cụ thể, chỉ cần kiểm tra đăng nhập
+  if (user && user.id) {
+    return children;
+  } else {
+    return <Navigate to="/login" replace />;
+  }
 };
 
 // Component điều hướng dựa trên vai trò
@@ -113,31 +118,31 @@ function App() {
                 element={<AllHousesPage />}
               />
 
-              {/* Trang đơn thuê của user */}
+              {/* Trang đơn thuê - cho phép cả user và host */}
               <Route
                 path="/my-rentals"
                 element={
-                  <ProtectedRoute requireUser={true}>
+                  <ProtectedRoute>
                     <MyRentalsPage />
                   </ProtectedRoute>
                 }
               />
 
-              {/* Trang yêu thích của user */}
+              {/* Trang yêu thích - cho phép cả user và host */}
               <Route
                 path="/my-favorites"
                 element={
-                  <ProtectedRoute requireUser={true}>
+                  <ProtectedRoute>
                     <MyFavoritesPage />
                   </ProtectedRoute>
                 }
               />
 
-              {/* Trang tin nhắn */}
+              {/* Trang tin nhắn - cho phép cả user và host */}
               <Route
                 path="/messages"
                 element={
-                  <ProtectedRoute requireUser={true}>
+                  <ProtectedRoute>
                     <ChatPage />
                   </ProtectedRoute>
                 }

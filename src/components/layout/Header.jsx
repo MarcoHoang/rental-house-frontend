@@ -420,7 +420,7 @@ const Header = () => {
             <NavLink to="/all-houses">Tất cả nhà</NavLink>
             <NavLink to="/my-favorites">Nhà yêu thích</NavLink>
             <NavLink to="/blog">Blog</NavLink>
-            {isLoggedIn && userData?.roleName === "USER" && (
+            {isLoggedIn && (
               <NavLink to="/my-rentals">Đơn thuê của tôi</NavLink>
             )}
             {isLoggedIn && (
@@ -542,18 +542,16 @@ const Header = () => {
                     )}
 
                     {/* Link đến trang đơn thuê của tôi */}
-                    {userData.roleName === "USER" && (
-                      <Link
-                        to="/my-rentals"
-                        onClick={() => setShowDropdown(false)}
-                        className="w-full text-left flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
-                      >
-                        <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                        </svg>
-                        Đơn thuê của tôi
-                      </Link>
-                    )}
+                    <Link
+                      to="/my-rentals"
+                      onClick={() => setShowDropdown(false)}
+                      className="w-full text-left flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                      Đơn thuê của tôi
+                    </Link>
 
                     {/* Link đến trang yêu thích */}
                     <Link
