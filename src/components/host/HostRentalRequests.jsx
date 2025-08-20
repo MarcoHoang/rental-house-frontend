@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { useToast } from '../common/Toast';
 import rentalApi from '../../api/rentalApi';
+import hostApi from '../../api/hostApi';
 import RejectRequestModal from './RejectRequestModal';
 import RequestDetailModal from './RequestDetailModal';
 import { Clock, CheckCircle, XCircle, Eye, Calendar, Users, MessageSquare } from 'lucide-react';

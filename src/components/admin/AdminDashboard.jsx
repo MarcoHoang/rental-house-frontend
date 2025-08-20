@@ -24,6 +24,8 @@ import UserManagement from "./UserManagement";
 import HostManagement from "./HostManagement";
 import HostApplicationsManagement from "./HostApplicationsManagement";
 import HouseManagement from "./HouseManagement";
+import RentalManagement from "./RentalManagement";
+import RentalDetailPage from "./RentalDetailPage";
 import ConfirmDialog from "../common/ConfirmDialog";
 import { useToast } from "../common/Toast";
 import UserDetailPage from "./UserDetailPage";
@@ -649,7 +651,7 @@ const AdminDashboard = () => {
     },
     {
       id: "user-management",
-      label: "Quản lý User",
+      label: "Quản lý người dùng",
       icon: Users,
       path: "/admin/user-management",
     },
@@ -666,10 +668,9 @@ const AdminDashboard = () => {
       path: "/admin/host-management",
     },
     { id: "houses", label: "Quản lý nhà", icon: Home, path: "/admin/houses" },
-    { id: "tenants", label: "Khách thuê", icon: Users, path: "/admin/tenants" },
     {
       id: "contracts",
-      label: "Hợp đồng",
+      label: "Quản lý Hợp đồng",
       icon: FileText,
       path: "/admin/contracts",
     },
@@ -780,17 +781,9 @@ const AdminDashboard = () => {
             <Route path="houses" element={<HouseManagement />} />
             <Route path="houses/:houseId" element={<HouseDetailPage />} />
 
-            {/* Các route đang phát triển */}
-            <Route
-              path="tenants"
-              element={
-                <DevelopingFeaturePage featureName="Quản lý khách thuê" />
-              }
-            />
-            <Route
-              path="contracts"
-              element={<DevelopingFeaturePage featureName="Quản lý hợp đồng" />}
-            />
+            {/* Route cho Contracts (Rental Management) */}
+            <Route path="contracts" element={<RentalManagement />} />
+            <Route path="contracts/:rentalId" element={<RentalDetailPage />} />
 
             <Route
               path="host-applications/:requestId"

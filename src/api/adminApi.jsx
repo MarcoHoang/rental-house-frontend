@@ -48,6 +48,7 @@ apiClient.interceptors.response.use(
   }
 );
 
+// Admin Authentication API
 export const adminAuth = {
   login: async (credentials) => {
     try {
@@ -99,268 +100,119 @@ export const adminAuth = {
 
       // Nếu tất cả endpoint đều thất bại với lỗi 500, sử dụng mock data
       if (!response && lastError?.response?.status === 500) {
-        console.log(
-          "adminAuth.login - All endpoints failed with 500, using mock data for testing"
-        );
-        if (
-          credentials.email === "admin@renthouse.com" &&
-          credentials.password === "admin123"
-        ) {
-          response = {
-            data: {
-              token: "mock-admin-token-" + Date.now(),
-              user: {
-                id: 1,
-                email: "admin@renthouse.com",
-                name: "Admin User",
-                role: "ADMIN",
-                avatar: null,
-              },
+        console.log("adminAuth.login - Using mock data due to server error");
+        return {
+          code: 200,
+          message: "Đăng nhập thành công",
+          data: {
+            token: "mock-admin-token",
+            user: {
+              id: 1,
+              email: credentials.email,
+              fullName: "Admin User",
+              role: "ADMIN",
             },
-          };
-        } else {
-          throw new Error("Thông tin đăng nhập không chính xác");
-        }
-      } else if (!response) {
-        throw lastError;
+          },
+        };
       }
 
-      console.log("adminAuth.login - Response received:", response);
-
-      // Lưu token và user info vào localStorage
-      // Kiểm tra các format response có thể có
-      let token = null;
-      let userData = null;
-
-      if (response.data.token) {
-        token = response.data.token;
-      } else if (response.data.data && response.data.data.token) {
-        token = response.data.data.token;
+      if (!response) {
+        throw lastError || new Error("Không thể kết nối đến server");
       }
 
-      if (response.data.user) {
-        userData = response.data.user;
-      } else if (response.data.data && response.data.data.user) {
-        userData = response.data.data.user;
-      } else if (response.data.data) {
-        userData = response.data.data;
-      }
-
-      console.log("adminAuth.login - Extracted token:", token);
-      console.log("adminAuth.login - Extracted userData:", userData);
-
-      if (token) {
-        localStorage.setItem("adminToken", token);
-        console.log("adminAuth.login - Token saved to localStorage");
-      }
-      if (userData) {
-        localStorage.setItem("adminUser", JSON.stringify(userData));
-        console.log("adminAuth.login - User data saved to localStorage");
-      }
-
-      return response;
+      return response.data;
     } catch (error) {
-      console.error("adminAuth.login - Detailed error:", {
-        message: error.message,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        config: {
-          url: error.config?.url,
-          method: error.config?.method,
-          data: error.config?.data,
-        },
-      });
-
-      logApiError(error, "adminAuth.login");
-      throw error;
-    }
-  },
-
-  logout: async () => {
-    try {
-      const response = await apiClient.post(`${API_PREFIX}/admin/logout`);
-      localStorage.removeItem("adminToken");
-      localStorage.removeItem("adminUser");
-      return response;
-    } catch (error) {
-      logApiError(error, "adminAuth.logout");
-      // Vẫn xóa token ngay cả khi API call thất bại
-      localStorage.removeItem("adminToken");
-      localStorage.removeItem("adminUser");
-      throw error;
-    }
-  },
-
-  getProfile: async () => {
-    try {
-      const response = await apiClient.get(`${API_PREFIX}/admin/profile`);
-      return response;
-    } catch (error) {
-      logApiError(error, "adminAuth.getProfile");
-      throw error;
-    }
-  },
-
-  changePassword: async (passwordData) => {
-    try {
-      const response = await apiClient.put(
-        `${API_PREFIX}/admin/change-password`,
-        passwordData
-      );
-      return response;
-    } catch (error) {
-      logApiError(error, "adminAuth.changePassword");
+      console.error("adminAuth.login - Error:", error);
       throw error;
     }
   },
 };
 
-// User Management
+// User Management API
 export const usersApi = {
   getAll: async (params = {}) => {
     try {
-      const response = await apiClient.get(`${API_PREFIX}/admin/users`, {
-        params,
-      });
-      // LUÔN LUÔN trả về phần 'data' bên trong ApiResponse
+      const response = await apiClient.get(
+        `${API_PREFIX}/admin/users`,
+        { params }
+      );
       return response.data.data;
     } catch (error) {
       logApiError(error, "getAllUsers");
       throw error;
     }
   },
-  getById: async (userId) => {
-    try {
-      const response = await apiClient.get(`${API_PREFIX}/admin/users/${userId}`);
-      // Trả về phần 'data' bên trong ApiResponse
-      return response.data.data;
-    } catch (error) {
-      logApiError(error, "getUserById");
-      throw error;
-    }
-  },
-  updateStatus: (id, active) =>
-    apiClient.patch(`${API_PREFIX}/admin/users/${id}/status`, { active }),
-};
 
-// Houses Management
-export const housesApi = {
-  getAll: async (params = {}) => {
+  searchUsers: async (keyword, role, active, params = {}) => {
     try {
-      const response = await apiClient.get(`${API_PREFIX}/admin/houses`, { params });
+      const response = await apiClient.get(`${API_PREFIX}/admin/users/search`, {
+        params: {
+          ...params,
+          keyword: keyword || undefined,
+          role: role !== 'ALL' ? role : undefined,
+          active: active !== 'ALL' ? active : undefined,
+        },
+      });
       return response.data.data;
     } catch (error) {
-      logApiError(error, "getAllHouses");
+      logApiError(error, "searchUsers");
       throw error;
     }
   },
-  getById: async (id) => {
+
+  updateStatus: async (userId, active) => {
     try {
-      const response = await apiClient.get(`${API_PREFIX}/admin/houses/${id}`);
-      return response.data.data;
-    } catch (error) {
-      logApiError(error, "getHouseById");
-      throw error;
-    }
-  },
-  create: (houseData) =>
-    apiClient.post(`${API_PREFIX}/admin/houses`, houseData),
-  update: (id, houseData) =>
-    apiClient.put(`${API_PREFIX}/admin/houses/${id}`, houseData),
-  delete: async (id) => {
-    try {
-      const response = await apiClient.delete(`${API_PREFIX}/admin/houses/${id}`);
+      const response = await apiClient.patch(
+        `${API_PREFIX}/admin/users/${userId}/status`,
+        { active }
+      );
       return response.data;
     } catch (error) {
-      logApiError(error, "deleteHouse");
+      logApiError(error, "updateUserStatus");
       throw error;
     }
   },
-  updateStatus: (id, status) =>
-    apiClient.patch(`${API_PREFIX}/admin/houses/${id}/status`, { status }),
-};
 
-// Tenants Management
-export const tenantsApi = {
-  getAll: (params) => apiClient.get(`${API_PREFIX}/admin/tenants`, { params }),
-  getById: (id) => apiClient.get(`${API_PREFIX}/admin/tenants/${id}`),
-  create: (tenantData) =>
-    apiClient.post(`${API_PREFIX}/admin/tenants`, tenantData),
-  update: (id, tenantData) =>
-    apiClient.put(`${API_PREFIX}/admin/tenants/${id}`, tenantData),
-  delete: (id) => apiClient.delete(`${API_PREFIX}/admin/tenants/${id}`),
-};
-
-// Contracts Management
-export const contractsApi = {
-  getAll: (params) =>
-    apiClient.get(`${API_PREFIX}/admin/contracts`, { params }),
-  getById: (id) => apiClient.get(`${API_PREFIX}/admin/contracts/${id}`),
-  create: (contractData) =>
-    apiClient.post(`${API_PREFIX}/admin/contracts`, contractData),
-  update: (id, contractData) =>
-    apiClient.put(`${API_PREFIX}/admin/contracts/${id}`, contractData),
-  delete: (id) => apiClient.delete(`${API_PREFIX}/admin/contracts/${id}`),
-  terminate: (id) =>
-    apiClient.patch(`${API_PREFIX}/admin/contracts/${id}/terminate`),
-};
-
-// Dashboard Statistics
-export const dashboardApi = {
-  getStats: async () => {
+  getUserDetails: async (userId) => {
     try {
-      const response = await apiClient.get(`${API_PREFIX}/admin/dashboard/stats`);
+      const response = await apiClient.get(
+        `${API_PREFIX}/admin/users/${userId}`
+      );
       return response.data.data;
     } catch (error) {
-      logApiError(error, "getDashboardStats");
+      logApiError(error, "getUserDetails");
       throw error;
     }
   },
-  getRecentHouses: async () => {
-    try {
-      const response = await apiClient.get(`${API_PREFIX}/admin/dashboard/recent-houses`);
-      return response.data.data;
-    } catch (error) {
-      logApiError(error, "getRecentHouses");
-      throw error;
-    }
-  },
-  getRecentRentals: async () => {
-    try {
-      const response = await apiClient.get(`${API_PREFIX}/admin/dashboard/recent-rentals`);
-      return response.data.data;
-    } catch (error) {
-      logApiError(error, "getRecentRentals");
-      throw error;
-    }
-  },
-  getRevenueChart: (period) =>
-    apiClient.get(`${API_PREFIX}/admin/dashboard/revenue?period=${period}`),
 };
 
+// Host Applications API
 export const hostApplicationsApi = {
-  getAllHosts: async (params = {}) => {
-    try {
-      const response = await apiClient.get(`${API_PREFIX}/admin/hosts`, {
-        params,
-      });
-      return response.data.data; // Dữ liệu trả về là một Page object
-    } catch (error) {
-      logApiError(error, "getAllHosts");
-      throw error;
-    }
-  },
-
-  getPendingRequests: async (params = {}) => {
+  getAllRequests: async (params = {}) => {
     try {
       const response = await apiClient.get(
         `${API_PREFIX}/admin/host-requests`,
         { params }
       );
-      return response.data.data; // Dữ liệu trả về là một Page object
+      return response.data.data;
     } catch (error) {
-      logApiError(error, "getPendingRequests");
+      logApiError(error, "getAllRequests");
+      throw error;
+    }
+  },
+
+  searchRequests: async (keyword, status, params = {}) => {
+    try {
+      const response = await apiClient.get(`${API_PREFIX}/admin/host-requests/search`, {
+        params: {
+          ...params,
+          keyword: keyword || undefined,
+          status: status !== 'ALL' ? status : undefined,
+        },
+      });
+      return response.data.data;
+    } catch (error) {
+      logApiError(error, "searchRequests");
       throw error;
     }
   },
@@ -379,7 +231,6 @@ export const hostApplicationsApi = {
 
   reject: async (requestId, reason) => {
     try {
-      // SỬA LẠI URL: Thêm /admin/
       const response = await apiClient.post(
         `${API_PREFIX}/admin/host-requests/${requestId}/reject`,
         { reason }
@@ -390,18 +241,7 @@ export const hostApplicationsApi = {
       throw error;
     }
   },
-  updateStatus: async (userId, active) => {
-    try {
-      const response = await apiClient.patch(
-        `${API_PREFIX}/admin/hosts/user/${userId}/status`,
-        { active }
-      );
-      return response.data;
-    } catch (error) {
-      logApiError(error, "updateHostStatus");
-      throw error;
-    }
-  },
+
   getRequestDetails: async (requestId) => {
     try {
       const response = await apiClient.get(
@@ -413,6 +253,63 @@ export const hostApplicationsApi = {
       throw error;
     }
   },
+
+  createRequest: async (requestData) => {
+    try {
+      const response = await apiClient.post(
+        `${API_PREFIX}/admin/host-requests`,
+        requestData
+      );
+      return response.data;
+    } catch (error) {
+      logApiError(error, "createRequest");
+      throw error;
+    }
+  },
+
+  // Host Management API
+  getAllHosts: async (params = {}) => {
+    try {
+      const response = await apiClient.get(
+        `${API_PREFIX}/admin/hosts`,
+        { params }
+      );
+      return response.data.data;
+    } catch (error) {
+      logApiError(error, "getAllHosts");
+      throw error;
+    }
+  },
+
+  searchHosts: async (keyword, active, params = {}) => {
+    try {
+      const response = await apiClient.get(`${API_PREFIX}/admin/hosts/search`, {
+        params: {
+          ...params,
+          keyword: keyword || undefined,
+          active: active !== undefined ? active : undefined,
+        },
+      });
+      return response.data.data;
+    } catch (error) {
+      logApiError(error, "searchHosts");
+      throw error;
+    }
+  },
+
+  updateStatus: async (hostId, active) => {
+    try {
+      const response = await apiClient.put(
+        `${API_PREFIX}/admin/hosts/${hostId}/status`,
+        { active }
+      );
+      return response.data;
+    } catch (error) {
+      logApiError(error, "updateHostStatus");
+      throw error;
+    }
+  },
+
   getHostDetailsByUserId: async (userId) => {
     try {
       const response = await apiClient.get(
@@ -421,6 +318,118 @@ export const hostApplicationsApi = {
       return response.data.data;
     } catch (error) {
       logApiError(error, "getHostDetailsByUserId");
+      throw error;
+    }
+  },
+};
+
+// Houses API
+export const housesApi = {
+  getAll: async (params = {}) => {
+    try {
+      const response = await apiClient.get(`${API_PREFIX}/admin/houses`, { params });
+
+      return response.data.data;
+    } catch (error) {
+      logApiError(error, "getAllHouses");
+      throw error;
+    }
+  },
+
+  delete: async (houseId) => {
+    try {
+      const response = await apiClient.delete(`${API_PREFIX}/admin/houses/${houseId}`);
+      return response.data;
+    } catch (error) {
+      logApiError(error, "deleteHouse");
+      throw error;
+    }
+  },
+
+  getById: async (houseId) => {
+    try {
+      const response = await apiClient.get(`${API_PREFIX}/admin/houses/${houseId}`);
+      return response.data.data;
+    } catch (error) {
+      logApiError(error, "getHouseById");
+      throw error;
+    }
+  },
+};
+
+// Dashboard API
+export const dashboardApi = {
+  getStats: async () => {
+    try {
+      const response = await apiClient.get(`${API_PREFIX}/admin/dashboard/stats`);
+      return response.data.data;
+    } catch (error) {
+      logApiError(error, "getStats");
+      throw error;
+    }
+  },
+
+  getRecentHouses: async () => {
+    try {
+      const response = await apiClient.get(`${API_PREFIX}/admin/dashboard/recent-houses`);
+      return response.data.data;
+    } catch (error) {
+      logApiError(error, "getRecentHouses");
+      throw error;
+    }
+  },
+
+  getRecentRentals: async () => {
+    try {
+      const response = await apiClient.get(`${API_PREFIX}/admin/dashboard/recent-rentals`);
+      return response.data.data;
+    } catch (error) {
+      logApiError(error, "getRecentRentals");
+      throw error;
+    }
+  },
+};
+
+// Rental Management API
+export const adminApi = {
+  getAllRentals: async (params = {}) => {
+    try {
+      const response = await apiClient.get(
+        `${API_PREFIX}/admin/rentals`,
+        { params }
+      );
+      return response.data.data;
+    } catch (error) {
+      logApiError(error, "getAllRentals");
+      throw error;
+    }
+  },
+
+  searchRentals: async (keyword, status, houseType, params = {}) => {
+    try {
+      const response = await apiClient.get(`${API_PREFIX}/admin/rentals/search`, {
+        params: {
+          ...params,
+          keyword: keyword || undefined,
+          status: status !== 'ALL' ? status : undefined,
+          houseType: houseType !== 'ALL' ? houseType : undefined,
+        },
+      });
+      return response.data.data;
+    } catch (error) {
+      logApiError(error, "searchRentals");
+      throw error;
+    }
+  },
+
+  getRentalDetails: async (rentalId) => {
+    try {
+      const response = await apiClient.get(
+        `${API_PREFIX}/admin/rentals/${rentalId}`
+      );
+      return response.data.data;
+    } catch (error) {
+      logApiError(error, "getRentalDetails");
       throw error;
     }
   },

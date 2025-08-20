@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useToast } from "../common/Toast";
 import ConfirmDialog from "../common/ConfirmDialog";
+import AdminSearchBar from "./AdminSearchBar";
 
 // --- STYLED COMPONENTS (Đồng bộ 100% với UserManagement) ---
 
@@ -95,6 +96,28 @@ const ActionButton = styled.button`
 const ActionContainer = styled.div`
   display: flex;
   gap: 0.5rem;
+`;
+
+const Badge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 0.375rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &.pending {
+    background-color: #fef3c7;
+    color: #92400e;
+  }
+  &.approved {
+    background-color: #c6f6d5;
+    color: #22543d;
+  }
+  &.rejected {
+    background-color: #fed7d7;
+    color: #742a2a;
+  }
 `;
 
 const PaginationContainer = styled.div`
@@ -213,6 +236,14 @@ const HostApplicationsManagement = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Thêm state cho tìm kiếm
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filters, setFilters] = useState({
+    status: "ALL",
+  });
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearchMode, setIsSearchMode] = useState(false);
+
   const [processingId, setProcessingId] = useState(null);
   const { showSuccess, showError } = useToast();
   const [confirm, setConfirm] = useState({ isOpen: false });
@@ -226,21 +257,80 @@ const HostApplicationsManagement = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await hostApplicationsApi.getPendingRequests({
+      const data = await hostApplicationsApi.getAllRequests({
         page,
         size: 10,
       });
+      
+      console.log('Applications data:', data); // Debug log
+      // API trả về trực tiếp data, không có wrapper
       setApplications(data.content || []);
       setPagination({
         number: data.number || 0,
         totalPages: data.totalPages || 1,
       });
     } catch (err) {
+      console.error('Error fetching applications:', err);
       setError("Không thể tải danh sách đơn đăng ký.");
     } finally {
       setLoading(false);
     }
   }, []);
+
+  // Local filter applications (giống trang chủ) - KHÔNG gọi API
+  useEffect(() => {
+    if (!applications.length) return;
+
+    let filtered = applications;
+
+    // Filter theo status
+    if (filters.status !== 'ALL') {
+      filtered = filtered.filter(app => app.status === filters.status);
+    }
+
+    // Search theo tên, email, phone (local search)
+    if (searchTerm && searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(app => 
+        (app.fullName && app.fullName.toLowerCase().includes(term)) ||
+        (app.username && app.username.toLowerCase().includes(term)) ||
+        (app.userEmail && app.userEmail.toLowerCase().includes(term)) ||
+        (app.phone && app.phone.toLowerCase().includes(term)) ||
+        (app.address && app.address.toLowerCase().includes(term))
+      );
+    }
+
+    // Sắp xếp theo thời gian tạo mới nhất (mới nhất ở trên)
+    filtered.sort((a, b) => {
+      const dateA = new Date(a.requestDate || a.createdAt || 0);
+      const dateB = new Date(b.requestDate || b.createdAt || 0);
+      return dateB - dateA; // Mới nhất lên đầu
+    });
+
+    setSearchResults(filtered);
+    setIsSearchMode(searchTerm.trim() || filters.status !== 'ALL');
+  }, [applications, searchTerm, filters]);
+
+  // Search applications với API - chỉ khi bấm nút tìm kiếm
+  const searchApplications = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await hostApplicationsApi.searchRequests(
+        searchTerm.trim() || undefined,
+        filters.status !== 'ALL' ? filters.status : undefined,
+        { page: 0, size: 10 }
+      );
+      setApplications(Array.isArray(data.content) ? data.content : []);
+      // Local filter sẽ tự động chạy sau khi setApplications
+    } catch (err) {
+      console.error('Error searching applications:', err);
+      setError('Không thể tìm kiếm đơn đăng ký. Vui lòng thử lại sau.');
+      showError('Lỗi tìm kiếm', 'Không thể tìm kiếm đơn đăng ký');
+    } finally {
+      setLoading(false);
+    }
+  }, [searchTerm, filters, showError]);
 
   useEffect(() => {
     fetchApplications(0);
@@ -279,6 +369,30 @@ const HostApplicationsManagement = () => {
 
   const handleReject = (app) => {
     setRejectModal({ isOpen: true, app: app, reason: "" });
+  };
+
+  const handleCreateTestApplication = async () => {
+    try {
+      // Tạo đơn đăng ký test
+      const testApplication = {
+        userId: 1, // ID của user test
+        nationalId: "123456789",
+        proofOfOwnershipUrl: "test-url",
+        idFrontPhotoUrl: "test-front",
+        idBackPhotoUrl: "test-back"
+      };
+      
+      // Gọi API tạo đơn đăng ký
+      await hostApplicationsApi.createRequest(testApplication);
+      
+      // Refresh danh sách
+      fetchApplications(0);
+      
+      showSuccess("Tạo thành công!", "Đã tạo đơn đăng ký test");
+    } catch (err) {
+      console.error('Error creating test application:', err);
+      showError("Tạo thất bại!", "Không thể tạo đơn đăng ký test");
+    }
   };
 
   const performReject = async () => {
@@ -320,23 +434,84 @@ const HostApplicationsManagement = () => {
 
   return (
     <>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <AdminSearchBar
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          filters={filters}
+          setFilters={setFilters}
+          onSearch={searchApplications}
+          onClear={() => {
+            setSearchTerm("");
+            setFilters({ status: "ALL" });
+            setIsSearchMode(false);
+            fetchApplications(0);
+          }}
+          filterOptions={{
+            status: [
+              { value: "ALL", label: "Tất cả trạng thái" },
+              { value: "PENDING", label: "Đang chờ" },
+              { value: "APPROVED", label: "Đã duyệt" },
+              { value: "REJECTED", label: "Đã từ chối" },
+            ],
+          }}
+          placeholder="Tìm kiếm theo tên, email, số điện thoại..."
+          $showFilters={true}
+          debounceMs={300}
+        />
+        
+        {/* Nút tạo đơn test */}
+        <button
+          onClick={handleCreateTestApplication}
+          style={{
+            padding: '0.5rem 1rem',
+            background: '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '0.375rem',
+            cursor: 'pointer',
+            fontSize: '0.875rem'
+          }}
+        >
+          Tạo đơn test
+        </button>
+      </div>
+
       <Card>
+        {/* Thống kê trạng thái */}
+        <div style={{ padding: '1rem', background: '#f8f9fa', borderBottom: '1px solid #e9ecef' }}>
+          <div style={{ display: 'flex', gap: '2rem', fontSize: '0.875rem' }}>
+            <span><strong>Tổng:</strong> {applications.length} đơn</span>
+            <span><strong>Chờ duyệt:</strong> {applications.filter(app => app.status === 'PENDING').length} đơn</span>
+            <span><strong>Đã duyệt:</strong> {applications.filter(app => app.status === 'APPROVED').length} đơn</span>
+            <span><strong>Đã từ chối:</strong> {applications.filter(app => app.status === 'REJECTED').length} đơn</span>
+          </div>
+        </div>
+        
         <Table>
           <thead>
             <tr>
               <th>Họ và Tên</th>
               <th>Email</th>
               <th>Ngày gửi</th>
+              <th>Trạng thái</th>
               <th>Thao tác</th>
             </tr>
           </thead>
           <tbody>
-            {applications.length > 0 ? (
-              applications.map((app) => (
+            {(isSearchMode ? searchResults : applications).length > 0 ? (
+              (isSearchMode ? searchResults : applications).map((app) => (
                 <tr key={app.id}>
                   <td>{app.fullName || app.username || "Chưa cập nhật"}</td>
                   <td>{app.userEmail}</td>
                   <td>{formatDate(app.requestDate)}</td>
+                  <td>
+                    <Badge className={app.status?.toLowerCase()}>
+                      {app.status === 'PENDING' && 'Đang chờ'}
+                      {app.status === 'APPROVED' && 'Đã duyệt'}
+                      {app.status === 'REJECTED' && 'Đã từ chối'}
+                    </Badge>
+                  </td>
                   <td>
                     <ActionContainer>
                       <Link to={`/admin/host-applications/${app.id}`}>
@@ -344,22 +519,26 @@ const HostApplicationsManagement = () => {
                           <Eye size={16} />
                         </ActionButton>
                       </Link>
-                      <ActionButton
-                        className="approve"
-                        onClick={() => handleApprove(app)}
-                        disabled={processingId === app.id}
-                        title="Duyệt"
-                      >
-                        Duyệt
-                      </ActionButton>
-                      <ActionButton
-                        className="reject"
-                        onClick={() => handleReject(app)}
-                        disabled={processingId === app.id}
-                        title="Từ chối"
-                      >
-                        Từ chối
-                      </ActionButton>
+                      {app.status === 'PENDING' && (
+                        <>
+                          <ActionButton
+                            className="approve"
+                            onClick={() => handleApprove(app)}
+                            disabled={processingId === app.id}
+                            title="Duyệt"
+                          >
+                            Duyệt
+                          </ActionButton>
+                          <ActionButton
+                            className="reject"
+                            onClick={() => handleReject(app)}
+                            disabled={processingId === app.id}
+                            title="Từ chối"
+                          >
+                            Từ chối
+                          </ActionButton>
+                        </>
+                      )}
                     </ActionContainer>
                   </td>
                 </tr>
@@ -367,35 +546,37 @@ const HostApplicationsManagement = () => {
             ) : (
               <tr>
                 <td
-                  colSpan="4"
+                  colSpan="5"
                   style={{ textAlign: "center", padding: "2rem" }}
                 >
-                  Không có đơn đăng ký nào đang chờ duyệt.
+                  {isSearchMode ? "Không tìm thấy đơn đăng ký nào." : "Không có đơn đăng ký nào."}
                 </td>
               </tr>
             )}
           </tbody>
         </Table>
-        <PaginationContainer>
-          <span>
-            Trang <strong>{pagination.number + 1}</strong> trên{" "}
-            <strong>{pagination.totalPages || 1}</strong>
-          </span>
-          <PaginationControls>
-            <PageButton
-              onClick={() => handlePageChange(pagination.number - 1)}
-              disabled={pagination.number === 0}
-            >
-              <ChevronLeft size={16} />
-            </PageButton>
-            <PageButton
-              onClick={() => handlePageChange(pagination.number + 1)}
-              disabled={pagination.number + 1 >= pagination.totalPages}
-            >
-              <ChevronRight size={16} />
-            </PageButton>
-          </PaginationControls>
-        </PaginationContainer>
+        {!isSearchMode && (
+          <PaginationContainer>
+            <span>
+              Trang <strong>{pagination.number + 1}</strong> trên{" "}
+              <strong>{pagination.totalPages || 1}</strong>
+            </span>
+            <PaginationControls>
+              <PageButton
+                onClick={() => handlePageChange(pagination.number - 1)}
+                disabled={pagination.number === 0}
+              >
+                <ChevronLeft size={16} />
+              </PageButton>
+              <PageButton
+                onClick={() => handlePageChange(pagination.number + 1)}
+                disabled={pagination.number + 1 >= pagination.totalPages}
+              >
+                <ChevronRight size={16} />
+              </PageButton>
+            </PaginationControls>
+          </PaginationContainer>
+        )}
       </Card>
 
       <ConfirmDialog
