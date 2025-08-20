@@ -7,6 +7,7 @@ import {
   safeSetToStorage, 
   clearAuthData as clearAuthDataUtil 
 } from '../utils/localStorage';
+import { fixUserDataFromStorage } from '../utils/roleMapper';
 
 const AuthContext = createContext();
 
@@ -35,8 +36,13 @@ export const AuthProvider = ({ children }) => {
         
         if (token) {
           if (userData && userData.id) {
-            // Có token và user data hợp lệ
-            setUser(userData);
+            // Có token và user data hợp lệ, nhưng kiểm tra và sửa roleName nếu cần
+            const fixedUserData = fixUserDataFromStorage();
+            if (fixedUserData) {
+              setUser(fixedUserData);
+            } else {
+              setUser(userData);
+            }
           } else {
             // Có token nhưng không có user data hoặc thiếu ID - thử gọi API
             try {
@@ -62,6 +68,24 @@ export const AuthProvider = ({ children }) => {
     };
 
     checkAuth();
+  }, []);
+
+  // Lắng nghe event userRoleUpdated từ các component
+  useEffect(() => {
+    const handleUserRoleUpdated = (event) => {
+      console.log('AuthProvider - Received userRoleUpdated event:', event.detail);
+      const updatedUser = event.detail;
+      if (updatedUser && updatedUser.id) {
+        setUser(updatedUser);
+        console.log('AuthProvider - Updated user state with fixed roleName');
+      }
+    };
+
+    window.addEventListener('userRoleUpdated', handleUserRoleUpdated);
+    
+    return () => {
+      window.removeEventListener('userRoleUpdated', handleUserRoleUpdated);
+    };
   }, []);
 
   const clearAuthData = useCallback(() => {
@@ -156,14 +180,33 @@ export const AuthProvider = ({ children }) => {
       // Lấy host data từ response
       const { token, user: hostData } = response.data;
       console.log('AuthProvider.loginAsHost - Extracted token and host:', { token: !!token, hostData });
+      console.log('AuthProvider.loginAsHost - Host data roleName:', hostData?.roleName);
+      console.log('AuthProvider.loginAsHost - Host data role:', hostData?.role);
 
       if (token && hostData) {
         // Lưu token và host data vào localStorage
         safeSetToStorage('token', token);
         safeSetToStorage('user', hostData);
         
+        // Debug: Kiểm tra dữ liệu trước khi lưu
+        console.log('AuthProvider.loginAsHost - Before storing, hostData:', hostData);
+        console.log('AuthProvider.loginAsHost - hostData.roleName:', hostData.roleName);
+        console.log('AuthProvider.loginAsHost - hostData.role:', hostData.role);
+        console.log('AuthProvider.loginAsHost - hostData keys:', Object.keys(hostData));
+        console.log('AuthProvider.loginAsHost - hostData.roleName type:', typeof hostData.roleName);
+        console.log('AuthProvider.loginAsHost - hostData.roleName value:', JSON.stringify(hostData.roleName));
+        
         // Cập nhật state
         setUser(hostData);
+        
+        // Debug: Kiểm tra dữ liệu sau khi lưu
+        console.log('AuthProvider.loginAsHost - After storing, checking localStorage:');
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            const parsedUser = JSON.parse(storedUser);
+            console.log('AuthProvider.loginAsHost - Stored user:', parsedUser);
+            console.log('AuthProvider.loginAsHost - Stored user.roleName:', parsedUser.roleName);
+        }
         
         // Redirect to host dashboard
         navigate("/host");

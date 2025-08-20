@@ -116,10 +116,23 @@ hostApiClient.interceptors.request.use(
     const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('Host API request with token:', {
+        url: config.url,
+        method: config.method,
+        hasToken: !!token
+      });
+    } else {
+      console.log('Host API request without token:', {
+        url: config.url,
+        method: config.method
+      });
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    console.error('Host API request interceptor error:', error);
+    return Promise.reject(error);
+  }
 );
 
 // Xử lý tự động khi token hết hạn (401 Unauthorized) - Admin
@@ -136,12 +149,31 @@ privateApiClient.interceptors.response.use(
 
 // Xử lý tự động khi token hết hạn (401 Unauthorized) - Host
 hostApiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('Host API response received:', {
+      url: response.config.url,
+      status: response.status,
+      data: response.data
+    });
+    return response;
+  },
   (error) => {
+    // Log error for debugging
+    console.error('Host API Error:', {
+      status: error.response?.status,
+      url: error.config?.url,
+      method: error.config?.method,
+      message: error.message,
+      data: error.response?.data
+    });
+    
     if (error.response && error.response.status === 401) {
       localStorage.removeItem("token");
       window.location.href = "/login"; // Chuyển về trang login
+    } else if (error.response?.status === 403) {
+      console.warn('Access forbidden for host:', error.config?.url);
     }
+    
     return Promise.reject(error);
   }
 );

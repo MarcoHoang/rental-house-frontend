@@ -2,6 +2,7 @@
 import axios from "axios";
 import { AUTH_CONFIG } from "../config/auth";
 import { handleApiError, logApiError } from "../utils/apiErrorHandler";
+import { privateApiClient } from "./apiClient";
 
 // Cấu hình axios mặc định
 const api = axios.create({
@@ -51,7 +52,7 @@ api.interceptors.response.use(
   }
 );
 
-const hostApi = {
+export const hostApi = {
   // Upload file chung - sử dụng fileUploadService
   uploadFile: async (file, uploadType) => {
     try {
@@ -438,6 +439,38 @@ const hostApi = {
       console.error("hostApi.changePassword - Error:", error);
       console.error("hostApi.changePassword - Error response:", error.response);
       logApiError(error, "changePassword");
+      throw error;
+    }
+  },
+
+  // Host statistics
+  getStatistics: async (period = 'current_month') => {
+    try {
+      console.log('hostApi.getStatistics - Starting with period:', period);
+      console.log('hostApi.getStatistics - Making request to /hosts/my-statistics');
+      
+      // Sử dụng endpoint đúng cho thống kê chi tiết
+      const response = await api.get(`/hosts/my-statistics?period=${period}`);
+      
+      console.log('hostApi.getStatistics - Response received:', response);
+      console.log('hostApi.getStatistics - Response status:', response.status);
+      console.log('hostApi.getStatistics - Response data:', response.data);
+      
+      return response;
+    } catch (error) {
+      console.error('hostApi.getStatistics - Error occurred:', error);
+      console.error('hostApi.getStatistics - Error response:', error.response);
+      logApiError(error, "getStatistics");
+      throw error;
+    }
+  },
+    
+  getHostStatistics: async (hostId, period = 'current_month') => {
+    try {
+      const response = await api.get(`/hosts/${hostId}/statistics?period=${period}`);
+      return response;
+    } catch (error) {
+      logApiError(error, "getHostStatistics");
       throw error;
     }
   },

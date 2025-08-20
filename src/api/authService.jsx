@@ -3,6 +3,7 @@ import axios from 'axios';
 import { AUTH_CONFIG } from '../config/auth';
 import { handleApiError, logApiError } from '../utils/apiErrorHandler';
 import { safeSetToStorage, safeRemoveFromStorage } from '../utils/localStorage';
+import { mapBackendRoleToFrontend, ensureUserHasRoleName } from '../utils/roleMapper';
 
 // Cấu hình axios mặc định
 const api = axios.create({
@@ -56,10 +57,10 @@ api.interceptors.response.use(
 );
 
 const authService = {
-    // Đăng nhập với vai trò host (riêng biệt)
+    // Đăng nhập với vai trò host (sử dụng endpoint login chung)
     loginAsHost: async (email, password) => {
         try {
-            const response = await api.post('/auth/host/login', {
+            const response = await api.post('/auth/login', {
                 email,
                 password
             });
@@ -67,16 +68,27 @@ const authService = {
             // Xử lý response format từ backend
             let loginData, token, hostData;
             
+            console.log('authService.loginAsHost - Raw response.data:', response.data);
+            console.log('authService.loginAsHost - response.data.data:', response.data.data);
+            
             if (response.data.data) {
                 loginData = response.data.data;
-                token = loginData.token || loginData.accessToken;
-                hostData = loginData.host || loginData.user;
-            } else if (response.data.token) {
-                token = response.data.token;
-                hostData = response.data.host || response.data.user;
-            } else if (response.data.accessToken) {
-                token = response.data.accessToken;
-                hostData = response.data.host || response.data.user;
+                token = loginData.token;
+                hostData = loginData.user;
+                
+                console.log('authService.loginAsHost - loginData.role:', loginData.role);
+                console.log('authService.loginAsHost - hostData.roleName (before):', hostData.roleName);
+                
+                // Backend trả về role riêng biệt, cần merge vào user object
+                if (loginData.role && !hostData.roleName) {
+                    const roleName = mapBackendRoleToFrontend(loginData.role);
+                    if (roleName) {
+                        hostData.roleName = roleName;
+                        console.log('authService.loginAsHost - Set hostData.roleName to:', roleName);
+                    }
+                }
+                
+                console.log('authService.loginAsHost - hostData.roleName (after):', hostData.roleName);
             } else {
                 throw new Error('Format response không được hỗ trợ');
             }
@@ -100,8 +112,19 @@ const authService = {
                 }
             }
 
-            // Đảm bảo host data có role HOST
-            if (hostData && !hostData.roleName) {
+            // Kiểm tra role phải là HOST
+            if (!hostData) {
+                throw new Error('Không nhận được thông tin người dùng từ server');
+            }
+            
+            // Kiểm tra role phải là HOST
+            if (hostData.roleName !== 'HOST') {
+                console.error('authService.loginAsHost - User role is not HOST:', hostData.roleName);
+                throw new Error(`Tài khoản này có role ${hostData.roleName}, không phải là chủ nhà. Vui lòng sử dụng tài khoản chủ nhà hợp lệ.`);
+            }
+            
+            // Đảm bảo roleName được set đúng
+            if (!hostData.roleName) {
                 hostData.roleName = 'HOST';
             }
 
@@ -177,7 +200,8 @@ const authService = {
 
             // Đảm bảo role là HOST
             if (!hostData.roleName) {
-                hostData.roleName = 'HOST';
+                const token = localStorage.getItem('token');
+                hostData = ensureUserHasRoleName(hostData, token);
             }
             
             // Lưu thông tin host vào localStorage
@@ -251,6 +275,12 @@ const authService = {
                 // Nếu fullName giống email, có thể backend đã lưu sai
                 // Chúng ta sẽ để fullName trống để hiển thị "Người dùng"
                 userData.fullName = '';
+            }
+            
+            // Đảm bảo roleName được set đúng
+            if (!userData.roleName) {
+                const token = localStorage.getItem('token');
+                userData = ensureUserHasRoleName(userData, token);
             }
             
             // Lưu thông tin user vào localStorage
@@ -388,6 +418,11 @@ const authService = {
                 // Nếu fullName giống email, có thể backend đã lưu sai
                 // Chúng ta sẽ để fullName trống để hiển thị "Người dùng"
                 user.fullName = '';
+            }
+            
+            // Đảm bảo roleName được set đúng
+            if (!user.roleName) {
+                user = ensureUserHasRoleName(user, token);
             }
             
             // Lưu user data

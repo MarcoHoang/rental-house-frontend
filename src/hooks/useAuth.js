@@ -26,6 +26,7 @@ export const useAuth = () => {
         console.log('useAuth.checkAuth - Token length:', token?.length);
         console.log('useAuth.checkAuth - Token preview:', token?.substring(0, 50) + '...');
         console.log('useAuth.checkAuth - User data from storage:', userData);
+        console.log('useAuth.checkAuth - User role:', userData?.roleName);
         
         if (token) {
           if (userData && userData.id) {
