@@ -462,6 +462,9 @@ const UserProfilePage = () => {
       if (!/^[0-9]+$/.test(cleanPhone)) {
         newErrors.phone = "Số điện thoại chỉ được chứa các chữ số từ 0-9";
         isValid = false;
+      } else if (cleanPhone === "0000000000") {
+        newErrors.phone = "Vui lòng nhập số điện thoại thực tế của bạn";
+        isValid = false;
       } else if (!/^0\d{9}$/.test(cleanPhone)) {
         newErrors.phone = "Số điện thoại không hợp lệ, phải bắt đầu bằng 0 và có 10 chữ số";
         isValid = false;
@@ -659,6 +662,24 @@ const UserProfilePage = () => {
             <ErrorText>
               ❌ {message.text}
             </ErrorText>
+          )}
+
+          {/* Thông báo yêu cầu cập nhật số điện thoại cho Google users */}
+          {profile.phone === "0000000000" && (
+            <div style={{
+              background: "#fff3cd",
+              border: "1px solid #ffeaa7",
+              color: "#856404",
+              padding: "1rem",
+              borderRadius: "0.5rem",
+              marginBottom: "1.5rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem"
+            }}>
+              📱 <strong>Vui lòng cập nhật số điện thoại của bạn!</strong> 
+              Số điện thoại hiện tại là số mặc định. Hãy cập nhật để có thể sử dụng đầy đủ tính năng của hệ thống.
+            </div>
           )}
 
           {/* Phần thông tin cá nhân */}

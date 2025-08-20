@@ -115,6 +115,7 @@ export const validationRules = {
     // Loại bỏ khoảng trắng và dấu gạch ngang trước khi validate
     const cleanPhone = value.replace(/[\s-]/g, '');
     if (!/^[0-9]+$/.test(cleanPhone)) return 'Số điện thoại chỉ được chứa các chữ số từ 0-9';
+    if (cleanPhone === "0000000000") return 'Vui lòng nhập số điện thoại thực tế của bạn';
     if (!/^0\d{9}$/.test(cleanPhone)) return 'Số điện thoại không hợp lệ, phải bắt đầu bằng 0 và có 10 chữ số';
     return '';
   },

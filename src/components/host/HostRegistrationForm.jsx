@@ -244,6 +244,9 @@ const HostRegistrationForm = ({ isOpen, onClose, onSubmit }) => {
       if (!/^[0-9]+$/.test(cleanPhone)) {
         newErrors.phone = "Số điện thoại chỉ được chứa các chữ số từ 0-9";
         isValid = false;
+      } else if (cleanPhone === "0000000000") {
+        newErrors.phone = "Vui lòng nhập số điện thoại thực tế của bạn";
+        isValid = false;
       } else if (!/^0\d{9}$/.test(cleanPhone)) {
         newErrors.phone = "Số điện thoại không hợp lệ, phải bắt đầu bằng 0 và có 10 chữ số";
         isValid = false;
