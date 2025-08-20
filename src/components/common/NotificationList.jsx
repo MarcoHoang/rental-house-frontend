@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Bell, X, Trash2, CheckCircle, AlertTriangle, Home, User, FileText, AlertCircle } from 'lucide-react';
-import { getUserNotifications, markNotificationAsRead, deleteNotification } from '../../api/notificationApi';
+import { getMyNotifications, markNotificationAsRead, deleteNotification } from '../../api/notificationApi';
 import { useToast } from './Toast';
 
 const NotificationContainer = styled.div`
@@ -162,14 +162,14 @@ const getNotificationIcon = (type) => {
   switch (type) {
     case 'HOUSE_DELETED':
       return <AlertCircle size={16} color="#ef4444" />;
-    case 'RENTAL_CREATED':
+    case 'RENTAL_REQUEST':
       return <CheckCircle size={16} color="#10b981" />;
     case 'RENTAL_CANCELED':
       return <AlertTriangle size={16} color="#f59e0b" />;
-    case 'REVIEW_RECEIVED':
-      return <User size={16} color="#3b82f6" />;
-    case 'LANDLORD_REQUEST_APPROVED':
-    case 'LANDLORD_REQUEST_REJECTED':
+    case 'REVIEW_ONE_STAR':
+      return <AlertTriangle size={16} color="#ef4444" />;
+    case 'RENTAL_APPROVED':
+    case 'RENTAL_REJECTED':
       return <FileText size={16} color="#8b5cf6" />;
     default:
       return <Bell size={16} color="#6b7280" />;
@@ -180,16 +180,16 @@ const getNotificationTypeLabel = (type) => {
   switch (type) {
     case 'HOUSE_DELETED':
       return 'Nhà bị xóa';
-    case 'RENTAL_CREATED':
+    case 'RENTAL_REQUEST':
       return 'Đơn thuê mới';
     case 'RENTAL_CANCELED':
       return 'Đơn thuê bị hủy';
-    case 'REVIEW_RECEIVED':
-      return 'Đánh giá mới';
-    case 'LANDLORD_REQUEST_APPROVED':
-      return 'Đơn đăng ký được duyệt';
-    case 'LANDLORD_REQUEST_REJECTED':
-      return 'Đơn đăng ký bị từ chối';
+    case 'REVIEW_ONE_STAR':
+      return 'Đánh giá 1 sao';
+    case 'RENTAL_APPROVED':
+      return 'Đơn thuê được duyệt';
+    case 'RENTAL_REJECTED':
+      return 'Đơn thuê bị từ chối';
     default:
       return 'Thông báo';
   }
@@ -206,21 +206,21 @@ const formatTime = (dateString) => {
   return `${Math.floor(diffInMinutes / 1440)} ngày trước`;
 };
 
-const NotificationListComponent = ({ userId, isOpen, onClose }) => {
+const NotificationListComponent = ({ isOpen, onClose }) => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
   const { showSuccess, showError } = useToast();
 
   useEffect(() => {
-    if (isOpen && userId) {
+    if (isOpen) {
       fetchNotifications();
     }
-  }, [isOpen, userId]);
+  }, [isOpen]);
 
   const fetchNotifications = async () => {
     setLoading(true);
     try {
-      const data = await getUserNotifications(userId);
+      const data = await getMyNotifications();
       setNotifications(data || []);
     } catch (error) {
       console.error('Error fetching notifications:', error);

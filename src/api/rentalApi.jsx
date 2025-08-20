@@ -351,7 +351,15 @@ const rentalApi = {
   // Từ chối yêu cầu thuê nhà
   rejectRequest: async (rentalId, reason) => {
     try {
+      console.log("rentalApi.rejectRequest - Sending request:", {
+        rentalId,
+        reason,
+        requestBody: { reason }
+      });
+      
       const response = await api.put(`/rentals/${rentalId}/reject`, { reason });
+      
+      console.log("rentalApi.rejectRequest - Response:", response);
       
       return {
         success: true,
@@ -360,6 +368,7 @@ const rentalApi = {
       };
     } catch (error) {
       console.error("rentalApi.rejectRequest - Error:", error);
+      console.error("rentalApi.rejectRequest - Error response:", error.response?.data);
       logApiError(error, "rejectRequest");
       throw error;
     }
