@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Edit, Eye, Trash2, MapPin, DollarSign, Home, Heart } from "lucide-react";
+import { Edit, Eye, Trash2, MapPin, DollarSign, Home, Heart, Crown } from "lucide-react";
 import { 
   getHouseTypeLabel, 
   getHouseStatusLabel, 
@@ -12,12 +12,15 @@ import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../common/Toast";
 
 const HouseCard = ({ house, showActions = false, onEdit, onDelete, fromPage }) => {
-  const { id, title, name, address, price, area, houseType, status, imageUrls, imageUrl, createdAt, favoriteCount } = house;
+  const { id, title, name, address, price, area, houseType, status, imageUrls, imageUrl, createdAt, favoriteCount, hostId, hostName, hostPhone, hostAvatar } = house;
   const { user } = useAuth();
   const { showError, showSuccess } = useToast();
   
   // Sử dụng title nếu có, nếu không thì dùng name
   const displayName = title || name || 'Không có tên';
+  
+  // Kiểm tra xem nhà này có phải của chủ nhà đang đăng nhập không
+  const isMyHouse = user && user.id && hostId && user.id === hostId;
   
   // State cho yêu thích
   const [isFavorite, setIsFavorite] = useState(false);
@@ -189,7 +192,11 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete, fromPage }) =
   };
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer group">
+    <div className={`border rounded-lg overflow-hidden shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer group ${
+      isMyHouse 
+        ? 'border-yellow-400 shadow-yellow-100' 
+        : 'border-gray-200'
+    }`}>
       {/* Hình ảnh */}
       <div className="relative">
         <img
@@ -203,6 +210,14 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete, fromPage }) =
           <span className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${getHouseStatusColor(status)}`}>
             {getHouseStatusLabel(status)}
           </span>
+        )}
+        
+        {/* Badge "Nhà của tôi" */}
+        {isMyHouse && (
+          <div className="absolute top-2 left-2 px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-full text-xs font-bold shadow-lg flex items-center gap-1 animate-pulse group-hover:scale-105 transition-transform duration-200" title="Đây là nhà của bạn">
+            <Crown size={12} className="text-yellow-200" />
+            <span className="text-yellow-100">Nhà của tôi</span>
+          </div>
         )}
       </div>
 
@@ -233,6 +248,32 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete, fromPage }) =
               </div>
             )}
           </div>
+          
+          {/* Thông tin chủ nhà */}
+          {hostName && (
+            <div className="flex items-center gap-2 text-sm text-gray-600 pt-2 border-t border-gray-100">
+              <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden">
+                {hostAvatar ? (
+                  <img 
+                    src={hostAvatar} 
+                    alt={hostName} 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                ) : null}
+                <div className="w-full h-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center" style={{ display: hostAvatar ? 'none' : 'flex' }}>
+                  {hostName.charAt(0).toUpperCase()}
+                </div>
+              </div>
+              <span className="font-medium text-gray-700">{hostName}</span>
+              {isMyHouse && (
+                <span className="text-xs text-yellow-600 font-medium">(Bạn)</span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Giá tiền */}
