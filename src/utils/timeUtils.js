@@ -32,3 +32,15 @@ export const formatPostingTime = (createdAt) => {
     return `Đăng ${years} năm trước`;
   }
 };
+
+// Utility function để format tiền tệ
+export const formatCurrency = (amount) => {
+  if (amount === null || amount === undefined) return '0 ₫';
+  
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(amount);
+};

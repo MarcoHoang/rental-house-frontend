@@ -2,6 +2,7 @@
 import axios from "axios";
 import { AUTH_CONFIG } from "../config/auth";
 import { handleApiError, logApiError } from "../utils/apiErrorHandler";
+import { privateApiClient } from "./apiClient";
 
 // Cấu hình axios mặc định
 const api = axios.create({
@@ -51,7 +52,7 @@ api.interceptors.response.use(
   }
 );
 
-const hostApi = {
+export const hostApi = {
   // Upload file chung - sử dụng fileUploadService
   uploadFile: async (file, uploadType) => {
     try {
@@ -438,6 +439,28 @@ const hostApi = {
       console.error("hostApi.changePassword - Error:", error);
       console.error("hostApi.changePassword - Error response:", error.response);
       logApiError(error, "changePassword");
+      throw error;
+    }
+  },
+
+  // Host statistics
+  getStatistics: async () => {
+    try {
+      // Backend endpoint is /hosts/my-stats without period parameter
+      const response = await api.get('/hosts/my-stats');
+      return response;
+    } catch (error) {
+      logApiError(error, "getStatistics");
+      throw error;
+    }
+  },
+    
+  getHostStatistics: async (hostId, period = 'current_month') => {
+    try {
+      const response = await api.get(`/hosts/${hostId}/statistics?period=${period}`);
+      return response;
+    } catch (error) {
+      logApiError(error, "getHostStatistics");
       throw error;
     }
   },

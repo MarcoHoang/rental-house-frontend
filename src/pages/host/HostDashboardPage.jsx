@@ -22,6 +22,7 @@ import EditHouseModal from '../../components/admin/EditHouseModal';
 import ToastContainer from '../../components/common/ToastContainer';
 import ConfirmModal from '../../components/common/ConfirmModal';
 import HostChatManager from '../../components/host/HostChatManager';
+import HostStatistics from '../../components/host/HostStatistics';
 import { extractHousesFromResponse } from '../../utils/apiHelpers';
 import { HOUSE_STATUS_LABELS } from '../../utils/constants';
 
@@ -232,6 +233,9 @@ const HostDashboardPage = () => {
   
   // Chat manager state
   const [showChatManager, setShowChatManager] = useState(false);
+  
+  // Statistics state
+  const [showStatistics, setShowStatistics] = useState(false);
 
   // Toast helper functions
   const showToast = (type, title, message) => {
@@ -569,11 +573,38 @@ const HostDashboardPage = () => {
           </StatCard>
         </StatsGrid>
 
+        {/* Statistics Section */}
+        {showStatistics && (
+          <div style={{ marginBottom: '2rem' }}>
+            <HostStatistics />
+          </div>
+        )}
+
         <PropertiesSection>
           <SectionTitle>
             <Home size={20} />
             Nhà đã đăng ({filteredHouses.length}/{houses.length})
             <div style={{ marginLeft: 'auto', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <button
+                onClick={() => setShowStatistics(!showStatistics)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 1rem',
+                  background: showStatistics ? '#10b981' : '#f3f4f6',
+                  color: showStatistics ? 'white' : '#374151',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <TrendingUp size={16} />
+                {showStatistics ? 'Ẩn thống kê' : 'Xem thống kê'}
+              </button>
               <button
                 onClick={() => setShowChatManager(!showChatManager)}
                 style={{

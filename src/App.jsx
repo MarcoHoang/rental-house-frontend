@@ -14,6 +14,7 @@ import HostRentalRequests from "./components/host/HostRentalRequests";
 import PostPropertyPage from "./pages/host/PostPropertyPage";
 import HostProfilePage from "./pages/host/HostProfilePage";
 import HostMessagesPage from "./pages/host/HostMessagesPage";
+import HostStatistics from "./components/host/HostStatistics";
 import Register from "./components/login-register/Register";
 import Login from "./components/login-register/Login";
 import ForgotPassword from "./components/login-register/ForgotPassword";
@@ -215,6 +216,10 @@ function App() {
               <Route
                 path="messages"
                 element={<HostMessagesPage />}
+              />
+              <Route
+                path="analytics"
+                element={<HostStatistics />}
               />
             </Route>
 
