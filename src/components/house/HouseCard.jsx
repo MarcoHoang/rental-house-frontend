@@ -182,7 +182,7 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete, fromPage }) =
   // Format giá tiền
   const formatPrice = (price) => {
     if (!price) return 'Liên hệ';
-    return `${price.toLocaleString("vi-VN")} VNĐ/tháng`;
+    return `${price.toLocaleString("vi-VN")} VNĐ/ngày`;
   };
 
   // Format diện tích

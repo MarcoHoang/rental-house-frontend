@@ -237,7 +237,7 @@ const PostPropertyPage = () => {
         {/* Giá và diện tích */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Giá (VNĐ/tháng) *</label>
+                            <label className="block text-sm font-medium text-gray-700">Giá (VNĐ/ngày) *</label>
             <div className="relative rounded-md shadow-sm">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <span className="text-gray-500">₫</span>

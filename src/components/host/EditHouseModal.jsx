@@ -229,7 +229,7 @@ const EditHouseModal = ({ isOpen, onClose, house, onHouseUpdated }) => {
                 {/* Giá */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Giá (VNĐ/tháng) *
+                    Giá (VNĐ/ngày) *
                   </label>
                   <input
                     type="number"

@@ -226,10 +226,12 @@ const propertyApi = {
     }
   },
 
-  // Lấy danh sách nhà của host (cần ROLE_HOST)
+  // Lấy danh sách nhà của chủ nhà hiện tại
   getMyHouses: async () => {
     try {
+      console.log('propertyApi - getMyHouses called');
       const response = await hostApiClient.get('/houses/my-houses');
+      console.log('propertyApi - getMyHouses response:', response);
       
       // Backend trả về ApiResponse format, cần extract data
       if (response.data && response.data.data) {
@@ -238,7 +240,7 @@ const propertyApi = {
       
       return response.data;
     } catch (error) {
-      console.error('Error fetching my houses:', error);
+      console.error('propertyApi - Error fetching my houses:', error);
       throw error;
     }
   },

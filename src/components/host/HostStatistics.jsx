@@ -13,6 +13,7 @@ import {
 import { useAuth } from '../../hooks/useAuth';
 import { formatCurrency } from '../../utils/timeUtils';
 import { hostApi } from '../../api/hostApi';
+import { useToast } from '../common/Toast';
 
 const StatisticsContainer = styled.div`
   background: white;
@@ -284,6 +285,7 @@ const HostStatistics = () => {
   console.log('HostStatistics component - Component is rendering');
   
   const { user } = useAuth();
+  const { showInfo } = useToast();
   const [period, setPeriod] = useState('current_month');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -500,7 +502,7 @@ const HostStatistics = () => {
 
   const handleExportReport = () => {
     // TODO: Implement export functionality
-    alert('Tính năng xuất báo cáo sẽ được phát triển sau');
+    showInfo('Thông báo', 'Tính năng xuất báo cáo sẽ được phát triển sau');
   };
 
   const handleFixUserData = () => {

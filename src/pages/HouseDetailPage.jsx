@@ -690,12 +690,29 @@ const HouseDetailPage = () => {
         console.log('API response:', response);
         const houseData = extractHouseFromResponse(response);
         console.log('Extracted house data:', houseData);
+        console.log('House data from API - hostPhone:', houseData.hostPhone, 'hostName:', houseData.hostName);
         
         // Nếu người dùng đang đăng nhập với vai trò chủ nhà và đang xem nhà của mình
-        if (user && user.roleName === 'HOST' && houseData.hostId === user.id) {
+        console.log('Debug host info:', {
+          user: user ? { id: user.id, roleName: user.roleName, phone: user.phone } : null,
+          houseData: { hostId: houseData.hostId, hostName: houseData.hostName, hostPhone: houseData.hostPhone },
+          isHost: user && user.roleName === 'HOST',
+          isOwnHouse: Number(houseData.hostId) === Number(user?.id),
+          shouldUpdate: user && user.roleName === 'HOST' && Number(houseData.hostId) === Number(user.id)
+        });
+        
+        if (user && user.roleName === 'HOST' && Number(houseData.hostId) === Number(user.id)) {
           // Sử dụng thông tin từ context thay vì từ API
           houseData.hostName = user.fullName || user.username || user.email;
-          houseData.hostPhone = user.phone;
+          // Chỉ cập nhật phone nếu user context có thông tin phone
+          if (user.phone) {
+            houseData.hostPhone = user.phone;
+          }
+          console.log('Updated house data with user info:', {
+            hostName: houseData.hostName,
+            hostPhone: houseData.hostPhone,
+            userPhone: user.phone
+          });
         }
         
         setHouse(houseData);
@@ -722,7 +739,7 @@ const HouseDetailPage = () => {
 
   const formatPrice = (price) => {
     if (!price) return 'Liên hệ';
-    return `${price.toLocaleString("vi-VN")} VNĐ/tháng`;
+    return `${price.toLocaleString("vi-VN")} VNĐ/ngày`;
   };
 
   const formatArea = (area) => {
@@ -988,7 +1005,7 @@ const HouseDetailPage = () => {
            </MapSection>
 
           {/* Section Đánh giá */}
-          <ReviewSection houseId={house.id} />
+          <ReviewSection houseId={house.id} house={house} />
 
           {/* Section Liên hệ chủ nhà */}
           {house.hostName && (house.hostPhone || house.hostAvatar) && (
@@ -1127,7 +1144,19 @@ const HouseDetailPage = () => {
               <Phone size={20} className="icon" />
               <div className="content">
                 <div className="label">Số điện thoại</div>
-                <div className="value">{house.hostPhone || 'Chưa cập nhật'}</div>
+                <div className="value">
+                  {house.hostPhone || 'Chưa cập nhật'}
+                  {user && user.roleName === 'HOST' && Number(house.hostId) === Number(user.id) && !house.hostPhone && (
+                    <div style={{ 
+                      marginTop: '0.25rem',
+                      fontSize: '0.75rem',
+                      color: '#ef4444',
+                      fontStyle: 'italic'
+                    }}>
+                      💡 Bạn cần cập nhật số điện thoại trong <a href="/profile" style={{ color: '#3b82f6', textDecoration: 'underline' }}>hồ sơ cá nhân</a> để người thuê có thể liên hệ
+                    </div>
+                  )}
+                </div>
               </div>
             </InfoItem>
 

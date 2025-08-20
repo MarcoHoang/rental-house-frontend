@@ -321,13 +321,13 @@ const formatCurrency = (amount) => {
   }).format(amount);
 };
 
-// Helper để format giá theo tháng
-const formatPricePerMonth = (price) => {
-  if (price === null || price === undefined) return "0 ₫/tháng";
+// Helper để format giá theo ngày
+const formatPricePerDay = (price) => {
+  if (price === null || price === undefined) return "0 ₫/ngày";
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
     currency: "VND",
-  }).format(price) + "/tháng";
+  }).format(price) + "/ngày";
 };
 
 const HouseManagement = () => {
@@ -483,7 +483,7 @@ const HouseManagement = () => {
                   <HouseDetails>
                     <DetailRow>
                       <DollarSign size={16} />
-                      <Price>{formatPricePerMonth(house.price)}</Price>
+                      <Price>{formatPricePerDay(house.price)}</Price>
                     </DetailRow>
                     
                     <DetailRow>

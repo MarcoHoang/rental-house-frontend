@@ -301,7 +301,7 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
   minEndDate.setDate(minEndDate.getDate() + 1);
   const minEndDateString = minEndDate.toISOString().split("T")[0];
 
-  // Tính toán tổng tiền theo giờ
+  // Tính toán tổng tiền theo ngày
   const calculateTotalPrice = () => {
     if (!startDate || !endDate || !house?.price) return 0;
     
@@ -309,10 +309,9 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
     const end = new Date(endDate + "T" + endTime);
     const hours = (end - start) / (1000 * 60 * 60);
     
-    // Tính theo giờ (giá tháng / 30 ngày / 24 giờ)
-    const hourlyPrice = house.price / 30 / 24;
-    
-    return Math.ceil(hours * hourlyPrice);
+    // Tính số ngày, nếu ít hơn hoặc bằng 24 giờ thì tính 1 ngày, nếu nhiều hơn thì làm tròn lên
+    const days = hours <= 24 ? 1 : Math.ceil(hours / 24);
+    return days * house.price;
   };
 
   const totalPrice = calculateTotalPrice();
@@ -355,13 +354,13 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
     if (!startDate) {
       newErrors.startDate = "Vui lòng chọn ngày bắt đầu";
     } else {
-      // Kiểm tra thời gian bắt đầu phải lớn hơn 1 ngày so với hiện tại
+      // Kiểm tra thời gian bắt đầu phải lớn hơn 2 giờ so với hiện tại
       const startDateTime = new Date(startDate + "T" + startTime);
       const minimumStartTime = new Date();
-      minimumStartTime.setDate(minimumStartTime.getDate() + 1);
+      minimumStartTime.setHours(minimumStartTime.getHours() + 2);
       
       if (startDateTime <= minimumStartTime) {
-        newErrors.startDate = "Thời gian bắt đầu phải vượt qua thời gian hiện tại ít nhất 1 ngày";
+        newErrors.startDate = "Thời gian bắt đầu phải vượt qua thời gian hiện tại ít nhất 2 giờ";
       }
     }
 
@@ -371,13 +370,13 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
       newErrors.endDate = "Ngày kết thúc phải sau ngày bắt đầu";
     }
 
-    // Kiểm tra thời gian thuê tối thiểu (ít nhất 1 ngày)
+    // Kiểm tra thời gian thuê tối thiểu (ít nhất 2 giờ)
     if (startDate && endDate && startTime && endTime) {
       const start = new Date(startDate + "T" + startTime);
       const end = new Date(endDate + "T" + endTime);
       const hours = (end - start) / (1000 * 60 * 60);
-      if (hours < 24) {
-        newErrors.endDate = "Thời gian thuê tối thiểu là 1 ngày";
+      if (hours < 2) {
+        newErrors.endDate = "Thời gian thuê tối thiểu là 2 giờ";
       }
     }
 
@@ -484,12 +483,12 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
 
         <HouseInfo>
           <HouseTitle>{house.title}</HouseTitle>
-          <HouseDetails>
-            <div>📍 {house.address}</div>
-            <div>💰 {house.price?.toLocaleString()} VNĐ/tháng</div>
-            <div>🏠 {house.houseType}</div>
-            <div>📏 {house.area} m²</div>
-          </HouseDetails>
+                     <HouseDetails>
+             <div>📍 {house.address}</div>
+             <div>💰 {house.price?.toLocaleString()} VNĐ/ngày</div>
+             <div>🏠 {house.houseType}</div>
+             <div>📏 {house.area} m²</div>
+           </HouseDetails>
         </HouseInfo>
 
         {/* Thông tin người thuê */}
@@ -526,7 +525,7 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
               required
             />
             <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
-              Thời gian nhận phòng thường từ 14:00. Thời gian bắt đầu phải vượt qua hiện tại ít nhất 1 ngày.
+              Thời gian nhận phòng thường từ 14:00. Thời gian bắt đầu phải vượt qua hiện tại ít nhất 2 giờ.
             </div>
           </FormGroup>
 
@@ -610,20 +609,16 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
             <PriceInfo>
               <PriceTitle>Chi tiết giá</PriceTitle>
               <PriceDetails>
-                <span>Giá/tháng:</span>
+                <span>Giá/ngày:</span>
                 <span>{house.price?.toLocaleString()} VNĐ</span>
-              </PriceDetails>
-              <PriceDetails>
-                <span>Giá/giờ:</span>
-                <span>{Math.ceil(house.price / 30 / 24).toLocaleString()} VNĐ</span>
               </PriceDetails>
               <PriceDetails>
                 <span>Thời gian:</span>
                 <span>{startDate} {startTime} - {endDate} {endTime}</span>
               </PriceDetails>
               <PriceDetails>
-                <span>Số giờ:</span>
-                <span>{numberOfHours} giờ</span>
+                <span>Số ngày:</span>
+                <span>{numberOfHours <= 24 ? 1 : Math.ceil(numberOfHours / 24)} ngày</span>
               </PriceDetails>
               <TotalPrice>
                 <span>Tổng cộng:</span>

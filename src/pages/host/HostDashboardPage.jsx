@@ -23,6 +23,7 @@ import ToastContainer from '../../components/common/ToastContainer';
 import ConfirmModal from '../../components/common/ConfirmModal';
 import HostChatManager from '../../components/host/HostChatManager';
 import HostStatistics from '../../components/host/HostStatistics';
+import ReviewManagement from '../../components/host/ReviewManagement';
 import { extractHousesFromResponse } from '../../utils/apiHelpers';
 import { HOUSE_STATUS_LABELS } from '../../utils/constants';
 
@@ -236,6 +237,9 @@ const HostDashboardPage = () => {
   
   // Statistics state
   const [showStatistics, setShowStatistics] = useState(false);
+
+  // Review management state
+  const [showReviewManagement, setShowReviewManagement] = useState(false);
 
   // Toast helper functions
   const showToast = (type, title, message) => {
@@ -605,6 +609,14 @@ const HostDashboardPage = () => {
           </div>
         )}
 
+        {/* Review Management Section */}
+        {showReviewManagement && (
+          <div style={{ marginBottom: '2rem' }}>
+            {console.log('HostDashboardPage - Rendering ReviewManagement component')}
+            <ReviewManagement />
+          </div>
+        )}
+
         <PropertiesSection>
           <SectionTitle>
             <Home size={20} />
@@ -649,6 +661,26 @@ const HostDashboardPage = () => {
               >
                 <MessageCircle size={16} />
                 {showChatManager ? 'Ẩn tin nhắn' : 'Xem tin nhắn'}
+              </button>
+              <button
+                onClick={() => setShowReviewManagement(!showReviewManagement)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 1rem',
+                  background: showReviewManagement ? '#8b5cf6' : '#f3f4f6',
+                  color: showReviewManagement ? 'white' : '#374151',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <Star size={16} />
+                {showReviewManagement ? 'Ẩn quản lý đánh giá' : 'Xem quản lý đánh giá'}
               </button>
               {houses.length > 0 && (
                 <span style={{ fontSize: '0.875rem', color: '#718096' }}>

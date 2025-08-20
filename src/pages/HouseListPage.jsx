@@ -352,7 +352,7 @@ const HouseListPage = () => {
                     style: 'currency', 
                     currency: 'VND',
                     maximumFractionDigits: 0
-                  }).format(house.price || 0)}/tháng
+                                          }).format(house.price || 0)}/ngày
                 </HousePrice>
               </HouseImage>
               <HouseInfo>
