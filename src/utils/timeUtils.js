@@ -1,3 +1,15 @@
+// Utility function để format ngày tháng
+export const formatDate = (dateString) => {
+  if (!dateString) return '';
+  
+  const date = new Date(dateString);
+  return date.toLocaleDateString('vi-VN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+};
+
 // Utility functions để format thời gian đăng bài
 export const formatPostingTime = (createdAt) => {
   if (!createdAt) return '';

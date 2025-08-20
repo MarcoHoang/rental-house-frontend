@@ -238,11 +238,25 @@ const AdminSearchBar = ({
   // Tạo danh sách active filters để hiển thị
   const activeFilterTags = Object.entries(filters)
     .filter(([key, value]) => value !== undefined && value !== null && value !== '' && value !== 'ALL')
-    .map(([key, value]) => ({
-      key,
-      value,
-      label: filterOptions[key]?.find(option => option.value === value)?.label || value
-    }));
+    .map(([key, value]) => {
+      // Xử lý cả array và object format cho filterOptions
+      let label = value;
+      
+      if (filterOptions[key]) {
+        if (Array.isArray(filterOptions[key])) {
+          const option = filterOptions[key].find(option => option.value === value);
+          label = option?.label || value;
+        } else if (typeof filterOptions[key] === 'object' && filterOptions[key] !== null) {
+          label = filterOptions[key][value] || value;
+        }
+      }
+      
+      return {
+        key,
+        value,
+        label
+      };
+    });
 
   const removeFilter = useCallback((filterKey) => {
     setFilters(prev => ({
@@ -288,24 +302,39 @@ const AdminSearchBar = ({
       {showFilters && $showFilters && (
         <FilterSection $show={showFilters}>
           <FilterGrid>
-            {Object.entries(filterOptions).map(([key, options]) => (
-              <FilterGroup key={key}>
-                <FilterLabel>{key}</FilterLabel>
-                <FilterSelect
-                  value={filters[key] || 'ALL'}
-                  onChange={(e) => setFilters(prev => ({
-                    ...prev,
-                    [key]: e.target.value
-                  }))}
-                >
-                  {options.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </FilterSelect>
-              </FilterGroup>
-            ))}
+            {Object.entries(filterOptions).map(([key, options]) => {
+              // Xử lý cả array và object format
+              let optionsArray = [];
+              
+              if (Array.isArray(options)) {
+                optionsArray = options;
+              } else if (typeof options === 'object' && options !== null) {
+                // Chuyển đổi object thành array
+                optionsArray = Object.entries(options).map(([value, label]) => ({
+                  value,
+                  label
+                }));
+              }
+              
+              return (
+                <FilterGroup key={key}>
+                  <FilterLabel>{key}</FilterLabel>
+                  <FilterSelect
+                    value={filters[key] || 'ALL'}
+                    onChange={(e) => setFilters(prev => ({
+                      ...prev,
+                      [key]: e.target.value
+                    }))}
+                  >
+                    {optionsArray.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </FilterSelect>
+                </FilterGroup>
+              );
+            })}
           </FilterGrid>
 
           <FilterActions>

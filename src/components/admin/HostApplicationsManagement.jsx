@@ -262,6 +262,7 @@ const HostApplicationsManagement = () => {
         size: 10,
       });
       
+      console.log('Applications data:', data); // Debug log
       // API trả về trực tiếp data, không có wrapper
       setApplications(data.content || []);
       setPagination({
@@ -370,6 +371,30 @@ const HostApplicationsManagement = () => {
     setRejectModal({ isOpen: true, app: app, reason: "" });
   };
 
+  const handleCreateTestApplication = async () => {
+    try {
+      // Tạo đơn đăng ký test
+      const testApplication = {
+        userId: 1, // ID của user test
+        nationalId: "123456789",
+        proofOfOwnershipUrl: "test-url",
+        idFrontPhotoUrl: "test-front",
+        idBackPhotoUrl: "test-back"
+      };
+      
+      // Gọi API tạo đơn đăng ký
+      await hostApplicationsApi.createRequest(testApplication);
+      
+      // Refresh danh sách
+      fetchApplications(0);
+      
+      showSuccess("Tạo thành công!", "Đã tạo đơn đăng ký test");
+    } catch (err) {
+      console.error('Error creating test application:', err);
+      showError("Tạo thất bại!", "Không thể tạo đơn đăng ký test");
+    }
+  };
+
   const performReject = async () => {
     if (!rejectModal.reason.trim()) {
       showError("Lỗi", "Vui lòng nhập lý do từ chối.");
@@ -409,32 +434,60 @@ const HostApplicationsManagement = () => {
 
   return (
     <>
-      <AdminSearchBar
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        filters={filters}
-        setFilters={setFilters}
-        onSearch={searchApplications}
-        onClear={() => {
-          setSearchTerm("");
-          setFilters({ status: "ALL" });
-          setIsSearchMode(false);
-          fetchApplications(0);
-        }}
-        filterOptions={{
-          status: [
-            { value: "ALL", label: "Tất cả trạng thái" },
-            { value: "PENDING", label: "Đang chờ" },
-            { value: "APPROVED", label: "Đã duyệt" },
-            { value: "REJECTED", label: "Đã từ chối" },
-          ],
-        }}
-        placeholder="Tìm kiếm theo tên, email, số điện thoại..."
-        $showFilters={true}
-        debounceMs={300}
-      />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <AdminSearchBar
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          filters={filters}
+          setFilters={setFilters}
+          onSearch={searchApplications}
+          onClear={() => {
+            setSearchTerm("");
+            setFilters({ status: "ALL" });
+            setIsSearchMode(false);
+            fetchApplications(0);
+          }}
+          filterOptions={{
+            status: [
+              { value: "ALL", label: "Tất cả trạng thái" },
+              { value: "PENDING", label: "Đang chờ" },
+              { value: "APPROVED", label: "Đã duyệt" },
+              { value: "REJECTED", label: "Đã từ chối" },
+            ],
+          }}
+          placeholder="Tìm kiếm theo tên, email, số điện thoại..."
+          $showFilters={true}
+          debounceMs={300}
+        />
+        
+        {/* Nút tạo đơn test */}
+        <button
+          onClick={handleCreateTestApplication}
+          style={{
+            padding: '0.5rem 1rem',
+            background: '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '0.375rem',
+            cursor: 'pointer',
+            fontSize: '0.875rem'
+          }}
+        >
+          Tạo đơn test
+        </button>
+      </div>
 
       <Card>
+        {/* Thống kê trạng thái */}
+        <div style={{ padding: '1rem', background: '#f8f9fa', borderBottom: '1px solid #e9ecef' }}>
+          <div style={{ display: 'flex', gap: '2rem', fontSize: '0.875rem' }}>
+            <span><strong>Tổng:</strong> {applications.length} đơn</span>
+            <span><strong>Chờ duyệt:</strong> {applications.filter(app => app.status === 'PENDING').length} đơn</span>
+            <span><strong>Đã duyệt:</strong> {applications.filter(app => app.status === 'APPROVED').length} đơn</span>
+            <span><strong>Đã từ chối:</strong> {applications.filter(app => app.status === 'REJECTED').length} đơn</span>
+          </div>
+        </div>
+        
         <Table>
           <thead>
             <tr>

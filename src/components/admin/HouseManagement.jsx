@@ -8,11 +8,12 @@ import {
   RefreshCw,
   AlertTriangle,
   Eye,
-  Edit,
-  Trash2,
   Home,
   MapPin,
   DollarSign,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useToast } from "../common/Toast";
 import AdminSearchBar from "./AdminSearchBar";
@@ -125,6 +126,40 @@ const ResultsInfo = styled.div`
   text-align: center;
 `;
 
+const PaginationContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  background: #f7fafc;
+  font-size: 0.875rem;
+`;
+
+const PaginationControls = styled.div`
+  display: flex;
+  gap: 0.5rem;
+`;
+
+const PageButton = styled.button`
+  padding: 0.5rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.875rem;
+
+  &:hover:not(:disabled) {
+    background: #f7fafc;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
 const HouseManagement = () => {
   const [houses, setHouses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -138,20 +173,36 @@ const HouseManagement = () => {
   });
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
+  const [pagination, setPagination] = useState({
+    number: 0,
+    totalPages: 1
+  });
 
   const navigate = useNavigate();
   const { showSuccess, showError } = useToast();
 
 
 
-  // Fetch houses - logic cũ
-  const fetchHouses = useCallback(async () => {
+  // Fetch houses với phân trang
+  const fetchHouses = useCallback(async (page = 0) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await housesApi.getAll();
+      const data = await housesApi.getAll({ page, size: 10 });
       console.log("Houses data:", data);
-      setHouses(data.content || data || []);
+      console.log("Houses pagination:", {
+        number: data?.number,
+        totalPages: data?.totalPages,
+        totalElements: data?.totalElements,
+        size: data?.size,
+        content: data?.content?.length
+      });
+      
+      setHouses(data?.content || data || []);
+      setPagination({
+        number: data?.number || 0,
+        totalPages: data?.totalPages || 1,
+      });
     } catch (err) {
       console.error("Error fetching houses:", err);
       setError("Không thể tải danh sách nhà.");
@@ -200,20 +251,28 @@ const HouseManagement = () => {
 
 
 
-  // Handle delete house - logic cũ
+
+  // Handle delete house
   const handleDeleteHouse = async (houseId) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa nhà này?")) {
       try {
         await housesApi.delete(houseId);
         showSuccess("Xóa thành công!", "Đã xóa nhà khỏi hệ thống.");
-        fetchHouses(); // Refresh list
+        fetchHouses(pagination.number); // Refresh list với trang hiện tại
       } catch (err) {
         showError("Xóa thất bại!", "Không thể xóa nhà. Vui lòng thử lại.");
       }
     }
   };
 
-  // Initial load - logic cũ
+  // Handle pagination
+  const handlePageChange = (newPage) => {
+    if (newPage >= 0 && newPage < pagination.totalPages) {
+      fetchHouses(newPage);
+    }
+  };
+
+  // Initial load
   useEffect(() => {
     fetchHouses();
   }, [fetchHouses]);
@@ -222,6 +281,17 @@ const HouseManagement = () => {
 
   const displayHouses = isSearchMode ? searchResults : houses;
   const hasResults = displayHouses && displayHouses.length > 0;
+  
+  // Debug pagination
+  console.log("HouseManagement render:", {
+    pagination,
+    isSearchMode,
+    shouldShowPagination: !isSearchMode && pagination.totalPages > 1,
+    housesCount: houses.length,
+    displayHousesCount: displayHouses.length
+  });
+  
+
 
   if (loading) {
     return (
@@ -256,9 +326,9 @@ const HouseManagement = () => {
         filterOptions={{
           status: [
             { value: "ALL", label: "Tất cả trạng thái" },
-            { value: "ACTIVE", label: "Đang hoạt động" },
+            { value: "AVAILABLE", label: "Có sẵn" },
+            { value: "RENTED", label: "Đã thuê" },
             { value: "INACTIVE", label: "Không hoạt động" },
-            { value: "RENTED", label: "Đã cho thuê" },
           ],
           houseType: [
             { value: "ALL", label: "Tất cả loại" },
@@ -275,21 +345,7 @@ const HouseManagement = () => {
       />
 
       <Card>
-        <Header>
-          <Title>Quản lý nhà cho thuê</Title>
-        </Header>
-
-        <ResultsInfo>
-          <span>
-            {isSearchMode 
-              ? `Tìm thấy ${displayHouses.length} kết quả`
-              : `Hiển thị ${displayHouses.length} nhà`
-            }
-          </span>
-        </ResultsInfo>
-
-        {hasResults ? (
-          <Table>
+        <Table>
             <thead>
               <tr>
                 <th>ID</th>
@@ -303,89 +359,108 @@ const HouseManagement = () => {
               </tr>
             </thead>
             <tbody>
-              {displayHouses.map((house) => (
-                <tr key={house.id}>
-                  <td>{house.id}</td>
-                  <td>{house.title || 'N/A'}</td>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <MapPin size={14} />
-                      {house.address || 'N/A'}
-                    </div>
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <DollarSign size={14} />
-                      {house.price ? `${house.price.toLocaleString()} VNĐ` : 'N/A'}
-                    </div>
-                  </td>
-                  <td>{house.houseType || 'N/A'}</td>
-                  <td>
-                    <Badge className={house.status?.toLowerCase()}>
-                      {house.status || 'N/A'}
-                    </Badge>
-                  </td>
-                  <td>{house.hostName || 'N/A'}</td>
-                  <td>
-                    <ActionContainer>
-                      <button
-                        onClick={() => navigate(`/admin/houses/${house.id}`)}
-                        title="Xem chi tiết"
-                        style={{
-                          padding: '0.5rem',
-                          background: 'white',
-                          border: '1px solid #e2e8f0',
-                          borderRadius: '0.375rem',
-                          cursor: 'pointer',
-                          color: '#2b6cb0'
-                        }}
-                      >
-                        <Eye size={14} />
-                      </button>
-                      <button
-                        onClick={() => navigate(`/admin/houses/${house.id}/edit`)}
-                        title="Chỉnh sửa"
-                        style={{
-                          padding: '0.5rem',
-                          background: 'white',
-                          border: '1px solid #e2e8f0',
-                          borderRadius: '0.375rem',
-                          cursor: 'pointer',
-                          color: '#4a5568'
-                        }}
-                      >
-                        <Edit size={14} />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteHouse(house.id)}
-                        title="Xóa"
-                        style={{
-                          padding: '0.5rem',
-                          background: 'white',
-                          border: '1px solid #e2e8f0',
-                          borderRadius: '0.375rem',
-                          cursor: 'pointer',
-                          color: '#e53e3e'
-                        }}
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </ActionContainer>
+              {displayHouses.length > 0 ? (
+                displayHouses.map((house) => (
+                  <tr key={house.id}>
+                    <td>{house.id}</td>
+                    <td>{house.title || 'N/A'}</td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <MapPin size={14} />
+                        {house.address || 'N/A'}
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <DollarSign size={14} />
+                        {house.price ? `${house.price.toLocaleString()} VNĐ` : 'N/A'}
+                      </div>
+                    </td>
+                    <td>
+                      {house.houseType === 'APARTMENT' && 'Chung cư'}
+                      {house.houseType === 'VILLA' && 'Biệt thự'}
+                      {house.houseType === 'TOWNHOUSE' && 'Nhà phố'}
+                      {house.houseType === 'BOARDING_HOUSE' && 'Nhà trọ'}
+                      {house.houseType === 'WHOLE_HOUSE' && 'Nhà nguyên căn'}
+                      {!house.houseType && 'N/A'}
+                    </td>
+                    <td>
+                      <Badge className={house.status?.toLowerCase()}>
+                        {house.status === 'AVAILABLE' && 'Có sẵn'}
+                        {house.status === 'RENTED' && 'Đã thuê'}
+                        {house.status === 'INACTIVE' && 'Không hoạt động'}
+                        {!house.status && 'N/A'}
+                      </Badge>
+                    </td>
+                    <td>{house.hostName || 'N/A'}</td>
+                    <td>
+                      <ActionContainer>
+                        <button
+                          onClick={() => navigate(`/admin/houses/${house.id}`)}
+                          title="Xem chi tiết"
+                          style={{
+                            padding: '0.5rem',
+                            background: 'white',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '0.375rem',
+                            cursor: 'pointer',
+                            color: '#2b6cb0'
+                          }}
+                        >
+                          <Eye size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteHouse(house.id)}
+                          title="Xóa"
+                          style={{
+                            padding: '0.5rem',
+                            background: 'white',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '0.375rem',
+                            cursor: 'pointer',
+                            color: '#e53e3e'
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </ActionContainer>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan="8"
+                    style={{ textAlign: "center", padding: "2rem" }}
+                  >
+                    {isSearchMode ? "Không tìm thấy nhà nào phù hợp với điều kiện tìm kiếm." : "Không có nhà nào."}
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </Table>
-        ) : (
-          <EmptyState>
-            <Home size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
-            <p>
-              {isSearchMode 
-                ? 'Không tìm thấy nhà nào phù hợp với điều kiện tìm kiếm'
-                : 'Không có nhà nào'
-              }
-            </p>
-          </EmptyState>
+
+        {!isSearchMode && pagination.totalPages > 1 && (
+          <PaginationContainer>
+            <span>
+              Trang <strong>{pagination.number + 1}</strong> trên{" "}
+              <strong>{pagination.totalPages}</strong>
+            </span>
+            <PaginationControls>
+              <PageButton
+                onClick={() => handlePageChange(pagination.number - 1)}
+                disabled={pagination.number === 0}
+              >
+                <ChevronLeft size={16} />
+              </PageButton>
+              <PageButton
+                onClick={() => handlePageChange(pagination.number + 1)}
+                disabled={pagination.number + 1 >= pagination.totalPages}
+              >
+                <ChevronRight size={16} />
+              </PageButton>
+            </PaginationControls>
+          </PaginationContainer>
         )}
       </Card>
     </div>
