@@ -26,6 +26,7 @@ const PostPropertyPage = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
   const navigate = useNavigate();
   const { showSuccess, showError } = useToast();
 
@@ -49,6 +50,10 @@ const PostPropertyPage = () => {
         imageFiles: [...prev.imageFiles, ...validFiles],
         imagePreviews: [...prev.imagePreviews, ...newImagePreviews]
       }));
+
+      // Mark images as touched and validate
+      setTouched(prev => ({ ...prev, images: true }));
+      validateField('images', [...formData.imageFiles, ...validFiles]);
     }
   };
 
@@ -69,34 +74,169 @@ const PostPropertyPage = () => {
         imagePreviews: newPreviews 
       };
     });
+
+    // Re-validate images after removal
+    const newFiles = [...formData.imageFiles];
+    newFiles.splice(index, 1);
+    validateField('images', newFiles);
+  };
+
+  const validateField = (fieldName, value) => {
+    const newErrors = { ...errors };
+    
+    switch (fieldName) {
+      case 'title':
+        if (!value?.trim()) {
+          newErrors.title = 'Tiêu đề là bắt buộc';
+        } else if (value.trim().length < 5) {
+          newErrors.title = 'Tiêu đề phải có ít nhất 5 ký tự';
+        } else if (value.trim().length > 100) {
+          newErrors.title = 'Tiêu đề không được vượt quá 100 ký tự';
+        } else {
+          delete newErrors.title;
+        }
+        break;
+        
+      case 'description':
+        if (!value?.trim()) {
+          newErrors.description = 'Mô tả là bắt buộc';
+        } else if (value.trim().length < 20) {
+          newErrors.description = 'Mô tả phải có ít nhất 20 ký tự';
+        } else if (value.trim().length > 1000) {
+          newErrors.description = 'Mô tả không được vượt quá 1000 ký tự';
+        } else {
+          delete newErrors.description;
+        }
+        break;
+        
+      case 'address':
+        if (!value?.trim()) {
+          newErrors.address = 'Địa chỉ là bắt buộc';
+        } else if (value.trim().length < 10) {
+          newErrors.address = 'Địa chỉ phải có ít nhất 10 ký tự';
+        } else {
+          delete newErrors.address;
+        }
+        break;
+        
+      case 'price':
+        if (!value || value.trim() === '') {
+          newErrors.price = 'Giá là bắt buộc';
+        } else if (isNaN(parseFloat(value))) {
+          newErrors.price = 'Giá phải là số hợp lệ';
+        } else if (parseFloat(value) <= 0) {
+          newErrors.price = 'Giá phải lớn hơn 0';
+        } else if (parseFloat(value) > 10000000) {
+          newErrors.price = 'Giá không được vượt quá 10,000,000 VNĐ/ngày';
+        } else {
+          delete newErrors.price;
+        }
+        break;
+        
+      case 'area':
+        if (!value || value.trim() === '') {
+          newErrors.area = 'Diện tích là bắt buộc';
+        } else if (isNaN(parseFloat(value))) {
+          newErrors.area = 'Diện tích phải là số hợp lệ';
+        } else if (parseFloat(value) <= 0) {
+          newErrors.area = 'Diện tích phải lớn hơn 0';
+        } else if (parseFloat(value) > 1000) {
+          newErrors.area = 'Diện tích không được vượt quá 1000 m²';
+        } else {
+          delete newErrors.area;
+        }
+        break;
+        
+      case 'images':
+        if (value.length === 0) {
+          newErrors.images = 'Vui lòng chọn ít nhất 3 ảnh cho nhà';
+        } else if (value.length < VALIDATION_RULES.MIN_IMAGES) {
+          newErrors.images = `Cần ít nhất ${VALIDATION_RULES.MIN_IMAGES} ảnh (hiện tại có ${value.length} ảnh)`;
+        } else if (value.length > VALIDATION_RULES.MAX_IMAGES) {
+          newErrors.images = `Tối đa ${VALIDATION_RULES.MAX_IMAGES} ảnh (hiện tại có ${value.length} ảnh)`;
+        } else {
+          delete newErrors.images;
+        }
+        break;
+        
+      default:
+        break;
+    }
+    
+    setErrors(newErrors);
+  };
+
+  const handleFieldChange = (fieldName, value) => {
+    setFormData(prev => ({ ...prev, [fieldName]: value }));
+    
+    // Validate field if it has been touched
+    if (touched[fieldName]) {
+      validateField(fieldName, value);
+    }
+  };
+
+  const handleFieldBlur = (fieldName) => {
+    setTouched(prev => ({ ...prev, [fieldName]: true }));
+    validateField(fieldName, formData[fieldName]);
   };
 
   const validateForm = () => {
     const newErrors = {};
 
-    // Validate required fields
+    // Validate title
     if (!formData.title?.trim()) {
       newErrors.title = 'Tiêu đề là bắt buộc';
+    } else if (formData.title.trim().length < 5) {
+      newErrors.title = 'Tiêu đề phải có ít nhất 5 ký tự';
+    } else if (formData.title.trim().length > 100) {
+      newErrors.title = 'Tiêu đề không được vượt quá 100 ký tự';
     }
 
+    // Validate description
     if (!formData.description?.trim()) {
       newErrors.description = 'Mô tả là bắt buộc';
+    } else if (formData.description.trim().length < 20) {
+      newErrors.description = 'Mô tả phải có ít nhất 20 ký tự';
+    } else if (formData.description.trim().length > 1000) {
+      newErrors.description = 'Mô tả không được vượt quá 1000 ký tự';
     }
 
+    // Validate address
     if (!formData.address?.trim()) {
       newErrors.address = 'Địa chỉ là bắt buộc';
+    } else if (formData.address.trim().length < 10) {
+      newErrors.address = 'Địa chỉ phải có ít nhất 10 ký tự';
     }
 
-    if (!formData.price || parseFloat(formData.price) <= 0) {
+    // Validate price
+    if (!formData.price || formData.price.trim() === '') {
+      newErrors.price = 'Giá là bắt buộc';
+    } else if (isNaN(parseFloat(formData.price))) {
+      newErrors.price = 'Giá phải là số hợp lệ';
+    } else if (parseFloat(formData.price) <= 0) {
       newErrors.price = 'Giá phải lớn hơn 0';
+    } else if (parseFloat(formData.price) > 10000000) {
+      newErrors.price = 'Giá không được vượt quá 10,000,000 VNĐ/ngày';
     }
 
-    if (!formData.area || parseFloat(formData.area) <= 0) {
+    // Validate area
+    if (!formData.area || formData.area.trim() === '') {
+      newErrors.area = 'Diện tích là bắt buộc';
+    } else if (isNaN(parseFloat(formData.area))) {
+      newErrors.area = 'Diện tích phải là số hợp lệ';
+    } else if (parseFloat(formData.area) <= 0) {
       newErrors.area = 'Diện tích phải lớn hơn 0';
+    } else if (parseFloat(formData.area) > 1000) {
+      newErrors.area = 'Diện tích không được vượt quá 1000 m²';
     }
 
-    if (formData.imageFiles.length < VALIDATION_RULES.MIN_IMAGES) {
-      newErrors.images = `Cần ít nhất ${VALIDATION_RULES.MIN_IMAGES} ảnh`;
+    // Validate images
+    if (formData.imageFiles.length === 0) {
+      newErrors.images = 'Vui lòng chọn ít nhất 3 ảnh cho nhà';
+    } else if (formData.imageFiles.length < VALIDATION_RULES.MIN_IMAGES) {
+      newErrors.images = `Cần ít nhất ${VALIDATION_RULES.MIN_IMAGES} ảnh (hiện tại có ${formData.imageFiles.length} ảnh)`;
+    } else if (formData.imageFiles.length > VALIDATION_RULES.MAX_IMAGES) {
+      newErrors.images = `Tối đa ${VALIDATION_RULES.MAX_IMAGES} ảnh (hiện tại có ${formData.imageFiles.length} ảnh)`;
     }
 
     setErrors(newErrors);
@@ -157,6 +297,7 @@ const PostPropertyPage = () => {
         imagePreviews: []
       });
       setErrors({});
+      setTouched({});
 
       // Chuyển hướng về trang dashboard sau 2 giây
       setTimeout(() => {
@@ -193,7 +334,8 @@ const PostPropertyPage = () => {
             type="text"
             name="title"
             value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            onChange={(e) => handleFieldChange('title', e.target.value)}
+            onBlur={() => handleFieldBlur('title')}
             className={`mt-1 block w-full rounded-md shadow-sm p-2 border ${
               errors.title ? 'border-red-500' : 'border-gray-300'
             }`}
@@ -208,7 +350,8 @@ const PostPropertyPage = () => {
           <textarea
             name="description"
             value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            onChange={(e) => handleFieldChange('description', e.target.value)}
+            onBlur={() => handleFieldBlur('description')}
             rows={4}
             className={`mt-1 block w-full rounded-md shadow-sm p-2 border ${
               errors.description ? 'border-red-500' : 'border-gray-300'
@@ -225,7 +368,8 @@ const PostPropertyPage = () => {
             type="text"
             name="address"
             value={formData.address}
-            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+            onChange={(e) => handleFieldChange('address', e.target.value)}
+            onBlur={() => handleFieldBlur('address')}
             className={`mt-1 block w-full rounded-md shadow-sm p-2 border ${
               errors.address ? 'border-red-500' : 'border-gray-300'
             }`}
@@ -246,7 +390,8 @@ const PostPropertyPage = () => {
                 type="number"
                 name="price"
                 value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                onChange={(e) => handleFieldChange('price', e.target.value)}
+                onBlur={() => handleFieldBlur('price')}
                 className={`focus:ring-blue-500 focus:border-blue-500 block w-full pl-7 pr-12 sm:text-sm rounded-md p-2 border ${
                   errors.price ? 'border-red-500' : 'border-gray-300'
                 }`}
@@ -265,7 +410,8 @@ const PostPropertyPage = () => {
                 type="number"
                 name="area"
                 value={formData.area}
-                onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                onChange={(e) => handleFieldChange('area', e.target.value)}
+                onBlur={() => handleFieldBlur('area')}
                 className={`focus:ring-blue-500 focus:border-blue-500 block w-full pr-12 sm:text-sm rounded-md p-2 border ${
                   errors.area ? 'border-red-500' : 'border-gray-300'
                 }`}
@@ -337,9 +483,6 @@ const PostPropertyPage = () => {
             )}
           </div>
           {errors.images && <p className="mt-1 text-sm text-red-600">{errors.images}</p>}
-          <p className="mt-1 text-xs text-gray-500">
-            Tối đa {VALIDATION_RULES.MAX_IMAGES} ảnh (định dạng: JPG, PNG, tối đa 5MB/ảnh)
-          </p>
         </div>
 
         {/* Nút hủy và đăng bài */}
