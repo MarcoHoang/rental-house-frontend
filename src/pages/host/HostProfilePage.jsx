@@ -263,6 +263,8 @@ const HostProfilePage = () => {
     avatarFile: null,
   });
 
+  const [errors, setErrors] = useState({});
+
   const fetchHostProfile = useCallback(async () => {
     setLoading(true);
     try {
@@ -293,6 +295,14 @@ const HostProfilePage = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    // Clear error when user types
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
   };
 
   const handleAvatarChange = (e) => {
@@ -303,8 +313,49 @@ const HostProfilePage = () => {
     }
   };
 
+  const validateForm = () => {
+    const newErrors = {};
+    let isValid = true;
+
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = "Vui lòng nhập họ và tên";
+      isValid = false;
+    } else if (!/^[\p{L}\s]+$/u.test(formData.fullName)) {
+      newErrors.fullName = "Họ và tên không được chứa ký tự đặc biệt";
+      isValid = false;
+    }
+
+    if (!formData.phone) {
+      newErrors.phone = "Vui lòng nhập số điện thoại";
+      isValid = false;
+    } else {
+      // Loại bỏ khoảng trắng và dấu gạch ngang trước khi validate
+      const cleanPhone = formData.phone.replace(/[\s-]/g, '');
+      if (!/^[0-9]+$/.test(cleanPhone)) {
+        newErrors.phone = "Số điện thoại chỉ được chứa các chữ số từ 0-9";
+        isValid = false;
+      } else if (!/^0\d{9}$/.test(cleanPhone)) {
+        newErrors.phone = "Số điện thoại không hợp lệ, phải bắt đầu bằng 0 và có 10 chữ số";
+        isValid = false;
+      }
+    }
+
+    if (formData.address && !/^[\p{L}0-9\s,./-]+$/u.test(formData.address)) {
+      newErrors.address = "Địa chỉ chứa ký tự không hợp lệ";
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       let uploadedAvatarUrl = null;
@@ -415,6 +466,7 @@ const HostProfilePage = () => {
                   onChange={handleChange}
                   required
                   icon={User}
+                  error={errors.fullName}
                 />
                 <FormField
                   label="Số điện thoại"
@@ -422,6 +474,7 @@ const HostProfilePage = () => {
                   value={formData.phone}
                   onChange={handleChange}
                   icon={Phone}
+                  error={errors.phone}
                 />
                 <FormField
                   label="Địa chỉ"
@@ -429,6 +482,7 @@ const HostProfilePage = () => {
                   value={formData.address}
                   onChange={handleChange}
                   icon={MapPin}
+                  error={errors.address}
                 />
               </div>
             </div>

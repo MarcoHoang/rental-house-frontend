@@ -238,9 +238,16 @@ const HostRegistrationForm = ({ isOpen, onClose, onSubmit }) => {
     if (!formData.phone.trim()) {
       newErrors.phone = "Vui lòng nhập số điện thoại";
       isValid = false;
-    } else if (!/^[0-9]{10,11}$/.test(formData.phone.replace(/\s/g, ""))) {
-      newErrors.phone = "Số điện thoại không hợp lệ (10-11 số)";
-      isValid = false;
+    } else {
+      // Loại bỏ khoảng trắng và dấu gạch ngang trước khi validate
+      const cleanPhone = formData.phone.replace(/[\s-]/g, '');
+      if (!/^[0-9]+$/.test(cleanPhone)) {
+        newErrors.phone = "Số điện thoại chỉ được chứa các chữ số từ 0-9";
+        isValid = false;
+      } else if (!/^0\d{9}$/.test(cleanPhone)) {
+        newErrors.phone = "Số điện thoại không hợp lệ, phải bắt đầu bằng 0 và có 10 chữ số";
+        isValid = false;
+      }
     }
 
     if (!formData.idFrontPhoto) {

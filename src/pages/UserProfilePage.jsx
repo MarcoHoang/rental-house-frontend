@@ -456,9 +456,16 @@ const UserProfilePage = () => {
     if (!profile.phone) {
       newErrors.phone = "Vui lòng nhập số điện thoại";
       isValid = false;
-    } else if (!/^0\d{9,10}$/.test(profile.phone)) {
-      newErrors.phone = "Số điện thoại không hợp lệ";
-      isValid = false;
+    } else {
+      // Loại bỏ khoảng trắng và dấu gạch ngang trước khi validate
+      const cleanPhone = profile.phone.replace(/[\s-]/g, '');
+      if (!/^[0-9]+$/.test(cleanPhone)) {
+        newErrors.phone = "Số điện thoại chỉ được chứa các chữ số từ 0-9";
+        isValid = false;
+      } else if (!/^0\d{9}$/.test(cleanPhone)) {
+        newErrors.phone = "Số điện thoại không hợp lệ, phải bắt đầu bằng 0 và có 10 chữ số";
+        isValid = false;
+      }
     }
 
     if (profile.address && !/^[\p{L}0-9\s,./-]+$/u.test(profile.address)) {
