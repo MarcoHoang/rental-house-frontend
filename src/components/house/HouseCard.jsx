@@ -160,6 +160,10 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete, fromPage }) =
         showError('Lỗi', 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
         // Có thể redirect đến trang login
         window.location.href = '/login';
+      } else if (error.response?.status === 400) {
+        // Hiển thị thông báo lỗi cụ thể từ server
+        const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi yêu thích nhà';
+        showError('Lỗi', errorMessage);
       } else if (error.response?.status === 403) {
         showError('Lỗi', 'Bạn không có quyền thực hiện hành động này');
       } else if (error.response?.data?.message) {

@@ -318,7 +318,20 @@ const MyFavoritesPage = () => {
       showSuccess('Thành công', 'Đã xóa khỏi danh sách yêu thích');
     } catch (error) {
       console.error('Error removing from favorites:', error);
-      showError('Lỗi', 'Không thể xóa khỏi danh sách yêu thích');
+      
+      // Xử lý lỗi cụ thể hơn
+      if (error.response?.status === 400) {
+        // Hiển thị thông báo lỗi cụ thể từ server
+        const errorMessage = error.response?.data?.message || 'Không thể xóa khỏi danh sách yêu thích';
+        showError('Lỗi', errorMessage);
+      } else if (error.response?.status === 401) {
+        showError('Lỗi', 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
+        window.location.href = '/login';
+      } else if (error.response?.data?.message) {
+        showError('Lỗi', error.response.data.message);
+      } else {
+        showError('Lỗi', 'Không thể xóa khỏi danh sách yêu thích');
+      }
     }
   };
 
