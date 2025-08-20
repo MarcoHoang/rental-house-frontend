@@ -281,6 +281,8 @@ const ErrorMessage = styled.div`
 `;
 
 const HostStatistics = () => {
+  console.log('HostStatistics component - Component is rendering');
+  
   const { user } = useAuth();
   const [period, setPeriod] = useState('current_month');
   const [loading, setLoading] = useState(true);
@@ -288,6 +290,7 @@ const HostStatistics = () => {
   const [debugInfo, setDebugInfo] = useState({});
   const [testMode, setTestMode] = useState(false); // Mode test để kiểm tra redirect
   const [stats, setStats] = useState({
+    totalHouses: 0, // Số nhà đã đăng
     totalRentals: 0,
     totalRevenue: 0,
     netRevenue: 0,
@@ -315,15 +318,16 @@ const HostStatistics = () => {
     console.log('HostStatistics useEffect - user.id:', user?.id);
     console.log('HostStatistics useEffect - user.roleName:', user?.roleName);
     console.log('HostStatistics useEffect - period:', period);
+    console.log('HostStatistics useEffect - Starting useEffect');
     
-            // Cập nhật debug info
-        setDebugInfo({
-          user: user,
-          userId: user?.id,
-          userRole: user?.roleName || user?.role || 'N/A',
-          token: localStorage.getItem('token') ? 'Yes' : 'No',
-          timestamp: new Date().toISOString()
-        });
+    // Cập nhật debug info
+    setDebugInfo({
+      user: user,
+      userId: user?.id,
+      userRole: user?.roleName || user?.role || 'N/A',
+      token: localStorage.getItem('token') ? 'Yes' : 'No',
+      timestamp: new Date().toISOString()
+    });
     
     // Kiểm tra quyền truy cập
     if (!user) {
@@ -432,13 +436,29 @@ const HostStatistics = () => {
   const fetchStatistics = async () => {
     try {
       console.log('HostStatistics fetchStatistics - Starting fetch for period:', period);
+      console.log('HostStatistics fetchStatistics - About to call hostApi.getStatistics');
       setLoading(true);
       setError(null);
       
-      // Backend doesn't support period filtering, so we don't pass the period parameter
-      const response = await hostApi.getStatistics();
-      console.log('HostStatistics fetchStatistics - API response:', response);
-      setStats(response.data);
+      // Truyền period parameter để backend có thể lọc theo kỳ thời gian
+      const response = await hostApi.getStatistics(period);
+      console.log('HostStatistics fetchStatistics - API response received:', response);
+      console.log('HostStatistics fetchStatistics - Response data:', response.data);
+      
+      // Xử lý response format từ backend: { code: "00", message: "...", data: HostStatisticsDTO }
+      let statisticsData;
+      if (response.data && response.data.data) {
+        statisticsData = response.data.data;
+        console.log('HostStatistics fetchStatistics - Using response.data.data:', statisticsData);
+      } else if (response.data) {
+        statisticsData = response.data;
+        console.log('HostStatistics fetchStatistics - Using response.data directly:', statisticsData);
+      } else {
+        throw new Error('Response format không hợp lệ');
+      }
+      
+      console.log('HostStatistics fetchStatistics - Setting stats with:', statisticsData);
+      setStats(statisticsData);
       
     } catch (err) {
       console.error('HostStatistics fetchStatistics - Error:', err);
@@ -457,6 +477,9 @@ const HostStatistics = () => {
         errorMessage = 'Không tìm thấy dữ liệu thống kê.';
       } else if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
+      } else if (err.response?.data?.data) {
+        // Trường hợp backend trả về error message trong data field
+        errorMessage = err.response.data.data;
       }
       
       // Thêm thông tin debug chi tiết hơn
@@ -672,6 +695,16 @@ const HostStatistics = () => {
                 <Home size={20} />
               </div>
             </div>
+            <div className="stat-value">{stats.totalHouses}</div>
+            <div className="stat-label">Số nhà đã đăng</div>
+          </StatCard>
+
+          <StatCard>
+            <div className="stat-header">
+              <div className="stat-icon" style={{ background: '#10b981' }}>
+                <Home size={20} />
+              </div>
+            </div>
             <div className="stat-value">{stats.totalRentals}</div>
             <div className="stat-label">Số nhà được thuê</div>
             {stats.rentalChangePercentage !== undefined && (
@@ -684,28 +717,12 @@ const HostStatistics = () => {
 
           <StatCard>
             <div className="stat-header">
-              <div className="stat-icon" style={{ background: '#10b981' }}>
+              <div className="stat-icon" style={{ background: '#f59e0b' }}>
                 <DollarSign size={20} />
               </div>
             </div>
             <div className="stat-value">{formatCurrency(stats.totalRevenue)}</div>
             <div className="stat-label">Doanh thu dự kiến</div>
-            {stats.revenueChangePercentage !== undefined && (
-              <div className={`stat-change ${stats.revenueChangePercentage >= 0 ? 'positive' : 'negative'}`}>
-                {stats.revenueChangePercentage >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-                {stats.revenueChangePercentage >= 0 ? '+' : ''}{stats.revenueChangePercentage.toFixed(1)}% so với kỳ trước
-              </div>
-            )}
-          </StatCard>
-
-          <StatCard>
-            <div className="stat-header">
-              <div className="stat-icon" style={{ background: '#f59e0b' }}>
-                <TrendingUp size={20} />
-              </div>
-            </div>
-            <div className="stat-value">{formatCurrency(stats.netRevenue)}</div>
-            <div className="stat-label">Doanh thu sau thuế & phí</div>
             {stats.revenueChangePercentage !== undefined && (
               <div className={`stat-change ${stats.revenueChangePercentage >= 0 ? 'positive' : 'negative'}`}>
                 {stats.revenueChangePercentage >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
@@ -726,6 +743,22 @@ const HostStatistics = () => {
               <TrendingUp size={16} />
               Dựa trên dữ liệu thực tế
             </div>
+          </StatCard>
+
+          <StatCard>
+            <div className="stat-header">
+              <div className="stat-icon" style={{ background: '#ef4444' }}>
+                <TrendingUp size={20} />
+              </div>
+            </div>
+            <div className="stat-value">{formatCurrency(stats.netRevenue)}</div>
+            <div className="stat-label">Doanh thu sau thuế & phí</div>
+            {stats.revenueChangePercentage !== undefined && (
+              <div className={`stat-change ${stats.revenueChangePercentage >= 0 ? 'positive' : 'negative'}`}>
+                {stats.revenueChangePercentage >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+                {stats.revenueChangePercentage >= 0 ? '+' : ''}{stats.revenueChangePercentage.toFixed(1)}% so với kỳ trước
+              </div>
+            )}
           </StatCard>
         </StatsGrid>
 
@@ -849,6 +882,46 @@ const HostStatistics = () => {
               <div style={{ background: 'white', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid #bae6fd' }}>
                 <div style={{ color: '#0369a1', fontWeight: '600' }}>Tổng khấu trừ:</div>
                 <div style={{ color: '#0c4a6e' }}>{formatCurrency(stats.totalDeductions)}</div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div style={{ 
+          background: '#f0f4ff', 
+          border: '1px solid #c7d2fe', 
+          borderRadius: '0.5rem', 
+          padding: '1rem',
+          marginTop: '1rem'
+        }}>
+          <div style={{ fontWeight: '600', color: '#3730a3', marginBottom: '0.5rem' }}>
+            🏠 Thông tin tổng quan về nhà đã đăng
+          </div>
+          <div style={{ fontSize: '0.875rem', color: '#312e81', marginBottom: '1rem' }}>
+            • Tổng số nhà đã đăng: {stats.totalHouses} nhà<br/>
+            • Số nhà được thuê trong kỳ: {stats.totalRentals} nhà<br/>
+            • Tỷ lệ nhà được thuê: {stats.totalHouses > 0 ? ((stats.totalRentals / stats.totalHouses) * 100).toFixed(1) : 0}%
+          </div>
+          {stats.totalHouses > 0 && (
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+              gap: '1rem',
+              fontSize: '0.875rem'
+            }}>
+              <div style={{ background: 'white', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid #c7d2fe' }}>
+                <div style={{ color: '#3730a3', fontWeight: '600' }}>Tổng số nhà:</div>
+                <div style={{ color: '#312e81', fontSize: '1.125rem', fontWeight: 'bold' }}>{stats.totalHouses} nhà</div>
+              </div>
+              <div style={{ background: 'white', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid #c7d2fe' }}>
+                <div style={{ color: '#3730a3', fontWeight: '600' }}>Nhà được thuê:</div>
+                <div style={{ color: '#10b981', fontSize: '1.125rem', fontWeight: 'bold' }}>{stats.totalRentals} nhà</div>
+              </div>
+              <div style={{ background: 'white', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid #c7d2fe' }}>
+                <div style={{ color: '#3730a3', fontWeight: '600' }}>Tỷ lệ thuê:</div>
+                <div style={{ color: '#8b5cf6', fontSize: '1.125rem', fontWeight: 'bold' }}>
+                  {stats.totalHouses > 0 ? ((stats.totalRentals / stats.totalHouses) * 100).toFixed(1) : 0}%
+                </div>
               </div>
             </div>
           )}

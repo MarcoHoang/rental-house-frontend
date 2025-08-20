@@ -444,12 +444,22 @@ export const hostApi = {
   },
 
   // Host statistics
-  getStatistics: async () => {
+  getStatistics: async (period = 'current_month') => {
     try {
-      // Backend endpoint is /hosts/my-stats without period parameter
-      const response = await api.get('/hosts/my-stats');
+      console.log('hostApi.getStatistics - Starting with period:', period);
+      console.log('hostApi.getStatistics - Making request to /hosts/my-statistics');
+      
+      // Sử dụng endpoint đúng cho thống kê chi tiết
+      const response = await api.get(`/hosts/my-statistics?period=${period}`);
+      
+      console.log('hostApi.getStatistics - Response received:', response);
+      console.log('hostApi.getStatistics - Response status:', response.status);
+      console.log('hostApi.getStatistics - Response data:', response.data);
+      
       return response;
     } catch (error) {
+      console.error('hostApi.getStatistics - Error occurred:', error);
+      console.error('hostApi.getStatistics - Error response:', error.response);
       logApiError(error, "getStatistics");
       throw error;
     }
