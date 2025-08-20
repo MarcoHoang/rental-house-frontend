@@ -407,7 +407,7 @@ export const hostApplicationsApi = {
     }
   },
 
-  getPendingRequests: async (params = {}) => {
+  getAllRequests: async (params = {}) => {
     try {
       const response = await apiClient.get(
         `${API_PREFIX}/admin/host-requests`,
@@ -415,7 +415,7 @@ export const hostApplicationsApi = {
       );
       return response.data.data; // Dữ liệu trả về là một Page object
     } catch (error) {
-      logApiError(error, "getPendingRequests");
+      logApiError(error, "getAllRequests");
       throw error;
     }
   },

@@ -187,6 +187,13 @@ const HouseManagement = () => {
       );
     }
 
+    // Sắp xếp theo thời gian tạo mới nhất (mới nhất ở trên)
+    filtered.sort((a, b) => {
+      const dateA = new Date(a.createdAt || a.postDate || 0);
+      const dateB = new Date(b.createdAt || b.postDate || 0);
+      return dateB - dateA; // Mới nhất lên đầu
+    });
+
     setSearchResults(filtered);
     setIsSearchMode(searchTerm.trim() || filters.status !== 'ALL' || filters.houseType !== 'ALL');
   }, [houses, searchTerm, filters]);

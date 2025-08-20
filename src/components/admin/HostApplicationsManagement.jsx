@@ -98,6 +98,28 @@ const ActionContainer = styled.div`
   gap: 0.5rem;
 `;
 
+const Badge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 0.375rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &.pending {
+    background-color: #fef3c7;
+    color: #92400e;
+  }
+  &.approved {
+    background-color: #c6f6d5;
+    color: #22543d;
+  }
+  &.rejected {
+    background-color: #fed7d7;
+    color: #742a2a;
+  }
+`;
+
 const PaginationContainer = styled.div`
   display: flex;
   justify-content: space-between;
@@ -235,7 +257,7 @@ const HostApplicationsManagement = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await hostApplicationsApi.getPendingRequests({
+      const data = await hostApplicationsApi.getAllRequests({
         page,
         size: 10,
       });
@@ -276,6 +298,13 @@ const HostApplicationsManagement = () => {
         (app.address && app.address.toLowerCase().includes(term))
       );
     }
+
+    // Sắp xếp theo thời gian tạo mới nhất (mới nhất ở trên)
+    filtered.sort((a, b) => {
+      const dateA = new Date(a.requestDate || a.createdAt || 0);
+      const dateB = new Date(b.requestDate || b.createdAt || 0);
+      return dateB - dateA; // Mới nhất lên đầu
+    });
 
     setSearchResults(filtered);
     setIsSearchMode(searchTerm.trim() || filters.status !== 'ALL');
@@ -412,6 +441,7 @@ const HostApplicationsManagement = () => {
               <th>Họ và Tên</th>
               <th>Email</th>
               <th>Ngày gửi</th>
+              <th>Trạng thái</th>
               <th>Thao tác</th>
             </tr>
           </thead>
@@ -423,28 +453,39 @@ const HostApplicationsManagement = () => {
                   <td>{app.userEmail}</td>
                   <td>{formatDate(app.requestDate)}</td>
                   <td>
+                    <Badge className={app.status?.toLowerCase()}>
+                      {app.status === 'PENDING' && 'Đang chờ'}
+                      {app.status === 'APPROVED' && 'Đã duyệt'}
+                      {app.status === 'REJECTED' && 'Đã từ chối'}
+                    </Badge>
+                  </td>
+                  <td>
                     <ActionContainer>
                       <Link to={`/admin/host-applications/${app.id}`}>
                         <ActionButton className="view" title="Xem chi tiết đơn">
                           <Eye size={16} />
                         </ActionButton>
                       </Link>
-                      <ActionButton
-                        className="approve"
-                        onClick={() => handleApprove(app)}
-                        disabled={processingId === app.id}
-                        title="Duyệt"
-                      >
-                        Duyệt
-                      </ActionButton>
-                      <ActionButton
-                        className="reject"
-                        onClick={() => handleReject(app)}
-                        disabled={processingId === app.id}
-                        title="Từ chối"
-                      >
-                        Từ chối
-                      </ActionButton>
+                      {app.status === 'PENDING' && (
+                        <>
+                          <ActionButton
+                            className="approve"
+                            onClick={() => handleApprove(app)}
+                            disabled={processingId === app.id}
+                            title="Duyệt"
+                          >
+                            Duyệt
+                          </ActionButton>
+                          <ActionButton
+                            className="reject"
+                            onClick={() => handleReject(app)}
+                            disabled={processingId === app.id}
+                            title="Từ chối"
+                          >
+                            Từ chối
+                          </ActionButton>
+                        </>
+                      )}
                     </ActionContainer>
                   </td>
                 </tr>
@@ -452,10 +493,10 @@ const HostApplicationsManagement = () => {
             ) : (
               <tr>
                 <td
-                  colSpan="4"
+                  colSpan="5"
                   style={{ textAlign: "center", padding: "2rem" }}
                 >
-                  {isSearchMode ? "Không tìm thấy đơn đăng ký nào." : "Không có đơn đăng ký nào đang chờ duyệt."}
+                  {isSearchMode ? "Không tìm thấy đơn đăng ký nào." : "Không có đơn đăng ký nào."}
                 </td>
               </tr>
             )}

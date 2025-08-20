@@ -226,6 +226,13 @@ const HostManagement = () => {
       );
     }
 
+    // Sắp xếp theo thời gian tạo mới nhất (mới nhất ở trên)
+    filtered.sort((a, b) => {
+      const dateA = new Date(a.createdAt || a.registrationDate || 0);
+      const dateB = new Date(b.createdAt || b.registrationDate || 0);
+      return dateB - dateA; // Mới nhất lên đầu
+    });
+
     setSearchResults(filtered);
     setIsSearchMode(searchTerm.trim() || filters.active !== 'ALL');
   }, [hosts, searchTerm, filters]);
