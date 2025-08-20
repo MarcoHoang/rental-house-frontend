@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Bell } from 'lucide-react';
-import { getUserNotifications } from '../../api/notificationApi';
+import { getMyNotifications } from '../../api/notificationApi';
 import NotificationListComponent from './NotificationList';
 import { useToast } from './Toast';
 
@@ -65,7 +65,7 @@ const NotificationBadge = styled.div`
   }
 `;
 
-const NotificationBell = ({ userId }) => {
+const NotificationBell = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
@@ -73,26 +73,15 @@ const NotificationBell = ({ userId }) => {
   const { showInfo } = useToast();
 
   useEffect(() => {
-    console.log('NotificationBell.useEffect - userId:', userId);
-    if (userId) {
-      fetchNotifications();
-      // Polling để cập nhật notification mỗi 10 giây
-      const interval = setInterval(fetchNotifications, 10000);
-      return () => clearInterval(interval);
-    } else {
-      console.log('NotificationBell.useEffect - No userId, skipping notification fetch');
-    }
-  }, [userId]);
+    fetchNotifications();
+    // Polling để cập nhật notification mỗi 10 giây
+    const interval = setInterval(fetchNotifications, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchNotifications = async () => {
     try {
-      console.log('NotificationBell.fetchNotifications - userId:', userId);
-      if (!userId) {
-        console.log('NotificationBell.fetchNotifications - No userId, skipping');
-        return;
-      }
-      
-      const data = await getUserNotifications(userId);
+      const data = await getMyNotifications();
       console.log('NotificationBell.fetchNotifications - Response data:', data);
       setNotifications(data || []);
       const unread = data?.filter(notif => !notif.isRead).length || 0;
@@ -126,8 +115,6 @@ const NotificationBell = ({ userId }) => {
     setIsOpen(false);
   };
 
-  if (!userId) return null;
-
   return (
     <NotificationBellContainer>
       <BellButton onClick={handleBellClick}>
@@ -140,7 +127,6 @@ const NotificationBell = ({ userId }) => {
       </BellButton>
       
       <NotificationListComponent 
-        userId={userId}
         isOpen={isOpen}
         onClose={handleClose}
       />

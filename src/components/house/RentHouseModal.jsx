@@ -334,8 +334,8 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
 
     setIsCheckingAvailability(true);
     try {
-      const startDateTime = startDate + "T" + startTime;
-      const endDateTime = endDate + "T" + endTime;
+      const startDateTime = startDate + "T" + startTime + ":00";
+      const endDateTime = endDate + "T" + endTime + ":00";
       const result = await rentalApi.checkAvailability(house.id, startDateTime, endDateTime);
       setAvailability(result);
     } catch (error) {
@@ -400,23 +400,40 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    console.log('=== RENT HOUSE MODAL DEBUG ===');
     console.log('RentHouseModal - handleSubmit called');
     console.log('RentHouseModal - user:', user);
     console.log('RentHouseModal - user exists:', !!user);
     console.log('RentHouseModal - user ID:', user?.id);
+    console.log('RentHouseModal - house:', house);
+    console.log('RentHouseModal - house ID:', house?.id);
+    console.log('RentHouseModal - form data:', {
+      startDate,
+      startTime,
+      endDate,
+      endTime,
+      guestCount,
+      messageToHost
+    });
 
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      console.log('RentHouseModal - Form validation failed');
+      return;
+    }
 
     if (!user || !user.id) {
+      console.log('RentHouseModal - User not logged in');
       showError("Lỗi", "Vui lòng đăng nhập để thuê nhà");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      // Format ngày và giờ theo ISO string để backend có thể parse
-      const startDateTime = new Date(startDate + "T" + startTime + ":00").toISOString();
-      const endDateTime = new Date(endDate + "T" + endTime + ":00").toISOString();
+      // Format ngày và giờ theo format LocalDateTime để backend có thể parse
+      const startDateTime = startDate + "T" + startTime + ":00";
+      const endDateTime = endDate + "T" + endTime + ":00";
+      
+      console.log('Frontend - datetime format:', { startDateTime, endDateTime });
       
       const rentalRequestData = {
         houseId: house.id,
@@ -427,13 +444,20 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
       };
 
       console.log('Sending rental request data:', rentalRequestData);
+      console.log('Calling rentalApi.createRequest...');
+      
       const result = await rentalApi.createRequest(rentalRequestData);
+      
+      console.log('Rental request result:', result);
       
       showSuccess("Thành công", result.message || "Đã gửi yêu cầu thuê nhà thành công! Chủ nhà sẽ xem xét và phản hồi sớm.");
       onSuccess && onSuccess(result.data);
       onClose();
     } catch (error) {
+      console.error("=== RENTAL REQUEST ERROR ===");
       console.error("Error creating rental:", error);
+      console.error("Error response:", error.response);
+      console.error("Error message:", error.message);
       
       let errorMessage = "Có lỗi xảy ra khi đặt nhà";
       if (error.response?.data?.message) {

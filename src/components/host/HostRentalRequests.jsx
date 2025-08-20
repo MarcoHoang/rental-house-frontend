@@ -263,8 +263,21 @@ const HostRentalRequests = () => {
   const fetchRequests = async () => {
     try {
       setLoading(true);
+      
+      // Debug: Log user information
+      console.log('HostRentalRequests - User info:', {
+        userId: user?.id,
+        userEmail: user?.email,
+        userRole: user?.roleName,
+        userFullName: user?.fullName
+      });
+      
       // Lấy tất cả yêu cầu của host (mọi trạng thái)
+      console.log('HostRentalRequests - Calling API with user ID:', user.id);
       const response = await rentalApi.getHostAllRequests(user.id);
+      
+      // Debug: Log raw response
+      console.log('HostRentalRequests - Raw API response:', response);
       
       // Chuẩn hóa dữ liệu trả về để tránh render object {code, message, data}
       const normalize = (value) => {
@@ -277,11 +290,17 @@ const HostRentalRequests = () => {
       };
 
       const requestsData = normalize(response?.data) || [];
-      console.log('HostRentalRequests - Raw response:', response);
       console.log('HostRentalRequests - Normalized data:', requestsData);
       console.log('HostRentalRequests - Data type:', typeof requestsData);
       console.log('HostRentalRequests - Is array:', Array.isArray(requestsData));
       console.log('HostRentalRequests - Requests length:', requestsData.length);
+      
+      if (requestsData.length === 0) {
+        console.log('HostRentalRequests - No rental requests found for user ID:', user.id);
+      } else {
+        console.log('HostRentalRequests - Found rental requests:', requestsData);
+      }
+      
       setRequests(requestsData);
       
       // Tính toán stats
@@ -296,6 +315,12 @@ const HostRentalRequests = () => {
       });
     } catch (error) {
       console.error('Error fetching requests:', error);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        url: error.config?.url
+      });
       showError('Lỗi', 'Không thể tải danh sách yêu cầu');
     } finally {
       setLoading(false);

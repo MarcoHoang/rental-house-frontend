@@ -12,6 +12,7 @@ import hostApi from "../../api/hostApi";
 import { getAvatarUrl } from "../../utils/avatarHelper";
 import Avatar from "../common/Avatar";
 import ChatNotificationBadge from "../common/ChatNotificationBadge";
+import NotificationBell from "../common/NotificationBell";
 import styled from "styled-components";
 import HostRegistrationForm from "../host/HostRegistrationForm";
 import ConfirmDialog from "../common/ConfirmDialog";
@@ -423,12 +424,15 @@ const Header = () => {
               <NavLink to="/my-rentals">Đơn thuê của tôi</NavLink>
             )}
             {isLoggedIn && (
-              <ChatNotificationBadge>
-                <NavLink to="/messages">
-                  <MessageCircle className="h-5 w-5" />
-                  Tin nhắn
-                </NavLink>
-              </ChatNotificationBadge>
+              <>
+                <NotificationBell />
+                <ChatNotificationBadge>
+                  <NavLink to="/messages">
+                    <MessageCircle className="h-5 w-5" />
+                    Tin nhắn
+                  </NavLink>
+                </ChatNotificationBadge>
+              </>
             )}
           </NavLinks>
         </Nav>

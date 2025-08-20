@@ -356,14 +356,7 @@ const HostHeader = () => {
             <>
               {console.log('HostHeader.render - userData:', userData)}
               {console.log('HostHeader.render - authUser:', authUser)}
-              <NotificationBell userId={userData.id || authUser?.id || (() => {
-                try {
-                  const storedUser = localStorage.getItem('user');
-                  return storedUser ? JSON.parse(storedUser).id : null;
-                } catch (e) {
-                  return null;
-                }
-              })()} />
+              <NotificationBell />
               <ChatNotificationBadge>
                 <Link
                   to="/host/messages"

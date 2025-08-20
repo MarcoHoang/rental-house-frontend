@@ -1,5 +1,16 @@
 import { hostApiClient } from "./apiClient";
 
+// Lấy danh sách notification của user hiện tại
+export const getMyNotifications = async () => {
+  try {
+    const response = await hostApiClient.get(`/notifications/my-notifications`);
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching my notifications:", error);
+    throw error;
+  }
+};
+
 // Lấy danh sách notification của user
 export const getUserNotifications = async (userId) => {
   try {
