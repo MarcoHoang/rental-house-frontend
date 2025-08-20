@@ -7,6 +7,7 @@ import { useToast } from '../components/common/Toast';
 import { useAuthContext } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import ConfirmDialog from '../components/common/ConfirmDialog';
+import CancelRentalModal from '../components/common/CancelRentalModal';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -322,8 +323,9 @@ const MyRentalsPage = () => {
   const [rentals, setRentals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const [rentalToCancel, setRentalToCancel] = useState(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
   const navigate = useNavigate();
   const { showSuccess, showError } = useToast();
   const { user } = useAuthContext();
@@ -369,47 +371,42 @@ const MyRentalsPage = () => {
 
   const handleCancelRental = (rental) => {
     setRentalToCancel(rental);
-    setShowCancelConfirm(true);
+    setShowCancelModal(true);
   };
 
-  const confirmCancelRental = async () => {
+  const confirmCancelRental = async (reason) => {
     if (!rentalToCancel) return;
 
     try {
-      await rentalApi.cancelRental(rentalToCancel.id);
+      setCancelLoading(true);
+      await rentalApi.cancelRental(rentalToCancel.id, reason);
       showSuccess('Thành công', 'Đã hủy đơn thuê thành công');
       
       // Cập nhật danh sách
       setRentals(rentals.filter(rental => rental.id !== rentalToCancel.id));
+      setShowCancelModal(false);
+      setRentalToCancel(null);
     } catch (err) {
       console.error('Error canceling rental:', err);
       
       // Xử lý lỗi chi tiết hơn
       let errorMessage = 'Không thể hủy đơn thuê. Vui lòng thử lại sau.';
       
-      if (err.response?.status === 409) {
-        // Lỗi conflict - thường là do thời gian không cho phép hủy
-        if (err.response?.data?.message) {
-          errorMessage = err.response.data.message;
-        } else {
-          errorMessage = 'Không thể hủy đơn thuê. Chỉ có thể hủy đơn thuê trước 24 giờ so với thời gian bắt đầu thuê.';
-        }
-      } else if (err.response?.data?.message) {
-        // Lấy message từ backend nếu có
+      if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
-      } else if (err.response?.status === 400) {
-        errorMessage = 'Yêu cầu không hợp lệ. Vui lòng kiểm tra lại thông tin.';
-      } else if (err.response?.status === 403) {
-        errorMessage = 'Bạn không có quyền hủy đơn thuê này.';
-      } else if (err.response?.status === 404) {
-        errorMessage = 'Không tìm thấy đơn thuê.';
+      } else if (err.message) {
+        errorMessage = err.message;
       }
       
-      showError('Không thể hủy đơn thuê', errorMessage);
+      showError('Lỗi', errorMessage);
     } finally {
-      setShowCancelConfirm(false);
-      setRentalToCancel(null);
+      setCancelLoading(false);
     }
+  };
+
+  const handleCloseCancelModal = () => {
+    setShowCancelModal(false);
+    setRentalToCancel(null);
   };
 
   const handleViewHouse = (houseId) => {
@@ -610,7 +607,7 @@ const MyRentalsPage = () => {
                 Xem chi tiết nhà
               </Button>
               
-              {(rental.status === 'PENDING' || rental.status === 'SCHEDULED') && (
+              {(rental.status === 'PENDING' || rental.status === 'APPROVED' || rental.status === 'SCHEDULED') && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   <Button 
                     className="danger" 
@@ -633,31 +630,12 @@ const MyRentalsPage = () => {
           ))
       )}
 
-      {/* Confirm Cancel Dialog */}
-      <ConfirmDialog
-        isOpen={showCancelConfirm}
-        onClose={() => setShowCancelConfirm(false)}
+      <CancelRentalModal
+        isOpen={showCancelModal}
+        onClose={handleCloseCancelModal}
         onConfirm={confirmCancelRental}
-        title="Xác nhận hủy đơn thuê"
-        type="danger"
-        message={
-          <div>
-            <p>Bạn có chắc chắn muốn hủy đơn thuê nhà "{rentalToCancel?.houseTitle}"?</p>
-            <div style={{ 
-              marginTop: '1rem', 
-              padding: '0.75rem', 
-              background: '#fef3c7', 
-              borderRadius: '0.5rem',
-              border: '1px solid #f59e0b',
-              fontSize: '0.875rem',
-              color: '#92400e'
-            }}>
-              <strong>⚠️ Lưu ý:</strong> Chỉ có thể hủy đơn thuê trước 24 giờ so với thời gian bắt đầu thuê.
-            </div>
-          </div>
-        }
-        confirmText="Hủy đơn thuê"
-        cancelText="Giữ lại"
+        rental={rentalToCancel}
+        loading={cancelLoading}
       />
     </Container>
   );

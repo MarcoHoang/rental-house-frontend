@@ -198,9 +198,9 @@ const rentalApi = {
   },
 
   // Hủy đơn thuê
-  cancelRental: async (rentalId) => {
+  cancelRental: async (rentalId, reason) => {
     try {
-      const response = await api.put(`/rentals/${rentalId}/cancel`);
+      const response = await api.put(`/rentals/${rentalId}/cancel`, { reason });
       
       return {
         success: true,

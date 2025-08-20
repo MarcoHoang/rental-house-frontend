@@ -160,6 +160,27 @@ const RejectContent = styled.div`
   line-height: 1.5;
 `;
 
+const CancelReason = styled.div`
+  background: #fee2e2;
+  border: 1px solid #ef4444;
+  border-radius: 0.5rem;
+  padding: 1rem;
+`;
+
+const CancelTitle = styled.div`
+  font-weight: 600;
+  color: #991b1b;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const CancelContent = styled.div`
+  color: #991b1b;
+  line-height: 1.5;
+`;
+
 const RentalRequestDetail = ({ request }) => {
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('vi-VN', {
@@ -187,6 +208,18 @@ const RentalRequestDetail = ({ request }) => {
       default: return status;
     }
   };
+
+  // Debug: Log thông tin hủy
+  console.log('RentalRequestDetail - Request data:', {
+    id: request?.id,
+    status: request?.status,
+    cancelReason: request?.cancelReason,
+    canceledAt: request?.canceledAt,
+    rejectReason: request?.rejectReason,
+    rejectedAt: request?.rejectedAt,
+    houseAddress: request?.houseAddress,
+    house: request?.house
+  });
 
   if (!request) {
     return (
@@ -219,7 +252,7 @@ const RentalRequestDetail = ({ request }) => {
             </DetailIcon>
             <DetailContent>
               <DetailLabel>Người thuê</DetailLabel>
-              <DetailValue>{request.renterName}</DetailValue>
+              <DetailValue>{request.renterName || 'Chưa có thông tin'}</DetailValue>
             </DetailContent>
           </DetailItem>
           <DetailItem>
@@ -228,7 +261,7 @@ const RentalRequestDetail = ({ request }) => {
             </DetailIcon>
             <DetailContent>
               <DetailLabel>Số lượng khách</DetailLabel>
-              <DetailValue>{request.guestCount} người</DetailValue>
+              <DetailValue>{request.guestCount || 1} người</DetailValue>
             </DetailContent>
           </DetailItem>
         </Grid>
@@ -246,7 +279,7 @@ const RentalRequestDetail = ({ request }) => {
             </DetailIcon>
             <DetailContent>
               <DetailLabel>Tên nhà</DetailLabel>
-              <DetailValue>{request.house?.title || 'Nhà cho thuê'}</DetailValue>
+              <DetailValue>{request.houseTitle || request.house?.title || 'Nhà cho thuê'}</DetailValue>
             </DetailContent>
           </DetailItem>
           <DetailItem>
@@ -255,7 +288,7 @@ const RentalRequestDetail = ({ request }) => {
             </DetailIcon>
             <DetailContent>
               <DetailLabel>Địa chỉ</DetailLabel>
-              <DetailValue>{request.house?.address || 'Chưa có thông tin'}</DetailValue>
+              <DetailValue>{request.houseAddress || request.house?.address || 'Chưa có thông tin'}</DetailValue>
             </DetailContent>
           </DetailItem>
         </Grid>
@@ -309,7 +342,7 @@ const RentalRequestDetail = ({ request }) => {
             </DetailIcon>
             <DetailContent>
               <DetailLabel>Tổng tiền</DetailLabel>
-              <DetailValue>{formatPrice(request.totalPrice)} VNĐ</DetailValue>
+              <DetailValue>{request.totalPrice ? formatPrice(request.totalPrice) + ' VNĐ' : 'Chưa có thông tin'}</DetailValue>
             </DetailContent>
           </DetailItem>
         </Grid>
@@ -324,6 +357,22 @@ const RentalRequestDetail = ({ request }) => {
             </MessageTitle>
             <MessageContent>{request.messageToHost}</MessageContent>
           </MessageSection>
+        </Section>
+      )}
+
+      {!request.messageToHost && (
+        <Section>
+          <div style={{ 
+            padding: '1rem', 
+            background: '#f9fafb', 
+            borderRadius: '0.5rem', 
+            color: '#6b7280',
+            textAlign: 'center',
+            fontStyle: 'italic',
+            border: '1px dashed #d1d5db'
+          }}>
+            Người thuê không để lại lời nhắn nào.
+          </div>
         </Section>
       )}
 
@@ -376,6 +425,52 @@ const RentalRequestDetail = ({ request }) => {
               </DetailContent>
             </DetailItem>
           </Grid>
+        </Section>
+      )}
+
+      {request.status === 'CANCELED' && (
+        <Section>
+          <SectionTitle>
+            <Clock size={20} />
+            Thông tin hủy đơn thuê
+          </SectionTitle>
+          
+          {request.canceledAt && (
+            <Grid>
+              <DetailItem>
+                <DetailIcon>
+                  <Clock size={20} />
+                </DetailIcon>
+                <DetailContent>
+                  <DetailLabel>Thời gian hủy</DetailLabel>
+                  <DetailValue>{formatDate(request.canceledAt)}</DetailValue>
+                </DetailContent>
+              </DetailItem>
+            </Grid>
+          )}
+          
+          {request.cancelReason && (
+            <CancelReason style={{ marginTop: request.canceledAt ? '1rem' : '0' }}>
+              <CancelTitle>
+                <MessageSquare size={20} />
+                Lý do hủy
+              </CancelTitle>
+              <CancelContent>{request.cancelReason}</CancelContent>
+            </CancelReason>
+          )}
+          
+          {!request.canceledAt && !request.cancelReason && (
+            <div style={{ 
+              padding: '1rem', 
+              background: '#f3f4f6', 
+              borderRadius: '0.5rem', 
+              color: '#6b7280',
+              textAlign: 'center',
+              fontStyle: 'italic'
+            }}>
+              Đơn thuê đã được hủy nhưng chưa có thông tin chi tiết về thời gian và lý do hủy.
+            </div>
+          )}
         </Section>
       )}
     </Container>
