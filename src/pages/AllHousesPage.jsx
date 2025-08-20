@@ -266,7 +266,8 @@ const AllHousesPage = () => {
       setError(null);
       
       console.log("Fetching all houses...");
-      const response = await propertyApi.getAllProperties();
+      const response = await propertyApi.getPublicProperties();
+      console.log("Raw response from API:", response);
       const housesData = extractHousesFromResponse(response);
       
       console.log("Houses data received:", housesData);
@@ -356,6 +357,8 @@ const AllHousesPage = () => {
   };
 
   const renderContent = () => {
+    console.log("renderContent called with:", { loading, error, housesLength: houses.length, filteredHousesLength: filteredHouses.length });
+    
     if (loading) {
       return <LoadingSpinner />;
     }
@@ -365,6 +368,7 @@ const AllHousesPage = () => {
     }
 
     if (houses.length === 0) {
+      console.log("No houses found, showing empty state");
       return (
         <EmptyState>
           <EmptyStateIcon>🏠</EmptyStateIcon>
@@ -375,6 +379,7 @@ const AllHousesPage = () => {
     }
 
     if (filteredHouses.length === 0) {
+      console.log("No filtered houses found, showing no results state");
       return (
         <EmptyState>
           <EmptyStateIcon>🔍</EmptyStateIcon>
@@ -387,6 +392,7 @@ const AllHousesPage = () => {
       );
     }
 
+    console.log("Rendering HouseList with houses:", filteredHouses);
     return <HouseList houses={filteredHouses} fromPage="all-houses" />;
   };
 
