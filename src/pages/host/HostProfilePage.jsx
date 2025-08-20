@@ -15,6 +15,7 @@ import {
 import { useToast } from "../../components/common/Toast";
 import hostApi from "../../api/hostApi";
 import authService from "../../api/authService";
+import HostPageWrapper from "../../components/layout/HostPageWrapper";
 
 const ProfileContainer = styled.div`
   min-height: 100vh;
@@ -418,18 +419,26 @@ const HostProfilePage = () => {
   }
 
   return (
-    <ProfileContainer>
-      <ProfileCard>
-        <ProfileHeader>
-          <button className="back-button" onClick={() => navigate("/host")}>
-            <ArrowLeft size={20} /> Quay lại
-          </button>
-          <h1>Thông tin chủ nhà</h1>
-          <p>{formData.fullName || formData.username}</p>
-          <div className="host-badge">
-            <Building2 size={16} /> Chủ nhà
-          </div>
-        </ProfileHeader>
+    <HostPageWrapper 
+      title="Thông tin chủ nhà"
+      subtitle={formData.fullName || formData.username}
+      showBackButton={true}
+    >
+      <div style={{ 
+        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)', 
+        padding: '1.5rem', 
+        borderRadius: '1rem',
+        border: '1px solid #e2e8f0',
+        marginBottom: '2rem',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5rem'
+      }}>
+        <Building2 size={20} style={{ color: "#667eea" }} />
+        <span style={{ color: "#4a5568", fontWeight: "500" }}>
+          Chủ nhà
+        </span>
+      </div>
 
         <ProfileForm onSubmit={handleSubmit}>
           {/* Thông báo yêu cầu cập nhật số điện thoại cho Google users */}
@@ -571,8 +580,7 @@ const HostProfilePage = () => {
             </Button>
           </ActionButtons>
         </ProfileForm>
-      </ProfileCard>
-    </ProfileContainer>
+    </HostPageWrapper>
   );
 };
 

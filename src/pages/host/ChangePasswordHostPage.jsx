@@ -13,6 +13,7 @@ import {
 import { useToast } from "../../components/common/Toast";
 import hostApi from "../../api/hostApi";
 import { getUserFromStorage } from "../../utils/localStorage";
+import HostPageWrapper from "../../components/layout/HostPageWrapper";
 
 const ProfileContainer = styled.div`
   min-height: 100vh;
@@ -412,18 +413,27 @@ const ChangePasswordHostPage = () => {
   };
 
   return (
-    <ProfileContainer>
-      <ProfileCard>
-        <ProfileHeader>
-          <button className="back-button" onClick={() => navigate("/host/profile")}>
-            <ArrowLeft size={20} /> Quay lại
-          </button>
-          <h1>Đổi mật khẩu</h1>
-          <p>Bảo mật tài khoản của bạn</p>
-          <div className="host-badge">
-            <Shield size={16} /> Chủ nhà
-          </div>
-        </ProfileHeader>
+    <HostPageWrapper 
+      title="Đổi mật khẩu"
+      subtitle="Bảo mật tài khoản của bạn"
+      showBackButton={true}
+      backUrl="/host/profile"
+    >
+      <div style={{ 
+        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)', 
+        padding: '1.5rem', 
+        borderRadius: '1rem',
+        border: '1px solid #e2e8f0',
+        marginBottom: '2rem',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5rem'
+      }}>
+        <Shield size={20} style={{ color: "#667eea" }} />
+        <span style={{ color: "#4a5568", fontWeight: "500" }}>
+          Bảo mật
+        </span>
+      </div>
 
         <ProfileForm onSubmit={handleSubmit}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', gridColumn: '1 / -1' }}>
@@ -557,8 +567,7 @@ const ChangePasswordHostPage = () => {
             </Button>
           </ActionButtons>
         </ProfileForm>
-      </ProfileCard>
-    </ProfileContainer>
+    </HostPageWrapper>
   );
 };
 

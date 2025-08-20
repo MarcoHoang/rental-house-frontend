@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { MessageCircle } from 'lucide-react';
 import HostChatManager from '../../components/host/HostChatManager';
+import HostPageWrapper from '../../components/layout/HostPageWrapper';
 
 const PageContainer = styled.div`
   padding: 2rem;
@@ -28,17 +29,12 @@ const PageHeader = styled.div`
 
 const HostMessagesPage = () => {
   return (
-    <PageContainer>
-      <PageHeader>
-        <h1>
-          <MessageCircle size={28} />
-          Quản lý tin nhắn
-        </h1>
-        <p>Xem và trả lời tin nhắn từ người thuê nhà</p>
-      </PageHeader>
-      
+    <HostPageWrapper 
+      title="Quản lý tin nhắn"
+      subtitle="Xem và trả lời tin nhắn từ người thuê nhà"
+    >
       <HostChatManager />
-    </PageContainer>
+    </HostPageWrapper>
   );
 };
 

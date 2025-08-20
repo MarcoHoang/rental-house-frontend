@@ -7,6 +7,7 @@ import hostApi from '../../api/hostApi';
 import RejectRequestModal from './RejectRequestModal';
 import RequestDetailModal from './RequestDetailModal';
 import { Clock, CheckCircle, XCircle, Eye, Calendar, Users, MessageSquare } from 'lucide-react';
+import HostPageWrapper from '../layout/HostPageWrapper';
 
 const Container = styled.div`
   padding: 1rem;
@@ -415,10 +416,10 @@ const HostRentalRequests = () => {
   }
 
   return (
-    <Container>
-      <Header>
-        <Title>Yêu cầu thuê nhà</Title>
-      </Header>
+    <HostPageWrapper 
+      title="Yêu cầu thuê nhà"
+      subtitle="Xem và xử lý các yêu cầu thuê nhà từ người dùng"
+    >
 
       <StatsContainer>
         <StatCard color="#f59e0b">
@@ -553,7 +554,7 @@ const HostRentalRequests = () => {
         onClose={closeDetailModal}
         request={selectedRequestForDetail}
       />
-    </Container>
+    </HostPageWrapper>
   );
 };
 

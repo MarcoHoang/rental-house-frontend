@@ -11,6 +11,7 @@ import {
 } from '../../utils/constants';
 import { formatHouseForApi, getApiErrorMessage } from '../../utils/apiHelpers';
 import { getUserFromStorage } from '../../utils/localStorage';
+import HostPageWrapper from '../../components/layout/HostPageWrapper';
 
 const PostPropertyPage = () => {
   const [formData, setFormData] = useState({
@@ -323,9 +324,11 @@ const PostPropertyPage = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Đăng tin cho thuê nhà</h1>
-
+    <HostPageWrapper 
+      title="Đăng tin cho thuê nhà"
+      subtitle="Tạo bài đăng mới để cho thuê nhà của bạn"
+      showBackButton={true}
+    >
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Tiêu đề */}
         <div>
@@ -515,7 +518,7 @@ const PostPropertyPage = () => {
           </button>
         </div>
       </form>
-    </div>
+    </HostPageWrapper>
   );
 };
 

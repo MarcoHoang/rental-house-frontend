@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useAuthContext } from '../contexts/AuthContext';
 import HostRentalRequests from '../components/host/HostRentalRequests';
-import HostNotificationBadge from '../components/host/HostNotificationBadge';
+
 import rentalApi from '../api/rentalApi';
 import { Home, Users, Calendar, Settings, DollarSign, TrendingUp } from 'lucide-react';
 
@@ -11,74 +11,7 @@ const Container = styled.div`
   background-color: #f3f4f6;
 `;
 
-const Header = styled.header`
-  background: white;
-  border-bottom: 1px solid #e5e7eb;
-  padding: 1rem 2rem;
-`;
 
-const HeaderContent = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-const Logo = styled.h1`
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0;
-`;
-
-const UserInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-`;
-
-const UserName = styled.span`
-  font-weight: 500;
-  color: #374151;
-`;
-
-const TabContainer = styled.div`
-  background: white;
-  border-bottom: 1px solid #e5e7eb;
-`;
-
-const TabContent = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  gap: 0;
-`;
-
-const Tab = styled.button`
-  padding: 1rem 2rem;
-  border: none;
-  background: none;
-  font-size: 1rem;
-  font-weight: 500;
-  color: ${props => props.$active ? '#3b82f6' : '#6b7280'};
-  border-bottom: 2px solid ${props => props.$active ? '#3b82f6' : 'transparent'};
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-
-  &:hover {
-    color: ${props => props.$active ? '#3b82f6' : '#374151'};
-    background-color: ${props => props.$active ? 'transparent' : '#f9fafb'};
-  }
-`;
-
-const TabIcon = styled.div`
-  display: flex;
-  align-items: center;
-`;
 
 const ContentArea = styled.main`
   flex: 1;
@@ -137,33 +70,7 @@ const HostDashboardPage = () => {
     }
   };
 
-  const tabs = [
-    {
-      id: 'overview',
-      label: 'Tổng quan',
-      icon: <Home size={20} />
-    },
-    {
-      id: 'requests',
-      label: 'Yêu cầu thuê nhà',
-      icon: <Calendar size={20} />
-    },
-    {
-      id: 'houses',
-      label: 'Quản lý nhà',
-      icon: <Home size={20} />
-    },
-    {
-      id: 'rentals',
-      label: 'Lịch thuê',
-      icon: <Users size={20} />
-    },
-    {
-      id: 'settings',
-      label: 'Cài đặt',
-      icon: <Settings size={20} />
-    }
-  ];
+
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -324,31 +231,6 @@ const HostDashboardPage = () => {
 
   return (
     <Container>
-      <Header>
-        <HeaderContent>
-          <Logo>Host Dashboard</Logo>
-          <UserInfo>
-            <HostNotificationBadge onClick={() => setActiveTab('requests')} />
-            <UserName>Xin chào, {user.fullName || user.username}</UserName>
-          </UserInfo>
-        </HeaderContent>
-      </Header>
-
-      <TabContainer>
-        <TabContent>
-          {tabs.map((tab) => (
-            <Tab
-              key={tab.id}
-              $active={activeTab === tab.id}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              <TabIcon>{tab.icon}</TabIcon>
-              {tab.label}
-            </Tab>
-          ))}
-        </TabContent>
-      </TabContainer>
-
       <ContentArea>
         {renderTabContent()}
       </ContentArea>

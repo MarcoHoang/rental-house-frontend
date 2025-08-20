@@ -667,9 +667,6 @@ const HostStatistics = () => {
             <RefreshCw size={16} />
             Làm mới
           </ActionButton>
-          <ActionButton onClick={() => setTestMode(!testMode)}>
-            {testMode ? 'Tắt' : 'Bật'} Test Mode
-          </ActionButton>
           <ActionButton onClick={handleExportReport}>
             <Download size={16} />
             Xuất báo cáo

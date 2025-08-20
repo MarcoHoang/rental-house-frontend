@@ -15,6 +15,7 @@ import PostPropertyPage from "./pages/host/PostPropertyPage";
 import HostProfilePage from "./pages/host/HostProfilePage";
 import HostMessagesPage from "./pages/host/HostMessagesPage";
 import HostStatistics from "./components/host/HostStatistics";
+import HostPropertiesPage from "./pages/host/HostPropertiesPage";
 import Register from "./components/login-register/Register";
 import Login from "./components/login-register/Login";
 import ForgotPassword from "./components/login-register/ForgotPassword";
@@ -191,43 +192,23 @@ function App() {
               <Route index element={<HostDashboardPage />} />
               <Route
                 path="post"
-                element={
-                  <div style={{ padding: "20px" }}>
-                    <PostPropertyPage />
-                  </div>
-                }
+                element={<PostPropertyPage />}
               />
               <Route
                 path="properties"
-                element={
-                  <div style={{ padding: "20px" }}>
-                    <HostDashboardPageOld />
-                  </div>
-                }
+                element={<HostPropertiesPage />}
               />
               <Route
                 path="bookings"
-                element={
-                  <div style={{ padding: "20px" }}>
-                    <HostRentalRequests />
-                  </div>
-                }
+                element={<HostRentalRequests />}
               />
               <Route
                 path="profile"
-                element={
-                  <div style={{ padding: "20px" }}>
-                    <HostProfilePage />
-                  </div>
-                }
+                element={<HostProfilePage />}
               />
               <Route
                 path="change-password"
-                element={
-                  <div style={{ padding: "20px" }}>
-                    <ChangePasswordHostPage />
-                  </div>
-                }
+                element={<ChangePasswordHostPage />}
               />
               <Route
                 path="messages"
