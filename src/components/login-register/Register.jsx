@@ -111,6 +111,57 @@ const FooterLinks = styled.div`
   }
 `;
 
+const ValidationErrorContainer = styled.div`
+  margin-bottom: 1rem;
+`;
+
+const ValidationErrorBox = styled.div`
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 0.375rem;
+  padding: 1rem;
+  display: flex;
+  align-items: flex-start;
+`;
+
+const ErrorIcon = styled.div`
+  flex-shrink: 0;
+  margin-right: 0.75rem;
+  
+  svg {
+    height: 1.25rem;
+    width: 1.25rem;
+    color: #f87171;
+  }
+`;
+
+const ErrorContent = styled.div`
+  flex: 1;
+`;
+
+const ErrorTitle = styled.h3`
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #991b1b;
+  margin: 0 0 0.5rem 0;
+`;
+
+const ErrorList = styled.ul`
+  margin: 0;
+  padding-left: 1.25rem;
+  list-style-type: disc;
+`;
+
+const ErrorListItem = styled.li`
+  font-size: 0.875rem;
+  color: #b91c1c;
+  margin-bottom: 0.25rem;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
 const Register = () => {
   const { register, loading, error } = useAuth();
   const navigate = useNavigate();
@@ -242,7 +293,33 @@ const Register = () => {
         </RegisterHeader>
 
         <Form onSubmit={handleSubmit}>
-          {error && <ErrorMessage type="error" message={error} />}
+          {error && (
+            <ValidationErrorContainer>
+              {error.includes('\n') ? (
+                // Nếu có nhiều dòng lỗi (từ backend validation)
+                <ValidationErrorBox>
+                  <ErrorIcon>
+                    <svg viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </ErrorIcon>
+                  <ErrorContent>
+                    <ErrorTitle>
+                      Vui lòng sửa các lỗi sau:
+                    </ErrorTitle>
+                    <ErrorList>
+                      {error.split('\n').map((errorLine, index) => (
+                        <ErrorListItem key={index}>{errorLine}</ErrorListItem>
+                      ))}
+                    </ErrorList>
+                  </ErrorContent>
+                </ValidationErrorBox>
+              ) : (
+                // Nếu chỉ có một lỗi đơn giản
+                <ErrorMessage type="error" message={error} />
+              )}
+            </ValidationErrorContainer>
+          )}
 
           <FormField
             label="Email"
@@ -261,7 +338,7 @@ const Register = () => {
             label="Số điện thoại"
             name="phone"
             type="tel"
-            placeholder="Nhập số điện thoại (9-12 số)"
+            placeholder="Nhập số điện thoại (VD: 0123456789)"
             value={formData.phone}
             onChange={handleChange}
             onBlur={handleBlur}

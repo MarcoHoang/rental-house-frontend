@@ -216,15 +216,32 @@ export const useAuth = () => {
       let errorMessage = 'Đăng ký thất bại';
       
       if (err.response?.status === 409) {
-        if (err.response?.data?.message?.includes('email')) {
-          errorMessage = 'Email đã được sử dụng';
-        } else if (err.response?.data?.message?.includes('phone')) {
-          errorMessage = 'Số điện thoại đã được sử dụng';
+        // Backend trả về message cụ thể trong err.response.data.message
+        const backendMessage = err.response?.data?.message || '';
+        
+        // Log để debug
+        console.log('useAuth.register - 409 error details:', {
+          message: backendMessage,
+          fullResponse: err.response?.data
+        });
+        
+        // Sử dụng message từ backend vì nó đã cụ thể rồi
+        if (backendMessage) {
+          errorMessage = backendMessage;
         } else {
           errorMessage = 'Thông tin đã tồn tại trong hệ thống';
         }
       } else if (err.response?.status === 400) {
-        errorMessage = 'Thông tin không hợp lệ';
+        // Xử lý lỗi validation từ backend
+        if (err.response?.data?.data?.details && Array.isArray(err.response.data.data.details)) {
+          // Có danh sách lỗi cụ thể từ backend
+          const validationErrors = err.response.data.data.details;
+          errorMessage = validationErrors.join('\n');
+        } else if (err.response?.data?.message) {
+          errorMessage = err.response.data.message;
+        } else {
+          errorMessage = 'Thông tin không hợp lệ';
+        }
       } else if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
       } else if (err.message) {

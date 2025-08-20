@@ -217,10 +217,18 @@ export const AuthProvider = ({ children }) => {
       let errorMessage = 'Đăng ký thất bại';
       
       if (err.response?.status === 409) {
-        if (err.response?.data?.message?.includes('email')) {
-          errorMessage = 'Email đã được sử dụng';
-        } else if (err.response?.data?.message?.includes('phone')) {
-          errorMessage = 'Số điện thoại đã được sử dụng';
+        // Backend trả về message cụ thể trong err.response.data.message
+        const backendMessage = err.response?.data?.message || '';
+        
+        // Log để debug
+        console.log('AuthProvider.register - 409 error details:', {
+          message: backendMessage,
+          fullResponse: err.response?.data
+        });
+        
+        // Sử dụng message từ backend vì nó đã cụ thể rồi
+        if (backendMessage) {
+          errorMessage = backendMessage;
         } else {
           errorMessage = 'Thông tin đã tồn tại trong hệ thống';
         }
