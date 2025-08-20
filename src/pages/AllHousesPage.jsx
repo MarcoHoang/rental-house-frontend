@@ -401,12 +401,6 @@ const AllHousesPage = () => {
       <Header />
       
       <MainContent>
-        <Breadcrumb>
-          <Link to="/">Trang chủ</Link>
-          <ChevronRight size={16} className="separator" />
-          <span>Tất cả nhà cho thuê</span>
-        </Breadcrumb>
-        
         <PageHeader>
           <PageTitle>Tất cả nhà cho thuê</PageTitle>
           <PageSubtitle>

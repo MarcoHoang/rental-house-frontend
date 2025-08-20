@@ -34,11 +34,6 @@ const HouseFilter = ({ onFilterChange, currentFilter = "all", houses = [] }) => 
 
   return (
     <div className="mb-6">
-      <div className="flex items-center gap-2 mb-4">
-        <Filter size={20} className="text-gray-600" />
-        <h3 className="text-lg font-semibold text-gray-800">Bộ lọc</h3>
-      </div>
-      
       <div className="flex flex-wrap gap-3">
         {filterOptions.map((option) => {
           const IconComponent = option.icon;
