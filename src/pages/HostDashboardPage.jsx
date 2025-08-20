@@ -61,8 +61,8 @@ const Tab = styled.button`
   background: none;
   font-size: 1rem;
   font-weight: 500;
-  color: ${props => props.active ? '#3b82f6' : '#6b7280'};
-  border-bottom: 2px solid ${props => props.active ? '#3b82f6' : 'transparent'};
+  color: ${props => props.$active ? '#3b82f6' : '#6b7280'};
+  border-bottom: 2px solid ${props => props.$active ? '#3b82f6' : 'transparent'};
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
@@ -70,8 +70,8 @@ const Tab = styled.button`
   gap: 0.5rem;
 
   &:hover {
-    color: ${props => props.active ? '#3b82f6' : '#374151'};
-    background-color: ${props => props.active ? 'transparent' : '#f9fafb'};
+    color: ${props => props.$active ? '#3b82f6' : '#374151'};
+    background-color: ${props => props.$active ? 'transparent' : '#f9fafb'};
   }
 `;
 
@@ -339,7 +339,7 @@ const HostDashboardPage = () => {
           {tabs.map((tab) => (
             <Tab
               key={tab.id}
-              active={activeTab === tab.id}
+              $active={activeTab === tab.id}
               onClick={() => setActiveTab(tab.id)}
             >
               <TabIcon>{tab.icon}</TabIcon>

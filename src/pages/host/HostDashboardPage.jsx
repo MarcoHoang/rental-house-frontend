@@ -398,6 +398,30 @@ const HostDashboardPage = () => {
     }
   };
 
+  // Refresh dữ liệu house sau khi thao tác ảnh
+  const handleHouseUpdate = async () => {
+    try {
+      if (!selectedHouse?.id) return;
+      
+      // Fetch lại dữ liệu house cụ thể
+      const updatedHouse = await propertyApi.getHouseById(selectedHouse.id);
+      
+      // Chỉ cập nhật imageUrls, giữ nguyên các field khác của selectedHouse
+      const houseWithUpdatedImages = {
+        ...selectedHouse,
+        imageUrls: updatedHouse.imageUrls
+      };
+      
+      // Cập nhật selectedHouse và houses
+      setSelectedHouse(houseWithUpdatedImages);
+      setHouses(prevHouses => 
+        prevHouses.map(h => h.id === updatedHouse.id ? houseWithUpdatedImages : h)
+      );
+    } catch (error) {
+      console.error('Lỗi khi refresh dữ liệu house:', error);
+    }
+  };
+
   // Xử lý xóa nhà
   const handleDeleteHouse = async (house) => {
     setHouseToDelete(house);
@@ -622,6 +646,7 @@ const HostDashboardPage = () => {
         }}
         house={selectedHouse}
         onSave={handleSaveEdit}
+        onHouseUpdate={handleHouseUpdate}
       />
 
              {/* Toast messages */}

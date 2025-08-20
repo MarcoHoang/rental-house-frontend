@@ -86,26 +86,40 @@ const fileUploadService = {
    */
   uploadHouseImages: async (files) => {
     try {
+      console.log('Uploading house images:', files);
+      
       const formData = new FormData();
-      files.forEach(file => {
+      files.forEach((file, index) => {
+        console.log(`Appending file ${index}:`, file.name, file.type, file.size);
         formData.append('files', file);
       });
 
+      console.log('FormData entries:');
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+      }
+
       const response = await fileUploadApi.post('/files/upload/house-images', formData);
+      console.log('Upload response:', response.data);
 
       // Xử lý response theo format của backend
       if (response.data && response.data.data) {
-        return response.data.data.map(item => {
+        const results = response.data.data.map(item => {
           if (typeof item === 'string') {
             return item;
           }
           return item.fileUrl || item.url || item.path || '';
         }).filter(url => url);
+        console.log('Processed results:', results);
+        return results;
       }
       
+      console.log('No data in response, returning empty array');
       return [];
     } catch (error) {
       console.error('fileUploadService.uploadHouseImages - Error:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
       logApiError(error, 'uploadHouseImages');
       throw error;
     }
