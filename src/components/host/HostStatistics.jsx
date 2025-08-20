@@ -741,7 +741,7 @@ const HostStatistics = () => {
             <div className="stat-label">Tỷ lệ lấp đầy</div>
             <div className="stat-change positive">
               <TrendingUp size={16} />
-              Dựa trên dữ liệu thực tế
+              Dựa trên thời gian thuê thực tế
             </div>
           </StatCard>
 
@@ -900,7 +900,8 @@ const HostStatistics = () => {
           <div style={{ fontSize: '0.875rem', color: '#312e81', marginBottom: '1rem' }}>
             • Tổng số nhà đã đăng: {stats.totalHouses} nhà<br/>
             • Số nhà được thuê trong kỳ: {stats.totalRentals} nhà<br/>
-            • Tỷ lệ nhà được thuê: {stats.totalHouses > 0 ? ((stats.totalRentals / stats.totalHouses) * 100).toFixed(1) : 0}%
+            • Tỷ lệ nhà được thuê: {stats.totalHouses > 0 ? ((stats.totalRentals / stats.totalHouses) * 100).toFixed(1) : 0}%<br/>
+            • Tỷ lệ lấp đầy: {stats.occupancyRate ? `${stats.occupancyRate.toFixed(1)}%` : 'N/A'}
           </div>
           {stats.totalHouses > 0 && (
             <div style={{ 
@@ -921,6 +922,12 @@ const HostStatistics = () => {
                 <div style={{ color: '#3730a3', fontWeight: '600' }}>Tỷ lệ thuê:</div>
                 <div style={{ color: '#8b5cf6', fontSize: '1.125rem', fontWeight: 'bold' }}>
                   {stats.totalHouses > 0 ? ((stats.totalRentals / stats.totalHouses) * 100).toFixed(1) : 0}%
+                </div>
+              </div>
+              <div style={{ background: 'white', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid #c7d2fe' }}>
+                <div style={{ color: '#3730a3', fontWeight: '600' }}>Tỷ lệ lấp đầy:</div>
+                <div style={{ color: '#8b5cf6', fontSize: '1.125rem', fontWeight: 'bold' }}>
+                  {stats.occupancyRate ? `${stats.occupancyRate.toFixed(1)}%` : 'N/A'}
                 </div>
               </div>
             </div>
