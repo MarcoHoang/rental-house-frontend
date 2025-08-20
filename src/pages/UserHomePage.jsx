@@ -7,6 +7,7 @@ import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import SearchBar from "../components/house/SearchBar";
 import LoadingSpinner from "../components/common/LoadingSpinner";
+import Pagination from "../components/common/Pagination";
 import { extractHousesFromResponse } from "../utils/apiHelpers";
 import { HOUSE_STATUS, HOUSE_TYPES, HOUSE_STATUS_LABELS, HOUSE_TYPE_LABELS } from "../utils/constants";
 
@@ -121,6 +122,10 @@ const HomePage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [typeFilter, setTypeFilter] = useState('ALL');
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize] = useState(8); // 8 nhà mỗi trang
 
   // --- Data Fetching ---
   // Sử dụng useEffect để gọi API (hoặc dữ liệu giả) một lần khi component render
@@ -181,6 +186,7 @@ const HomePage = () => {
     }
     
     setFilteredHouses(filtered);
+    setCurrentPage(0); // Reset về trang đầu khi filter thay đổi
   }, [houses, searchTerm, statusFilter, typeFilter]);
 
   // Hàm search sử dụng API backend
@@ -236,7 +242,20 @@ const HomePage = () => {
         </div>
       );
     }
-    return <HouseList houses={filteredHouses} fromPage="home" />;
+    return (
+      <>
+        <HouseList houses={filteredHouses.slice(currentPage * pageSize, (currentPage + 1) * pageSize)} fromPage="home" />
+        {filteredHouses.length > pageSize && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={Math.ceil(filteredHouses.length / pageSize)}
+            totalElements={filteredHouses.length}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+          />
+        )}
+      </>
+    );
   };
 
   // --- JSX to Render ---

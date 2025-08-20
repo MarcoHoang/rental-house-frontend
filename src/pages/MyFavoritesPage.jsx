@@ -6,6 +6,7 @@ import favoriteApi from '../api/favoriteApi';
 import { useToast } from '../components/common/Toast';
 import { useAuthContext } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import Pagination from '../components/common/Pagination';
 import HouseCard from '../components/house/HouseCard';
 
 const Container = styled.div`
@@ -217,6 +218,11 @@ const MyFavoritesPage = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [priceFilter, setPriceFilter] = useState('all');
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize] = useState(8); // 8 nhà mỗi trang
+  
   const navigate = useNavigate();
   const { showSuccess, showError } = useToast();
   const { user } = useAuthContext();
@@ -303,6 +309,7 @@ const MyFavoritesPage = () => {
     });
 
     setFilteredHouses(filtered);
+    setCurrentPage(0); // Reset về trang đầu khi search thay đổi
   }, [searchTerm, favoriteHouses]);
 
   const handleRemoveFromFavorites = async (houseId) => {
@@ -419,7 +426,9 @@ const MyFavoritesPage = () => {
           </SearchAndFilterSection>
 
           <HousesGrid>
-            {filteredHouses.map((house) => (
+            {filteredHouses
+              .slice(currentPage * pageSize, (currentPage + 1) * pageSize)
+              .map((house) => (
               <HouseCard
                 key={house.id}
                 house={house}
@@ -428,6 +437,16 @@ const MyFavoritesPage = () => {
               />
             ))}
           </HousesGrid>
+          
+          {filteredHouses.length > pageSize && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={Math.ceil(filteredHouses.length / pageSize)}
+              totalElements={filteredHouses.length}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+            />
+          )}
         </>
       )}
     </Container>

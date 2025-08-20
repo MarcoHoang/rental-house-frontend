@@ -18,6 +18,7 @@ import { useAuth } from '../../hooks/useAuth';
 import propertyApi from '../../api/propertyApi';
 import HouseList from '../../components/house/HouseList';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import Pagination from '../../components/common/Pagination';
 import EditHouseModal from '../../components/admin/EditHouseModal';
 import ToastContainer from '../../components/common/ToastContainer';
 import ConfirmModal from '../../components/common/ConfirmModal';
@@ -225,6 +226,10 @@ const HostDashboardPage = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedHouse, setSelectedHouse] = useState(null);
   
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize] = useState(8); // 8 nhà mỗi trang
+  
   // Toast state
   const [toasts, setToasts] = useState([]);
   
@@ -349,6 +354,7 @@ const HostDashboardPage = () => {
     }
     
     setFilteredHouses(filtered);
+    setCurrentPage(0); // Reset về trang đầu khi filter thay đổi
   }, [houses, searchTerm, statusFilter]);
 
   const formatCurrency = (amount) => {
@@ -538,13 +544,24 @@ const HostDashboardPage = () => {
             Không tìm thấy nhà nào phù hợp với tiêu chí tìm kiếm.
           </div>
         ) : (
-          <HouseList 
-            houses={filteredHouses} 
-            showActions={true}
-            onEdit={handleEditHouse}
-            onDelete={handleDeleteHouse}
-            fromPage="host"
-          />
+          <>
+            <HouseList 
+              houses={filteredHouses.slice(currentPage * pageSize, (currentPage + 1) * pageSize)} 
+              showActions={true}
+              onEdit={handleEditHouse}
+              onDelete={handleDeleteHouse}
+              fromPage="host"
+            />
+            {filteredHouses.length > pageSize && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={Math.ceil(filteredHouses.length / pageSize)}
+                totalElements={filteredHouses.length}
+                pageSize={pageSize}
+                onPageChange={setCurrentPage}
+              />
+            )}
+          </>
         )}
       </>
     );

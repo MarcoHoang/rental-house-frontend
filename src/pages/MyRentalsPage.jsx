@@ -6,6 +6,7 @@ import rentalApi from '../api/rentalApi';
 import { useToast } from '../components/common/Toast';
 import { useAuthContext } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import Pagination from '../components/common/Pagination';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import CancelRentalModal from '../components/common/CancelRentalModal';
 
@@ -326,6 +327,11 @@ const MyRentalsPage = () => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [rentalToCancel, setRentalToCancel] = useState(null);
   const [cancelLoading, setCancelLoading] = useState(false);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize] = useState(5); // 5 đơn thuê mỗi trang
+  
   const navigate = useNavigate();
   const { showSuccess, showError } = useToast();
   const { user } = useAuthContext();
@@ -462,8 +468,11 @@ const MyRentalsPage = () => {
           </Button>
         </EmptyState>
       ) : (
-        rentals.map((rental) => (
-          <RentalCard key={rental.id}>
+        <>
+          {rentals
+            .slice(currentPage * pageSize, (currentPage + 1) * pageSize)
+            .map((rental) => (
+            <RentalCard key={rental.id}>
             <RentalHeader>
               <HouseTitle>{rental.houseTitle}</HouseTitle>
               <StatusBadge className={getStatusColor(rental.status)}>
@@ -627,7 +636,18 @@ const MyRentalsPage = () => {
               )}
                           </ActionButtons>
             </RentalCard>
-          ))
+          ))}
+          
+          {rentals.length > pageSize && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={Math.ceil(rentals.length / pageSize)}
+              totalElements={rentals.length}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+            />
+          )}
+        </>
       )}
 
       <CancelRentalModal

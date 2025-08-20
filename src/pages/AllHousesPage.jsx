@@ -6,6 +6,7 @@ import HouseList from "../components/house/HouseList";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import LoadingSpinner from "../components/common/LoadingSpinner";
+import Pagination from "../components/common/Pagination";
 import { extractHousesFromResponse } from "../utils/apiHelpers";
 import { HOUSE_STATUS, HOUSE_TYPES, HOUSE_STATUS_LABELS, HOUSE_TYPE_LABELS } from "../utils/constants";
 import { Search, Filter, MapPin, Home, DollarSign, ChevronRight } from "lucide-react";
@@ -254,6 +255,10 @@ const AllHousesPage = () => {
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   const [sortBy, setSortBy] = useState('newest');
   const [isSearching, setIsSearching] = useState(false);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize] = useState(8); // 8 nhà mỗi trang
 
   // Fetch tất cả nhà khi component mount
   useEffect(() => {
@@ -333,6 +338,7 @@ const AllHousesPage = () => {
     }
     
     setFilteredHouses(filtered);
+    setCurrentPage(0); // Reset về trang đầu khi filter thay đổi
   }, [houses, searchTerm, statusFilter, typeFilter, priceRange, sortBy]);
 
   const handleSearch = () => {
@@ -347,6 +353,7 @@ const AllHousesPage = () => {
     setTypeFilter('ALL');
     setPriceRange({ min: '', max: '' });
     setSortBy('newest');
+    setCurrentPage(0);
   };
 
   const formatPrice = (price) => {
@@ -393,7 +400,26 @@ const AllHousesPage = () => {
     }
 
     console.log("Rendering HouseList with houses:", filteredHouses);
-    return <HouseList houses={filteredHouses} fromPage="all-houses" />;
+    
+    // Tính toán nhà hiển thị cho trang hiện tại
+    const startIndex = currentPage * pageSize;
+    const endIndex = startIndex + pageSize;
+    const currentHouses = filteredHouses.slice(startIndex, endIndex);
+    
+    return (
+      <>
+        <HouseList houses={currentHouses} fromPage="all-houses" />
+        {filteredHouses.length > pageSize && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={Math.ceil(filteredHouses.length / pageSize)}
+            totalElements={filteredHouses.length}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+          />
+        )}
+      </>
+    );
   };
 
   return (

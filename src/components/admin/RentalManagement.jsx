@@ -4,6 +4,7 @@ import { Eye, Calendar, MapPin, DollarSign, Clock, AlertTriangle, FileText, Chev
 import { adminApi } from '../../api/adminApi';
 import AdminSearchBar from './AdminSearchBar';
 import LoadingSpinner from '../common/LoadingSpinner';
+import Pagination from '../common/Pagination';
 import { formatDate, formatCurrency } from '../../utils/timeUtils';
 import { Link } from 'react-router-dom'; // Added Link import
 
@@ -192,6 +193,10 @@ const RentalManagement = () => {
     number: 0,
     totalPages: 1
   });
+  
+  // Pagination states for local filtering
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize] = useState(5); // 5 rentals mỗi trang
 
   const fetchRentals = useCallback(async (page = 0) => {
     try {
@@ -266,6 +271,7 @@ const RentalManagement = () => {
 
     setSearchResults(filtered);
     setIsSearchMode(searchTerm.trim() || filters.status !== 'ALL' || filters.houseType !== 'ALL');
+    setCurrentPage(0); // Reset về trang đầu khi filter thay đổi
   }, [rentals, searchTerm, filters]);
 
   // Handle pagination
@@ -351,7 +357,9 @@ const RentalManagement = () => {
         </thead>
         <tbody>
           {displayRentals.length > 0 ? (
-            displayRentals.map((rental) => (
+            displayRentals
+              .slice(currentPage * pageSize, (currentPage + 1) * pageSize)
+              .map((rental) => (
               <tr key={rental.id}>
                 <td>
                   <div style={{ maxWidth: '100%', overflow: 'hidden' }}>
@@ -480,6 +488,16 @@ const RentalManagement = () => {
               </PageButton>
             </PaginationControls>
           </PaginationContainer>
+        )}
+        
+        {isSearchMode && searchResults.length > pageSize && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={Math.ceil(searchResults.length / pageSize)}
+            totalElements={searchResults.length}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+          />
         )}
       </Card>
     </div>
