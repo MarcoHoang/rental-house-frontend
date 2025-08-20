@@ -102,9 +102,9 @@ export const adminAuth = {
       if (!response && lastError?.response?.status === 500) {
         console.log("adminAuth.login - Using mock data due to server error");
         return {
-          code: 200,
-          message: "Đăng nhập thành công",
           data: {
+            code: 200,
+            message: "Đăng nhập thành công",
             token: "mock-admin-token",
             user: {
               id: 1,

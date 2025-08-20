@@ -165,6 +165,18 @@ const AdminLogin = () => {
         throw new Error("Bạn không có quyền truy cập Admin.");
       }
 
+      // Lưu token và user data vào localStorage
+      const token = response.data.token || response.data.data?.token || userData.token || response.data.data?.user?.token;
+      if (token) {
+        localStorage.setItem("adminToken", token);
+        localStorage.setItem("adminUser", JSON.stringify(userData));
+        console.log("AdminLogin.handleSubmit - Token and user data saved to localStorage");
+        console.log("AdminLogin.handleSubmit - Token:", token);
+        console.log("AdminLogin.handleSubmit - UserData:", userData);
+      } else {
+        console.error("AdminLogin.handleSubmit - No token found in response");
+      }
+
       showSuccess(
         "Đăng nhập Admin thành công!",
         `Chào mừng Admin ${userData.name || userData.email} quay trở lại!`
