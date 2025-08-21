@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
 import propertyApi from "../api/propertyApi";
-import HouseList from "../components/house/HouseList";
+import HouseList from "../components/house/HouseList.jsx";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import SearchBar from "../components/house/SearchBar";

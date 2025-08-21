@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import propertyApi from '../../api/propertyApi';
-import HouseList from '../../components/house/HouseList';
+import HouseList from '../../components/house/HouseList.jsx';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import Pagination from '../../components/common/Pagination';
 import EditHouseModal from '../../components/admin/EditHouseModal';

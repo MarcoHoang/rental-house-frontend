@@ -218,11 +218,11 @@ const MyFavoritesPage = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [priceFilter, setPriceFilter] = useState('all');
-  
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize] = useState(8); // 8 nhà mỗi trang
-  
+
   const navigate = useNavigate();
   const { showSuccess, showError } = useToast();
   const { user } = useAuthContext();
@@ -437,7 +437,7 @@ const MyFavoritesPage = () => {
               />
             ))}
           </HousesGrid>
-          
+
           {filteredHouses.length > pageSize && (
             <Pagination
               currentPage={currentPage}
