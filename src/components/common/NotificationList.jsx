@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Bell, X, Trash2, CheckCircle, AlertTriangle, Home, User, FileText, AlertCircle } from 'lucide-react';
+import { Bell, X, Trash2, CheckCircle, AlertTriangle, Home, User, FileText, AlertCircle, Star } from 'lucide-react';
 import { getMyNotifications, markNotificationAsRead, deleteNotification } from '../../api/notificationApi';
 import { useToast } from './Toast';
 
@@ -166,8 +166,12 @@ const getNotificationIcon = (type) => {
       return <CheckCircle size={16} color="#10b981" />;
     case 'RENTAL_CANCELED':
       return <AlertTriangle size={16} color="#f59e0b" />;
-    case 'REVIEW_ONE_STAR':
+    case 'REVIEW_LOW_RATING':
       return <AlertTriangle size={16} color="#ef4444" />;
+    case 'REVIEW_MEDIUM_RATING':
+      return <Star size={16} color="#f59e0b" />;
+    case 'REVIEW_HIGH_RATING':
+      return <Star size={16} color="#10b981" />;
     case 'RENTAL_APPROVED':
     case 'RENTAL_REJECTED':
       return <FileText size={16} color="#8b5cf6" />;
@@ -184,8 +188,12 @@ const getNotificationTypeLabel = (type) => {
       return 'Đơn thuê mới';
     case 'RENTAL_CANCELED':
       return 'Đơn thuê bị hủy';
-    case 'REVIEW_ONE_STAR':
-      return 'Đánh giá 1 sao';
+    case 'REVIEW_LOW_RATING':
+      return 'Đánh giá thấp (1-2 sao)';
+    case 'REVIEW_MEDIUM_RATING':
+      return 'Đánh giá trung bình (3 sao)';
+    case 'REVIEW_HIGH_RATING':
+      return 'Đánh giá cao (4-5 sao)';
     case 'RENTAL_APPROVED':
       return 'Đơn thuê được duyệt';
     case 'RENTAL_REJECTED':
