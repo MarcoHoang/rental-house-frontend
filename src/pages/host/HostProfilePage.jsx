@@ -293,6 +293,16 @@ const HostProfilePage = () => {
     fetchHostProfile();
   }, [fetchHostProfile]);
 
+  // Cleanup blob URLs khi component unmount
+  useEffect(() => {
+    return () => {
+      // Cleanup blob URL khi component unmount
+      if (avatarPreview && avatarPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+    };
+  }, [avatarPreview]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -308,10 +318,33 @@ const HostProfilePage = () => {
 
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setFormData((prev) => ({ ...prev, avatarFile: file }));
-      setAvatarPreview(URL.createObjectURL(file));
+    if (!file) {
+      // Nếu không có file được chọn, không làm gì
+      return;
     }
+
+    // Kiểm tra loại file
+    const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
+    if (!allowedTypes.includes(file.type)) {
+      showError("Lỗi", "Chỉ chấp nhận file JPG hoặc PNG");
+      return;
+    }
+
+    // Kiểm tra dung lượng file (tối đa 5MB)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      showError("Lỗi", "Kích thước ảnh tối đa 5MB");
+      return;
+    }
+
+    // Tạo URL tạm để hiển thị preview
+    const previewUrl = URL.createObjectURL(file);
+    
+    setFormData((prev) => ({ ...prev, avatarFile: file }));
+    setAvatarPreview(previewUrl);
+
+    // Hiển thị thông báo preview thành công
+    showSuccess("Thành công!", "Ảnh đã được chọn! Nhấn 'Cập nhật' để lưu thay đổi.");
   };
 
   const validateForm = () => {
@@ -461,8 +494,31 @@ const HostProfilePage = () => {
           )}
           
           <AvatarSection>
-            <div className="avatar-container">
+            <div className="avatar-container" style={{ position: 'relative' }}>
               <img src={avatarPreview} alt="Avatar" className="avatar" />
+              {formData.avatarFile && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "-5px",
+                    right: "-5px",
+                    background: "#10b981",
+                    color: "white",
+                    borderRadius: "50%",
+                    width: "24px",
+                    height: "24px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "12px",
+                    border: "2px solid white",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+                  }}
+                  title="Ảnh mới đã được chọn"
+                >
+                  ✨
+                </div>
+              )}
               <label className="avatar-upload">
                 <Camera size={16} />
                 <input
@@ -473,6 +529,19 @@ const HostProfilePage = () => {
                 />
               </label>
             </div>
+            {formData.avatarFile && (
+              <p
+                style={{
+                  fontSize: "0.875rem",
+                  color: "#10b981",
+                  marginTop: "0.5rem",
+                  fontWeight: "500",
+                  textAlign: "center"
+                }}
+              >
+                ✅ Ảnh đã được chọn - Nhấn "Cập nhật" để lưu thay đổi
+              </p>
+            )}
           </AvatarSection>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>

@@ -83,6 +83,22 @@ const Avatar = ({
 
   // Load authenticated image if needed
   React.useEffect(() => {
+    // Nếu là blob URL (preview từ file được chọn), hiển thị ngay lập tức
+    if (avatarUrl && avatarUrl.startsWith('blob:')) {
+      setAuthenticatedImageUrl(avatarUrl);
+      setImageError(false);
+      setIsLoading(false);
+      return;
+    }
+
+    // Nếu là placeholder URL, hiển thị ngay lập tức
+    if (avatarUrl && (avatarUrl.includes('via.placeholder.com') || avatarUrl === '/default-avatar.png')) {
+      setAuthenticatedImageUrl(avatarUrl);
+      setImageError(false);
+      setIsLoading(false);
+      return;
+    }
+
     if (avatarUrl && avatarUrl !== '/default-avatar.png' && requiresAuthentication(avatarUrl)) {
       setIsLoading(true);
       
@@ -148,7 +164,7 @@ const Avatar = ({
         <span>Loading...</span>
       ) : (
         <>
-          {!imageError && imageUrlToUse && imageUrlToUse !== '/default-avatar.png' ? (
+          {!imageError && imageUrlToUse && (imageUrlToUse.startsWith('blob:') || imageUrlToUse !== '/default-avatar.png') ? (
             <img
               src={imageUrlToUse}
               alt={alt || displayName}
@@ -161,7 +177,7 @@ const Avatar = ({
             />
           ) : null}
           
-          {(imageError || !imageUrlToUse || imageUrlToUse === '/default-avatar.png') && (
+          {(imageError || !imageUrlToUse || (imageUrlToUse === '/default-avatar.png' && !imageUrlToUse.startsWith('blob:'))) && (
             <span>{initials}</span>
           )}
         </>

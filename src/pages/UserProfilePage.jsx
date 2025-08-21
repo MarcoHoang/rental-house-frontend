@@ -118,6 +118,7 @@ const AvatarSection = styled.div`
 
 const AvatarWrapper = styled.div`
   margin-right: 1.5rem;
+  position: relative;
 `;
 
 const FileInput = styled.input`
@@ -236,6 +237,7 @@ const UserProfilePage = () => {
     avatar: null,
     avatarPreview: getAvatarUrl(null),
   });
+  const [previewUrl, setPreviewUrl] = useState(null); // State riêng cho preview URL
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
@@ -392,6 +394,19 @@ const UserProfilePage = () => {
     }
   }, [user, navigate]);
 
+  // Cleanup blob URLs khi component unmount
+  useEffect(() => {
+    return () => {
+      // Cleanup blob URL khi component unmount
+      if (profile.avatarPreview && profile.avatarPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(profile.avatarPreview);
+      }
+      if (previewUrl && previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, []); // Chỉ cleanup khi component unmount
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -416,7 +431,11 @@ const UserProfilePage = () => {
 
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
-    if (!file) return;
+    if (!file) {
+      // Nếu không có file được chọn, xóa thông báo
+      setMessage({ text: "", type: "" });
+      return;
+    }
 
     // Kiểm tra loại file
     const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
@@ -433,12 +452,29 @@ const UserProfilePage = () => {
     }
 
     // Tạo URL tạm để hiển thị preview
-    const previewUrl = URL.createObjectURL(file);
+    const newPreviewUrl = URL.createObjectURL(file);
+    
+    console.log('Avatar preview URL:', newPreviewUrl); // Debug log
+    
+    // Cập nhật profile với preview mới
     setProfile((prev) => ({
       ...prev,
       avatar: file,
-      avatarPreview: previewUrl,
     }));
+    
+    // Cập nhật preview URL riêng biệt
+    setPreviewUrl(newPreviewUrl);
+
+    // Hiển thị thông báo preview thành công
+    setMessage({ 
+      text: "✅ Ảnh đã được chọn! Nhấn 'Lưu thay đổi' để cập nhật.", 
+      type: "success" 
+    });
+
+    // Tự động ẩn thông báo sau 3 giây
+    setTimeout(() => {
+      setMessage({ text: "", type: "" });
+    }, 3000);
   };
 
   const validateForm = () => {
@@ -575,6 +611,9 @@ const UserProfilePage = () => {
         avatarPreview: newAvatarPreview,
         avatar: null, // Reset avatar file
       }));
+      
+      // Reset preview URL
+      setPreviewUrl(null);
 
       showSuccess(
         "Cập nhật thành công!",
@@ -696,12 +735,64 @@ const UserProfilePage = () => {
                 <Label>Ảnh đại diện</Label>
                 <AvatarSection>
                   <AvatarWrapper>
-                    <Avatar
-                      src={profile.avatarPreview}
-                      alt="Avatar"
-                      size="100px"
-                      name={profile.fullName}
-                    />
+                    {previewUrl ? (
+                      // Sử dụng img trực tiếp cho blob URLs (preview)
+                      <div
+                        style={{
+                          width: '100px',
+                          height: '100px',
+                          borderRadius: '50%',
+                          overflow: 'hidden',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: '#e5e7eb',
+                          border: '2px solid transparent'
+                        }}
+                      >
+                        <img
+                          src={previewUrl}
+                          alt="Avatar Preview"
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            borderRadius: '50%'
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      // Sử dụng component Avatar cho URLs khác
+                      <Avatar
+                        src={profile.avatarPreview}
+                        alt="Avatar"
+                        size="100px"
+                        name={profile.fullName}
+                      />
+                    )}
+                    {profile.avatar && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "-5px",
+                          right: "-5px",
+                          background: "#10b981",
+                          color: "white",
+                          borderRadius: "50%",
+                          width: "24px",
+                          height: "24px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "12px",
+                          border: "2px solid white",
+                          boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+                        }}
+                        title="Ảnh mới đã được chọn"
+                      >
+                        ✨
+                      </div>
+                    )}
                   </AvatarWrapper>
                   <div>
                     <FileInput
@@ -710,7 +801,9 @@ const UserProfilePage = () => {
                       accept="image/*"
                       onChange={handleAvatarChange}
                     />
-                    <FileLabel htmlFor="avatar">📷 Chọn ảnh</FileLabel>
+                    <FileLabel htmlFor="avatar">
+                      {profile.avatar ? "🔄 Chọn ảnh khác" : "📷 Chọn ảnh"}
+                    </FileLabel>
                     <p
                       style={{
                         fontSize: "0.875rem",
@@ -720,6 +813,18 @@ const UserProfilePage = () => {
                     >
                       Định dạng: JPG, PNG. Kích thước tối đa: 5MB
                     </p>
+                    {profile.avatar && (
+                      <p
+                        style={{
+                          fontSize: "0.875rem",
+                          color: "#10b981",
+                          marginTop: "0.5rem",
+                          fontWeight: "500"
+                        }}
+                      >
+                        ✅ Ảnh đã được chọn - Nhấn "Lưu thay đổi" để cập nhật
+                      </p>
+                    )}
                   </div>
                 </AvatarSection>
               </FormGroup>
