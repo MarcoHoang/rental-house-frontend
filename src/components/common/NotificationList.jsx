@@ -175,6 +175,10 @@ const getNotificationIcon = (type) => {
     case 'RENTAL_APPROVED':
     case 'RENTAL_REJECTED':
       return <FileText size={16} color="#8b5cf6" />;
+    case 'HOST_REQUEST_APPROVED':
+      return <CheckCircle size={16} color="#10b981" />;
+    case 'HOST_REQUEST_REJECTED':
+      return <AlertTriangle size={16} color="#ef4444" />;
     default:
       return <Bell size={16} color="#6b7280" />;
   }
@@ -198,6 +202,10 @@ const getNotificationTypeLabel = (type) => {
       return 'Đơn thuê được duyệt';
     case 'RENTAL_REJECTED':
       return 'Đơn thuê bị từ chối';
+    case 'HOST_REQUEST_APPROVED':
+      return 'Đơn xin làm host được duyệt';
+    case 'HOST_REQUEST_REJECTED':
+      return 'Đơn xin làm host bị từ chối';
     default:
       return 'Thông báo';
   }
