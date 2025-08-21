@@ -7,8 +7,10 @@ import HouseCard from "../components/house/HouseCard.jsx";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import SearchBar from "../components/house/SearchBar";
+import AdvancedSearchBar from "../components/common/AdvancedSearchBar";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import Pagination from "../components/common/Pagination";
+import HeroBackgroundCarousel from "../components/common/HeroBackgroundCarousel";
 import { extractHousesFromResponse } from "../utils/apiHelpers";
 import { HOUSE_STATUS, HOUSE_TYPES, HOUSE_STATUS_LABELS, HOUSE_TYPE_LABELS } from "../utils/constants";
 
@@ -72,33 +74,26 @@ const MainContent = styled.main`
   /* Component chính bọc nội dung, đảm bảo không có style thừa */
 `;
 
-// Hero section với thiết kế hiện đại hơn
+// Hero section với background carousel động
 const HeroSection = styled.section`
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   text-align: center;
   padding: 6rem 2rem;
   position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 100" fill="rgba(255,255,255,0.1)"><polygon points="0,100 1000,0 1000,100"/></svg>');
-    background-size: cover;
-  }
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 
   h1 {
     font-size: 3.5rem;
     font-weight: 800;
     margin-bottom: 1.5rem;
-    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
     position: relative;
-    z-index: 2;
+    z-index: 3;
     
     @media (max-width: 768px) {
       font-size: 2.5rem;
@@ -108,16 +103,27 @@ const HeroSection = styled.section`
   .hero-subtitle {
     font-size: 1.25rem;
     margin-bottom: 3rem;
-    opacity: 0.9;
+    opacity: 0.95;
     position: relative;
-    z-index: 2;
+    z-index: 3;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
   }
+`;
+
+const HeroSearchSection = styled.div`
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 3;
 `;
 
 // Section cho nhà nổi bật với thiết kế đặc biệt
 const FeaturedSection = styled.section`
   padding: 5rem 2rem;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   position: relative;
 
   &::before {
@@ -127,7 +133,7 @@ const FeaturedSection = styled.section`
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
+    background: linear-gradient(90deg, #3b82f6, #1d4ed8);
   }
 `;
 
@@ -147,7 +153,7 @@ const SectionTitle = styled.h2`
     transform: translateX(-50%);
     width: 80px;
     height: 4px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
+    background: linear-gradient(90deg, #3b82f6, #1d4ed8);
     border-radius: 2px;
   }
 `;
@@ -165,7 +171,7 @@ const SectionSubtitle = styled.p`
 // Section cho tìm kiếm với background khác
 const SearchSection = styled.section`
   padding: 4rem 2rem;
-  background-color: #ffffff;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
 `;
 
@@ -347,6 +353,60 @@ const HomePage = () => {
     }
   };
 
+  // Hàm xử lý tìm kiếm nâng cao
+  const handleAdvancedSearch = async (searchData) => {
+    try {
+      setLoading(true);
+      let filtered = houses;
+
+      // Filter theo địa điểm
+      if (searchData.location) {
+        const locationTerm = searchData.location.toLowerCase();
+        filtered = filtered.filter(house => 
+          (house.address && house.address.toLowerCase().includes(locationTerm)) ||
+          (house.title && house.title.toLowerCase().includes(locationTerm))
+        );
+      }
+
+      // Filter theo loại nhà
+      if (searchData.houseType !== 'ALL') {
+        filtered = filtered.filter(house => house.houseType === searchData.houseType);
+      }
+
+      // Filter theo mức giá
+      if (searchData.priceRange !== 'ALL') {
+        const [minPrice, maxPrice] = searchData.priceRange.split('-').map(Number);
+        filtered = filtered.filter(house => {
+          const price = house.price || 0;
+          if (searchData.priceRange === '50000000+') {
+            return price >= 50000000;
+          }
+          return price >= minPrice && price <= maxPrice;
+        });
+      }
+
+      // Filter theo diện tích
+      if (searchData.area !== 'ALL') {
+        const [minArea, maxArea] = searchData.area.split('-').map(Number);
+        filtered = filtered.filter(house => {
+          const area = house.area || 0;
+          if (searchData.area === '200+') {
+            return area >= 200;
+          }
+          return area >= minArea && area <= maxArea;
+        });
+      }
+
+      setFilteredHouses(filtered);
+      setCurrentPage(0);
+    } catch (error) {
+      console.error('Advanced search error:', error);
+      setFilteredHouses([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // --- Content Rendering Logic ---
   // Một hàm nhỏ để quyết định hiển thị gì dựa trên trạng thái (loading, error, success)
   const renderHouseContent = () => {
@@ -404,43 +464,47 @@ const HomePage = () => {
 
       <MainContent>
         <HeroSection>
+          <HeroBackgroundCarousel />
           <h1>Tìm kiếm ngôi nhà mơ ước của bạn</h1>
           <p className="hero-subtitle">
             Khám phá hàng nghìn ngôi nhà đẹp với giá cả hợp lý
           </p>
-          <SearchBar onSearch={handleSearch} />
-          <div style={{ marginTop: '2rem' }}>
-            <Link 
-              to="/all-houses" 
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                padding: '1rem 2rem',
-                backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '0.75rem',
-                fontWeight: '600',
-                transition: 'all 0.3s ease',
-                border: '2px solid rgba(255, 255, 255, 0.3)',
-                backdropFilter: 'blur(10px)'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.25)';
-                e.target.style.transform = 'translateY(-3px)';
-                e.target.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.2)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
-                e.target.style.transform = 'translateY(0)';
-                e.target.style.boxShadow = 'none';
-              }}
-            >
-              <Home size={24} />
-              Xem tất cả nhà cho thuê
-            </Link>
-          </div>
+          
+          <HeroSearchSection>
+            <AdvancedSearchBar onSearch={handleAdvancedSearch} />
+            <div style={{ marginTop: '2rem' }}>
+              <Link 
+                to="/all-houses" 
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '1rem 2rem',
+                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                  color: 'white',
+                  textDecoration: 'none',
+                  borderRadius: '0.75rem',
+                  fontWeight: '600',
+                  transition: 'all 0.3s ease',
+                  border: '2px solid rgba(255, 255, 255, 0.3)',
+                  backdropFilter: 'blur(10px)'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.25)';
+                  e.target.style.transform = 'translateY(-3px)';
+                  e.target.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = 'none';
+                }}
+              >
+                <Home size={24} />
+                Xem tất cả nhà cho thuê
+              </Link>
+            </div>
+          </HeroSearchSection>
         </HeroSection>
 
         <FeaturedSection>
