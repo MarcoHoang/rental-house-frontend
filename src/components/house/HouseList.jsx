@@ -4,6 +4,7 @@ import HouseCard from "./HouseCard.jsx";
 import HouseFilter from "./HouseFilter";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../common/Toast";
+import { HouseGrid, HouseGridItem } from "../../styles/GlobalComponents";
 
 const HouseList = ({ houses, showActions = false, onEdit, onDelete, fromPage }) => {
   const { user, isHost } = useAuth();
@@ -67,18 +68,19 @@ const HouseList = ({ houses, showActions = false, onEdit, onDelete, fromPage }) 
           }
         </p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        <HouseGrid>
           {filteredHouses.map((house) => (
-            <HouseCard 
-              key={house.id} 
-              house={house} 
-              showActions={showActions}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              fromPage={fromPage}
-            />
+            <HouseGridItem key={house.id}>
+              <HouseCard 
+                house={house} 
+                showActions={showActions}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                fromPage={fromPage}
+              />
+            </HouseGridItem>
           ))}
-        </div>
+        </HouseGrid>
       )}
     </div>
   );

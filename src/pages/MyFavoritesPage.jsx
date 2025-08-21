@@ -8,6 +8,7 @@ import { useAuthContext } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import Pagination from '../components/common/Pagination';
 import HouseCard from '../components/house/HouseCard';
+import { HouseGrid, HouseGridItem } from '../styles/GlobalComponents';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -159,15 +160,7 @@ const StatLabel = styled.div`
   opacity: 0.9;
 `;
 
-const HousesGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 2rem;
-  
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
-`;
+
 
 const EmptyState = styled.div`
   text-align: center;
@@ -425,18 +418,19 @@ const MyFavoritesPage = () => {
             </SearchBar>
           </SearchAndFilterSection>
 
-          <HousesGrid>
+          <HouseGrid>
             {filteredHouses
               .slice(currentPage * pageSize, (currentPage + 1) * pageSize)
               .map((house) => (
-              <HouseCard
-                key={house.id}
-                house={house}
-                fromPage="favorites"
-                onRemoveFromFavorites={() => handleRemoveFromFavorites(house.id)}
-              />
+              <HouseGridItem key={house.id}>
+                <HouseCard
+                  house={house}
+                  fromPage="favorites"
+                  onRemoveFromFavorites={() => handleRemoveFromFavorites(house.id)}
+                />
+              </HouseGridItem>
             ))}
-          </HousesGrid>
+          </HouseGrid>
 
           {filteredHouses.length > pageSize && (
             <Pagination

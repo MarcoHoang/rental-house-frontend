@@ -54,3 +54,113 @@ body {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
 }
+
+/* ======================================================================== */
+/* 5. HOUSE CARD GRID UTILITIES */
+/* ======================================================================== */
+.house-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+  align-items: stretch;
+}
+
+.house-grid-item {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.house-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  min-height: 480px; /* Giảm chiều cao tối thiểu */
+}
+
+.house-card:hover {
+  transform: translateY(-0.5rem);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Đảm bảo các phần tử trong card có chiều cao cố định */
+.house-card .card-image {
+  height: 160px; /* Giảm từ 192px xuống 160px */
+  flex-shrink: 0;
+}
+
+.house-card .card-title {
+  height: 48px; /* Giảm từ 56px xuống 48px */
+  display: flex;
+  align-items: flex-start;
+}
+
+.house-card .card-address {
+  height: 32px; /* Giảm từ 40px xuống 32px */
+  display: flex;
+  align-items: flex-start;
+}
+
+.house-card .card-info {
+  height: 28px; /* Giảm từ 32px xuống 28px */
+  display: flex;
+  align-items: center;
+}
+
+.house-card .card-host {
+  height: 40px; /* Giảm từ 48px xuống 40px */
+  display: flex;
+  align-items: center;
+}
+
+.house-card .card-price {
+  height: 28px; /* Giảm từ 32px xuống 28px */
+  display: flex;
+  align-items: center;
+}
+
+.house-card .card-favorites {
+  height: 20px; /* Giảm từ 24px xuống 20px */
+  display: flex;
+  align-items: center;
+}
+
+.house-card .card-actions {
+  margin-top: auto;
+  padding-top: 0.75rem; /* Giảm từ 1rem xuống 0.75rem */
+  border-top: 1px solid #f1f5f9;
+}
+
+/* Responsive grid adjustments */
+@media (max-width: 640px) {
+  .house-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+  .house-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .house-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1025px) {
+  .house-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+  }
+}
