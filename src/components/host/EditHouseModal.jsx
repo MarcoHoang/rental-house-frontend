@@ -109,10 +109,11 @@ const EditHouseModal = ({ isOpen, onClose, house, onHouseUpdated }) => {
 
   const handleImagesChange = (newImages) => {
     // Callback khi ảnh thay đổi
-    if (onHouseUpdated && house) {
+    if (onHouseUpdated && house && Array.isArray(newImages)) {
+      const validImages = newImages.filter(img => img && img.imageUrl);
       const updatedHouse = {
         ...house,
-        imageUrls: newImages.map(img => img.imageUrl)
+        imageUrls: validImages.map(img => img.imageUrl)
       };
       onHouseUpdated(updatedHouse);
     }

@@ -13,6 +13,7 @@ const EditHouseModal = ({ isOpen, onClose, house, onSave, onHouseUpdate }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [uploadingImages, setUploadingImages] = useState([]);
   const [errors, setErrors] = useState({});
+  const [localImages, setLocalImages] = useState([]); // State để quản lý ảnh local
 
   const { showSuccess, showError } = useToast();
 
@@ -21,22 +22,46 @@ const EditHouseModal = ({ isOpen, onClose, house, onSave, onHouseUpdate }) => {
     if (house) {
       console.log('=== HOUSE PROP CHANGED ===');
       console.log('House ID:', house.id);
+      console.log('House images:', house.imageUrls);
       
       // Nếu đây là lần đầu load hoặc house ID thay đổi, reset toàn bộ form
       if (!formData || formData.id !== house.id) {
         setFormData({ ...house });
+        setLocalImages([...new Set(house.imageUrls || [])]);
       } else {
         // Nếu chỉ có imageUrls thay đổi, chỉ cập nhật imageUrls và giữ nguyên form data
         setFormData(prev => ({ 
           ...prev, 
           imageUrls: house.imageUrls 
         }));
+        setLocalImages([...new Set(house.imageUrls || [])]);
       }
     }
   }, [house?.id, house?.imageUrls]);
 
-  // Lấy ảnh trực tiếp từ house prop và deduplicate
-  const images = [...new Set(house?.imageUrls || [])];
+  // State để lưu thông tin chi tiết của ảnh (bao gồm ID)
+  const [imageDetails, setImageDetails] = useState([]);
+
+  // Fetch thông tin chi tiết của ảnh khi house thay đổi
+  useEffect(() => {
+    const fetchImageDetails = async () => {
+      if (house?.id) {
+        try {
+          const response = await houseImageApi.getHouseImages(house.id);
+          if (response && response.data) {
+            setImageDetails(response.data);
+          }
+        } catch (error) {
+          console.error('Error fetching image details:', error);
+        }
+      }
+    };
+
+    fetchImageDetails();
+  }, [house?.id]);
+
+  // Lấy ảnh từ local state thay vì trực tiếp từ house prop
+  const images = localImages;
 
   // Validation form
   const validateForm = () => {
@@ -88,8 +113,32 @@ const EditHouseModal = ({ isOpen, onClose, house, onSave, onHouseUpdate }) => {
 
     try {
       setIsSaving(true);
-      await onSave(formData);
-      showSuccess('Thành công', 'Đã cập nhật thông tin nhà');
+      
+      // Chỉ gửi các field cần thiết cho HouseRequest
+      const houseRequestData = {
+        title: formData.title,
+        description: formData.description,
+        address: formData.address,
+        price: parseFloat(formData.price),
+        area: parseFloat(formData.area),
+        houseType: formData.houseType,
+        status: formData.status,
+        latitude: formData.latitude,
+        longitude: formData.longitude,
+        imageUrls: localImages // Sử dụng localImages (ảnh hiện tại đã được cập nhật)
+      };
+      
+      console.log('Submitting form with images:', localImages);
+      console.log('House request data:', houseRequestData);
+      
+      // Thêm house.id vào request data
+      const requestDataWithId = {
+        ...houseRequestData,
+        id: house.id
+      };
+      
+      await onSave(requestDataWithId);
+      // Không cần hiển thị thông báo thành công ở đây vì HostDashboardPage sẽ hiển thị
     } catch (error) {
       console.error('Error updating house:', error);
       showError('Lỗi', 'Không thể cập nhật thông tin nhà');
@@ -98,29 +147,58 @@ const EditHouseModal = ({ isOpen, onClose, house, onSave, onHouseUpdate }) => {
     }
   };
 
-  // Xử lý upload ảnh - ĐƠN GIẢN NHẤT
+  // Xử lý upload ảnh - CẢI THIỆN
   const onDrop = async (acceptedFiles) => {
     if (acceptedFiles.length === 0 || !house?.id) return;
 
-    for (const file of acceptedFiles) {
+    // Thêm ảnh vào danh sách đang upload
+    const newUploadingImages = acceptedFiles.map(file => ({
+      id: `uploading-${Date.now()}-${Math.random()}`,
+      file,
+      preview: URL.createObjectURL(file)
+    }));
+    
+    setUploadingImages(prev => [...prev, ...newUploadingImages]);
+
+    for (const uploadItem of newUploadingImages) {
       try {
-        console.log('Uploading:', file.name);
+        console.log('Uploading:', uploadItem.file.name);
         
         // Upload file
-        const uploadResponse = await fileUploadService.uploadHouseImages([file]);
+        const uploadResponse = await fileUploadService.uploadHouseImages([uploadItem.file]);
         const imageUrl = uploadResponse[0];
         
-        // Thêm ảnh vào nhà
-        await houseImageApi.addHouseImage(house.id, imageUrl);
-        showSuccess('Thành công', 'Đã thêm ảnh mới');
-        
-        // Refresh dữ liệu
-        if (onHouseUpdate) {
-          await onHouseUpdate();
+        if (!imageUrl) {
+          throw new Error('Upload response không chứa URL ảnh');
         }
+        
+        // Thêm ảnh vào nhà
+        const addResponse = await houseImageApi.addHouseImage(house.id, imageUrl);
+        
+        // Cập nhật local state ngay lập tức
+        setLocalImages(prev => [...prev, imageUrl]);
+        
+        // Cập nhật formData
+        setFormData(prev => ({
+          ...prev,
+          imageUrls: [...prev.imageUrls, imageUrl]
+        }));
+        
+        // Cập nhật imageDetails nếu có response
+        if (addResponse && addResponse.data) {
+          setImageDetails(prev => [...prev, addResponse.data]);
+        }
+        
+        showSuccess('Thành công', `Đã thêm ảnh ${uploadItem.file.name}`);
+        
       } catch (error) {
-        console.error('Error:', error);
-        showError('Lỗi', `Không thể tải lên ảnh ${file.name}`);
+        console.error('Error uploading image:', error);
+        showError('Lỗi', `Không thể tải lên ảnh ${uploadItem.file.name}`);
+      } finally {
+        // Xóa ảnh khỏi danh sách đang upload
+        setUploadingImages(prev => prev.filter(item => item.id !== uploadItem.id));
+        // Thu hồi URL object để tránh memory leak
+        URL.revokeObjectURL(uploadItem.preview);
       }
     }
   };
@@ -134,69 +212,112 @@ const EditHouseModal = ({ isOpen, onClose, house, onSave, onHouseUpdate }) => {
     multiple: true
   });
 
-  // Di chuyển ảnh lên - VIẾT LẠI ĐƠN GIẢN
+  // Di chuyển ảnh lên - CẢI THIỆN
   const moveImageUp = async (index) => {
     if (index === 0) return;
     
     try {
-      const imageIds = images.map((_, i) => {
-        if (i === index) return images[index - 1];
-        if (i === index - 1) return images[index];
-        return images[i];
-      });
+      const newImages = [...images];
+      [newImages[index], newImages[index - 1]] = [newImages[index - 1], newImages[index]];
       
-      await houseImageApi.updateImageOrder(house.id, { imageIds });
+      // Cập nhật local state ngay lập tức
+      setLocalImages(newImages);
+      
+      // Cập nhật formData.imageUrls để đồng bộ
+      setFormData(prev => ({
+        ...prev,
+        imageUrls: newImages
+      }));
+      
+      // Gọi API để cập nhật thứ tự
+      await houseImageApi.updateImageOrder(house.id, { imageIds: newImages });
       showSuccess('Thành công', 'Đã cập nhật thứ tự ảnh');
       
-      // Refresh dữ liệu
-      if (onHouseUpdate) {
-        await onHouseUpdate();
-      }
     } catch (error) {
       console.error('Error updating image order:', error);
       showError('Lỗi', 'Không thể cập nhật thứ tự ảnh');
+      // Rollback local state nếu API thất bại
+      setLocalImages([...images]);
+      // Rollback formData.imageUrls
+      setFormData(prev => ({
+        ...prev,
+        imageUrls: [...images]
+      }));
     }
   };
 
-  // Di chuyển ảnh xuống - VIẾT LẠI ĐƠN GIẢN
+  // Di chuyển ảnh xuống - CẢI THIỆN
   const moveImageDown = async (index) => {
     if (index === images.length - 1) return;
     
     try {
-      const imageIds = images.map((_, i) => {
-        if (i === index) return images[index + 1];
-        if (i === index + 1) return images[index];
-        return images[i];
-      });
+      const newImages = [...images];
+      [newImages[index], newImages[index + 1]] = [newImages[index + 1], newImages[index]];
       
-      await houseImageApi.updateImageOrder(house.id, { imageIds });
+      // Cập nhật local state ngay lập tức
+      setLocalImages(newImages);
+      
+      // Cập nhật formData.imageUrls để đồng bộ
+      setFormData(prev => ({
+        ...prev,
+        imageUrls: newImages
+      }));
+      
+      // Gọi API để cập nhật thứ tự
+      await houseImageApi.updateImageOrder(house.id, { imageIds: newImages });
       showSuccess('Thành công', 'Đã cập nhật thứ tự ảnh');
       
-      // Refresh dữ liệu
-      if (onHouseUpdate) {
-        await onHouseUpdate();
-      }
     } catch (error) {
       console.error('Error updating image order:', error);
       showError('Lỗi', 'Không thể cập nhật thứ tự ảnh');
+      // Rollback local state nếu API thất bại
+      setLocalImages([...images]);
+      // Rollback formData.imageUrls
+      setFormData(prev => ({
+        ...prev,
+        imageUrls: [...images]
+      }));
     }
   };
 
-  // Xóa ảnh - VIẾT LẠI ĐƠN GIẢN
+  // Xóa ảnh - CẢI THIỆN
   const handleDeleteImage = async (imageUrl, index) => {
     try {
-      const imageId = `temp-${index}`;
-      await houseImageApi.deleteHouseImage(imageId, house.id);
+      // Tìm image detail tương ứng
+      const imageDetail = imageDetails.find(img => img.imageUrl === imageUrl);
+      if (!imageDetail) {
+        throw new Error('Không tìm thấy thông tin ảnh');
+      }
+
+      // Cập nhật local state ngay lập tức
+      const newImages = images.filter((_, i) => i !== index);
+      setLocalImages(newImages);
+      
+      // Cập nhật formData.imageUrls để đồng bộ
+      setFormData(prev => ({
+        ...prev,
+        imageUrls: newImages
+      }));
+      
+      // Gọi API để xóa ảnh với ID thực từ backend
+      await houseImageApi.deleteHouseImage(imageDetail.id, house.id);
+      
+      // Cập nhật imageDetails
+      setImageDetails(prev => prev.filter(img => img.id !== imageDetail.id));
       
       showSuccess('Thành công', 'Đã xóa ảnh');
       
-      // Refresh dữ liệu
-      if (onHouseUpdate) {
-        await onHouseUpdate();
-      }
     } catch (error) {
       console.error('Error deleting image:', error);
       showError('Lỗi', 'Không thể xóa ảnh');
+      // Rollback local state nếu API thất bại
+      setLocalImages([...images]);
+      // Rollback formData.imageUrls
+      setFormData(prev => ({
+        ...prev,
+        imageUrls: [...images]
+      }));
+      // Không cần rollback imageDetails vì chưa thay đổi
     }
   };
 

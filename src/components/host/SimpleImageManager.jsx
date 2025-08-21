@@ -22,7 +22,7 @@ const SimpleImageManager = ({ houseId, onImagesChange }) => {
     try {
       setIsLoading(true);
       const response = await houseImageApi.getHouseImages(houseId);
-      if (response.success) {
+      if (response && response.data) {
         setImages(response.data || []);
       }
     } catch (error) {
@@ -95,22 +95,21 @@ const SimpleImageManager = ({ houseId, onImagesChange }) => {
     for (const item of newUploadingImages) {
       try {
         // Upload file
-        const formData = new FormData();
-        formData.append('file', item.file);
-        
-        const uploadResponse = await fileUploadApi.uploadFile(formData);
-        if (uploadResponse.success) {
-          const imageUrl = uploadResponse.data.url;
+        const uploadResponse = await fileUploadApi.uploadFile(item.file, 'house-image');
+        if (uploadResponse && uploadResponse.fileUrl) {
+          const imageUrl = uploadResponse.fileUrl;
           
           // Thêm ảnh vào nhà
           const addResponse = await houseImageApi.addHouseImage(houseId, imageUrl);
-          if (addResponse.success) {
+          if (addResponse && addResponse.data) {
             const newImage = addResponse.data;
-            setImages(prev => [...prev, newImage]);
-            
-            if (onImagesChange) {
-              onImagesChange([...images, newImage]);
-            }
+            setImages(prev => {
+              const updatedImages = [...prev, newImage];
+              if (onImagesChange) {
+                onImagesChange(updatedImages);
+              }
+              return updatedImages;
+            });
             
             showSuccess('Thành công', 'Đã thêm ảnh mới');
           }
@@ -140,12 +139,13 @@ const SimpleImageManager = ({ houseId, onImagesChange }) => {
     try {
       await houseImageApi.deleteHouseImage(imageId, houseId);
       
-      const newImages = images.filter((_, i) => i !== index);
-      setImages(newImages);
-      
-      if (onImagesChange) {
-        onImagesChange(newImages);
-      }
+      setImages(prev => {
+        const newImages = prev.filter((_, i) => i !== index);
+        if (onImagesChange) {
+          onImagesChange(newImages);
+        }
+        return newImages;
+      });
       
       showSuccess('Thành công', 'Đã xóa ảnh');
     } catch (error) {

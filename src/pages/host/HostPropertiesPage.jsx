@@ -262,6 +262,11 @@ const HostPropertiesPage = () => {
   };
 
   const handleHouseUpdate = (updatedHouse) => {
+    if (!updatedHouse || !updatedHouse.id) {
+      console.warn('Invalid updatedHouse data:', updatedHouse);
+      return;
+    }
+    
     setHouses(prevHouses =>
       prevHouses.map(house =>
         house.id === updatedHouse.id ? updatedHouse : house

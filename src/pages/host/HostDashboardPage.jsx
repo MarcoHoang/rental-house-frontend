@@ -371,14 +371,26 @@ const HostDashboardPage = () => {
   };
 
   // Xử lý lưu chỉnh sửa nhà
-  const handleSaveEdit = async (updatedHouse) => {
+  const handleSaveEdit = async (houseRequestData) => {
     try {
+      // Lấy ID từ request data hoặc selectedHouse
+      const houseId = houseRequestData.id || selectedHouse?.id;
+      
+      if (!houseId) {
+        console.error('Không tìm thấy house ID:', { houseRequestData, selectedHouse });
+        showToast('error', 'Lỗi cập nhật nhà', 'Không tìm thấy thông tin nhà cần cập nhật.');
+        return;
+      }
+
+      console.log('Updating house with ID:', houseId);
+      console.log('House request data:', houseRequestData);
+      
       // Gọi API cập nhật nhà thực tế
-      await propertyApi.updateHouse(updatedHouse.id, updatedHouse);
+      const updatedHouse = await propertyApi.updateHouse(houseId, houseRequestData);
       
       // Cập nhật danh sách sau khi chỉnh sửa
       setHouses(prevHouses => 
-        prevHouses.map(h => h.id === updatedHouse.id ? updatedHouse : h)
+        prevHouses.map(h => h.id === houseId ? updatedHouse : h)
       );
       
       setEditModalOpen(false);
@@ -722,7 +734,7 @@ const HostDashboardPage = () => {
         isOpen={editModalOpen}
         onClose={() => {
           setEditModalOpen(false);
-          setSelectedHouse(null);
+          // Không reset selectedHouse ngay lập tức để tránh lỗi khi submit
         }}
         house={selectedHouse}
         onSave={handleSaveEdit}
