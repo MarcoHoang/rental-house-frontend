@@ -699,13 +699,13 @@ const authService = {
         }
     },
 
-    // Verify OTP - Backend hiện tại không có endpoint này, sử dụng token thay thế
-    verifyOtp: async (email, otp) => {
+    // Verify OTP
+    verifyOtp: async (otp) => {
         try {
-            // Backend hiện tại sử dụng token thay vì OTP
-            // Method này được giữ lại để tương thích ngược
-            console.warn('verifyOtp: Backend endpoint not implemented yet, using token instead');
-            return { success: true, message: 'OTP verified' };
+            const response = await api.post('/users/password-reset/verify', null, {
+                params: { otp }
+            });
+            return response.data;
         } catch (error) {
             logApiError(error, 'verifyOtp');
             throw error;
@@ -713,10 +713,10 @@ const authService = {
     },
 
     // Reset mật khẩu - Sử dụng endpoint có sẵn từ backend
-    resetPassword: async (token, newPassword) => {
+    resetPassword: async (otp, newPassword) => {
         try {
             const response = await api.post('/users/password-reset/confirm', null, {
-                params: { token, newPassword }
+                params: { otp, newPassword }
             });
             return response.data;
         } catch (error) {

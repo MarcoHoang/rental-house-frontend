@@ -129,7 +129,7 @@ const InfoMessage = styled.div`
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
-  const [token, setToken] = useState("");
+  const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [step, setStep] = useState(1);
@@ -153,7 +153,7 @@ const ForgotPassword = () => {
       setEmailSent(true);
       setStep(2); // Chuyển đến bước kiểm tra email
       setMessage({
-        text: "Link đặt lại mật khẩu đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư đến (và cả thư mục spam/junk).",
+        text: "Mã OTP 6 số đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư đến (và cả thư mục spam/junk).",
         type: "success",
       });
     } catch (error) {
@@ -167,33 +167,45 @@ const ForgotPassword = () => {
     }
   };
 
-  const handleContinueToToken = () => {
-    setStep(3); // Chuyển đến bước nhập token
+  const handleContinueToOtp = () => {
+    setStep(3); // Chuyển đến bước nhập OTP
     setMessage({
-      text: "Vui lòng nhập token từ email vào ô bên dưới",
+      text: "Vui lòng nhập mã OTP 6 số từ email vào ô bên dưới",
       type: "info",
     });
   };
 
-  const handleVerifyToken = async (e) => {
+  const handleVerifyOtp = async (e) => {
     e.preventDefault();
-    if (!token) {
-      setMessage({ text: "Vui lòng nhập token từ email", type: "error" });
+    if (!otp) {
+      setMessage({ text: "Vui lòng nhập mã OTP từ email", type: "error" });
+      return;
+    }
+
+    if (otp.length !== 6 || !/^\d{6}$/.test(otp)) {
+      setMessage({ text: "Mã OTP phải là 6 số", type: "error" });
       return;
     }
 
     setIsLoading(true);
     try {
-      // Token được gửi từ email, user cần copy và paste vào đây
-      setStep(4); // Chuyển đến bước đặt mật khẩu mới
-      setMessage({
-        text: "Token hợp lệ, vui lòng đặt mật khẩu mới",
-        type: "success",
-      });
+      const response = await authService.verifyOtp(otp);
+      if (response.data) {
+        setStep(4); // Chuyển đến bước đặt mật khẩu mới
+        setMessage({
+          text: "Mã OTP hợp lệ, vui lòng đặt mật khẩu mới",
+          type: "success",
+        });
+      } else {
+        setMessage({
+          text: "Mã OTP không đúng hoặc đã hết hạn",
+          type: "error",
+        });
+      }
     } catch (error) {
       setMessage({
         text:
-          error.response?.data?.message || "Token không đúng hoặc đã hết hạn",
+          error.response?.data?.message || "Mã OTP không đúng hoặc đã hết hạn",
         type: "error",
       });
     } finally {
@@ -220,7 +232,7 @@ const ForgotPassword = () => {
 
     setIsLoading(true);
     try {
-      await authService.resetPassword(token, newPassword);
+      await authService.resetPassword(otp, newPassword);
       setMessage({
         text: "Đặt lại mật khẩu thành công! Bạn sẽ được chuyển hướng về trang đăng nhập",
         type: "success",
@@ -249,7 +261,7 @@ const ForgotPassword = () => {
     try {
       await authService.requestPasswordReset(email);
       setMessage({
-        text: "Link đặt lại mật khẩu đã được gửi lại đến email của bạn",
+        text: "Mã OTP 6 số đã được gửi lại đến email của bạn",
         type: "success",
       });
     } catch (error) {
@@ -317,7 +329,7 @@ const ForgotPassword = () => {
           {[
             { num: 1, label: "Nhập email" },
             { num: 2, label: "Kiểm tra email" },
-            { num: 3, label: "Nhập token" },
+            { num: 3, label: "Nhập OTP" },
             { num: 4, label: "Đặt mật khẩu mới" },
           ].map((s, index) => (
             <div
@@ -404,7 +416,7 @@ const ForgotPassword = () => {
                disabled={isLoading}
                loading={isLoading}
              >
-               {isLoading ? "Đang xử lý..." : "Gửi link đặt lại mật khẩu"}
+               {isLoading ? "Đang xử lý..." : "Gửi mã OTP"}
              </Button>
           </Form>
         )}
@@ -431,8 +443,8 @@ const ForgotPassword = () => {
             >
               <li>Kiểm tra hộp thư đến của bạn</li>
               <li>Kiểm tra thư mục spam/junk nếu không thấy</li>
-              <li>Copy token từ email (chuỗi ký tự dài)</li>
-              <li>Nhấn "Tiếp tục" để nhập token</li>
+              <li>Copy mã OTP 6 số từ email</li>
+              <li>Nhấn "Tiếp tục" để nhập mã OTP</li>
             </ul>
 
             <div style={{ display: "flex", gap: "1rem" }}>
@@ -443,12 +455,12 @@ const ForgotPassword = () => {
                  loading={isLoading}
                  variant="outline"
                >
-                 {isLoading ? "Đang xử lý..." : "Gửi lại email"}
+                 {isLoading ? "Đang xử lý..." : "Gửi lại OTP"}
                </Button>
 
                <Button
                  type="button"
-                 onClick={handleContinueToToken}
+                 onClick={handleContinueToOtp}
                  disabled={isLoading}
                >
                  Tiếp tục
@@ -458,7 +470,7 @@ const ForgotPassword = () => {
         )}
 
         {step === 3 && (
-          <Form onSubmit={handleVerifyToken}>
+          <Form onSubmit={handleVerifyOtp}>
             <div style={{ textAlign: "center", marginBottom: "1rem" }}>
               <div
                 style={{
@@ -482,7 +494,7 @@ const ForgotPassword = () => {
                   margin: "0 0 0.5rem 0",
                 }}
               >
-                Nhập token từ email
+                Nhập mã OTP từ email
               </h3>
               <p
                 style={{
@@ -492,17 +504,20 @@ const ForgotPassword = () => {
                   lineHeight: "1.5",
                 }}
               >
-                Vui lòng copy token từ email và paste vào ô bên dưới
+                Vui lòng copy mã OTP 6 số từ email và paste vào ô bên dưới
               </p>
             </div>
 
                          <FormField
-               label="Token từ email"
-               name="token"
+               label="Mã OTP từ email"
+               name="otp"
                type="text"
-               placeholder="Nhập token từ email (chuỗi ký tự dài)"
-               value={token}
-               onChange={(e) => setToken(e.target.value)}
+               placeholder="Nhập mã OTP 6 số từ email"
+               value={otp}
+               onChange={(e) => {
+                 const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                 setOtp(value);
+               }}
                required
                icon={Lock}
              />
@@ -514,7 +529,7 @@ const ForgotPassword = () => {
                 fontSize: "0.75rem",
               }}
             >
-              💡 <strong>Mẹo:</strong> Token thường là một chuỗi ký tự dài (ví dụ: a1b2c3d4-e5f6-7890-abcd-ef1234567890)
+              💡 <strong>Mẹo:</strong> Mã OTP là 6 số (ví dụ: 123456)
             </small>
 
             {/* Nút gửi lại email */}
@@ -525,15 +540,15 @@ const ForgotPassword = () => {
                loading={isLoading}
                variant="outline"
              >
-               {isLoading ? "Đang xử lý..." : "Gửi lại email"}
+               {isLoading ? "Đang xử lý..." : "Gửi lại OTP"}
              </Button>
 
              <Button
                type="submit"
-               disabled={isLoading || !token}
+               disabled={isLoading || !otp}
                loading={isLoading}
              >
-               {isLoading ? "Đang xác thực..." : "Xác thực token"}
+               {isLoading ? "Đang xác thực..." : "Xác thực OTP"}
              </Button>
           </Form>
         )}
@@ -573,7 +588,7 @@ const ForgotPassword = () => {
                   lineHeight: "1.5",
                 }}
               >
-                Token đã được xác thực thành công. Vui lòng đặt mật khẩu mới cho tài khoản của bạn.
+                Mã OTP đã được xác thực thành công. Vui lòng đặt mật khẩu mới cho tài khoản của bạn.
               </p>
             </div>
 
