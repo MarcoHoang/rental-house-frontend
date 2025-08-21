@@ -16,6 +16,7 @@ import { useToast } from "../../components/common/Toast";
 import hostApi from "../../api/hostApi";
 import authService from "../../api/authService";
 import HostPageWrapper from "../../components/layout/HostPageWrapper";
+import { getAvatarUrl } from "../../utils/avatarHelper";
 
 const ProfileContainer = styled.div`
   min-height: 100vh;
@@ -280,7 +281,14 @@ const HostProfilePage = () => {
         nationalId: hostData.nationalId || "",
         avatarFile: null,
       });
-      setAvatarPreview(hostData.avatar || "/default-avatar.png");
+                   // Debug avatar data
+      console.log('HostProfilePage - hostData.avatar:', hostData.avatar);
+      console.log('HostProfilePage - hostData:', hostData);
+      
+      // Sử dụng avatarHelper để xử lý URL avatar
+      const avatarUrl = getAvatarUrl(hostData.avatar);
+      console.log('HostProfilePage - Processed avatar URL:', avatarUrl);
+      setAvatarPreview(avatarUrl);
     } catch (error) {
       showError("Lỗi", "Không thể tải thông tin cá nhân.");
       navigate("/host");
@@ -293,7 +301,7 @@ const HostProfilePage = () => {
     fetchHostProfile();
   }, [fetchHostProfile]);
 
-  // Cleanup blob URLs khi component unmount
+  // Cleanup blob URLs khi component unmount hoặc khi avatarPreview thay đổi
   useEffect(() => {
     return () => {
       // Cleanup blob URL khi component unmount
@@ -301,6 +309,21 @@ const HostProfilePage = () => {
         URL.revokeObjectURL(avatarPreview);
       }
     };
+  }, [avatarPreview]);
+
+  // Cleanup blob URL khi avatarPreview thay đổi
+  useEffect(() => {
+    const prevAvatarPreview = avatarPreview;
+    return () => {
+      if (prevAvatarPreview && prevAvatarPreview.startsWith('blob:') && prevAvatarPreview !== avatarPreview) {
+        URL.revokeObjectURL(prevAvatarPreview);
+      }
+    };
+  }, [avatarPreview]);
+
+  // Debug: Log khi avatarPreview thay đổi
+  useEffect(() => {
+    console.log('HostProfilePage - Avatar preview changed to:', avatarPreview);
   }, [avatarPreview]);
 
   const handleChange = (e) => {
@@ -323,6 +346,8 @@ const HostProfilePage = () => {
       return;
     }
 
+    console.log('HostProfilePage - Selected file:', file.name, file.type, file.size);
+
     // Kiểm tra loại file
     const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
     if (!allowedTypes.includes(file.type)) {
@@ -339,12 +364,13 @@ const HostProfilePage = () => {
 
     // Tạo URL tạm để hiển thị preview
     const previewUrl = URL.createObjectURL(file);
+    console.log('HostProfilePage - Created preview URL:', previewUrl);
     
     setFormData((prev) => ({ ...prev, avatarFile: file }));
     setAvatarPreview(previewUrl);
+    console.log('HostProfilePage - Set avatar preview to:', previewUrl);
 
-    // Hiển thị thông báo preview thành công
-    showSuccess("Thành công!", "Ảnh đã được chọn! Nhấn 'Cập nhật' để lưu thay đổi.");
+    // Không hiển thị toast ở đây nữa, chỉ hiển thị khi lưu thành công
   };
 
   const validateForm = () => {
@@ -402,24 +428,43 @@ const HostProfilePage = () => {
           formData.avatarFile
         );
         
+        console.log('HostProfilePage - Upload result:', uploadResult);
+        
         if (uploadResult && uploadResult.fileUrl) {
           uploadedAvatarUrl = uploadResult.fileUrl;
+          console.log('HostProfilePage - Uploaded avatar URL:', uploadedAvatarUrl);
         } else {
           throw new Error("Upload avatar thất bại");
         }
       }
 
-      const profileData = {
+                   const profileData = {
         fullName: formData.fullName,
         phone: formData.phone,
         address: formData.address,
         nationalId: formData.nationalId,
-        avatar: uploadedAvatarUrl,
         email: formData.email,
       };
 
-      const updatedProfile = await hostApi.updateMyProfile(profileData);
-      showSuccess("Thành công!", "Thông tin của bạn đã được cập nhật.");
+      // Chỉ thêm avatarUrl nếu có file avatar mới
+      if (uploadedAvatarUrl) {
+        profileData.avatarUrl = uploadedAvatarUrl;
+      }
+
+      // Debug: Log dữ liệu gửi lên
+      console.log('HostProfilePage - Sending profile data:', profileData);
+
+            const updatedProfile = await hostApi.updateMyProfile(profileData);
+      
+      // Debug: Log dữ liệu nhận về
+      console.log('HostProfilePage - Received updated profile:', updatedProfile);
+      
+      // Hiển thị thông báo thành công
+      if (uploadedAvatarUrl) {
+        showSuccess("Thành công!", "Thông tin và ảnh đại diện của bạn đã được cập nhật.");
+      } else {
+        showSuccess("Thành công!", "Thông tin của bạn đã được cập nhật.");
+      }
       
       setFormData(prev => ({
         ...prev,
@@ -429,13 +474,42 @@ const HostProfilePage = () => {
         nationalId: updatedProfile.nationalId || prev.nationalId,
       }));
       
+      // Cập nhật avatar preview từ response của backend hoặc từ uploadedAvatarUrl
       if (uploadedAvatarUrl) {
-        setAvatarPreview(uploadedAvatarUrl);
+        // Nếu có upload avatar mới, sử dụng URL đã upload
+        console.log('HostProfilePage - Using uploaded avatar URL:', uploadedAvatarUrl);
+        
+        const newAvatarPreview = getAvatarUrl(uploadedAvatarUrl);
+        console.log('HostProfilePage - New avatar preview URL from upload:', newAvatarPreview);
+        
+        setAvatarPreview(newAvatarPreview);
         
         window.dispatchEvent(new CustomEvent('avatarUpdated', {
           detail: { avatarUrl: uploadedAvatarUrl }
         }));
+      } else if (updatedProfile.avatar || updatedProfile.avatarUrl) {
+        // Nếu không có upload mới, sử dụng từ response của backend
+        const newAvatarUrl = updatedProfile.avatar || updatedProfile.avatarUrl;
+        console.log('HostProfilePage - Avatar from updated profile:', newAvatarUrl);
+        
+        const newAvatarPreview = getAvatarUrl(newAvatarUrl);
+        console.log('HostProfilePage - New avatar preview URL from profile:', newAvatarPreview);
+        
+        setAvatarPreview(newAvatarPreview);
+        
+        window.dispatchEvent(new CustomEvent('avatarUpdated', {
+          detail: { avatarUrl: newAvatarUrl }
+        }));
       }
+      
+      // Reset avatar file sau khi upload thành công
+      setFormData(prev => ({
+        ...prev,
+        avatarFile: null
+      }));
+      
+      // Debug: Log final avatar preview
+      console.log('HostProfilePage - Final avatar preview state:', avatarPreview);
     } catch (err) {
       showError("Cập nhật thất bại!", err.message || "Có lỗi xảy ra.");
     } finally {
@@ -495,7 +569,13 @@ const HostProfilePage = () => {
           
           <AvatarSection>
             <div className="avatar-container" style={{ position: 'relative' }}>
-              <img src={avatarPreview} alt="Avatar" className="avatar" />
+              <img 
+                src={avatarPreview} 
+                alt="Avatar" 
+                className="avatar" 
+                onLoad={() => console.log('HostProfilePage - Avatar image loaded successfully:', avatarPreview)}
+                onError={(e) => console.error('HostProfilePage - Avatar image failed to load:', avatarPreview, e)}
+              />
               {formData.avatarFile && (
                 <div
                   style={{

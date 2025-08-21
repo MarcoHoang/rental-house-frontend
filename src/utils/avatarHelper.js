@@ -12,7 +12,7 @@ const API_BASE_URL = import.meta.env.DEV
 
 /**
  * Chuyển đổi fileUrl từ backend thành URL đầy đủ để hiển thị
- * @param {string} fileUrl - URL từ backend (ví dụ: "avatar/filename.jpg")
+ * @param {string} fileUrl - URL từ backend (ví dụ: "avatar/filename.jpg" hoặc "http://localhost:8080/api/files/avatar/filename.jpg")
  * @returns {string} URL đầy đủ để hiển thị
  */
 export const getAvatarUrl = (fileUrl) => {
