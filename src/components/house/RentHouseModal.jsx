@@ -569,23 +569,72 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
   
   const minEndDateString = getMinEndDate();
 
-  // Tính toán tổng tiền theo ngày
+  // Tính toán tổng tiền theo logic mới
   const calculateTotalPrice = () => {
     if (!startDate || !endDate || !house?.price) return 0;
     
     const start = new Date(startDate + "T" + startTime);
     const end = new Date(endDate + "T" + endTime);
-    const hours = (end - start) / (1000 * 60 * 60);
+    const totalHours = Math.ceil((end - start) / (1000 * 60 * 60));
     
-    // Tính số ngày, nếu ít hơn hoặc bằng 24 giờ thì tính 1 ngày, nếu nhiều hơn thì làm tròn lên
-    const days = hours <= 24 ? 1 : Math.ceil(hours / 24);
-    return days * house.price;
+    const dailyPrice = house.price;
+    const hourlyRate1 = dailyPrice / 20; // Giá giờ cho 6h đầu
+    const hourlyRate2 = dailyPrice / 25; // Giá giờ cho giờ thứ 7 trở đi
+    
+    let totalPrice = 0;
+    
+    if (totalHours <= 6) {
+      // ≤ 6h: mỗi giờ = giá ngày/20
+      totalPrice = totalHours * hourlyRate1;
+    } else if (totalHours < 24) {
+      // 6h < thời gian < 1 ngày: 6h đầu = giá ngày/20, từ h thứ 7 = giá ngày/25
+      totalPrice = (6 * hourlyRate1) + ((totalHours - 6) * hourlyRate2);
+    } else {
+      // ≥ 1 ngày: tính theo ngày + giờ lẻ = giá ngày/25
+      const fullDays = Math.floor(totalHours / 24);
+      const remainingHours = totalHours % 24;
+      
+      totalPrice = fullDays * dailyPrice;
+      if (remainingHours > 0) {
+        totalPrice += remainingHours * hourlyRate2;
+      }
+    }
+    
+    return totalPrice;
   };
 
   const totalPrice = calculateTotalPrice();
   const numberOfHours = startDate && endDate 
     ? Math.ceil((new Date(endDate + "T" + endTime) - new Date(startDate + "T" + startTime)) / (1000 * 60 * 60))
     : 0;
+  
+  // Tính toán thông tin hiển thị
+  const getPriceDisplayInfo = () => {
+    if (numberOfHours <= 6) {
+      return {
+        type: "Giờ",
+        value: numberOfHours,
+        rate: house.price / 20
+      };
+    } else if (numberOfHours < 24) {
+      return {
+        type: "Giờ",
+        value: numberOfHours,
+        rate: null // Hiển thị chi tiết riêng
+      };
+    } else {
+      const fullDays = Math.floor(numberOfHours / 24);
+      const remainingHours = numberOfHours % 24;
+      return {
+        type: "Ngày",
+        value: fullDays,
+        remainingHours: remainingHours,
+        rate: house.price
+      };
+    }
+  };
+  
+  const priceInfo = getPriceDisplayInfo();
 
   // Kiểm tra tính khả dụng khi ngày hoặc giờ thay đổi
   useEffect(() => {
@@ -988,9 +1037,41 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
                 <span>Thời gian:</span>
                 <span>{startDate} {startTime} - {endDate} {endTime}</span>
               </PriceDetails>
+              {numberOfHours <= 6 && (
+                <PriceDetails>
+                  <span>Giá/giờ (≤6h):</span>
+                  <span>{(house.price / 20).toLocaleString()} VNĐ</span>
+                </PriceDetails>
+              )}
+              {numberOfHours > 6 && numberOfHours < 24 && (
+                <>
+                  <PriceDetails>
+                    <span>6h đầu (giá/giờ):</span>
+                    <span>{(house.price / 20).toLocaleString()} VNĐ</span>
+                  </PriceDetails>
+                  <PriceDetails>
+                    <span>Từ h thứ 7 (giá/giờ):</span>
+                    <span>{(house.price / 25).toLocaleString()} VNĐ</span>
+                  </PriceDetails>
+                </>
+              )}
+              {numberOfHours >= 24 && (
+                <>
+                  <PriceDetails>
+                    <span>Số ngày:</span>
+                    <span>{priceInfo.value} ngày</span>
+                  </PriceDetails>
+                  {priceInfo.remainingHours > 0 && (
+                    <PriceDetails>
+                      <span>Giờ lẻ:</span>
+                      <span>{priceInfo.remainingHours}h × {(house.price / 25).toLocaleString()} VNĐ</span>
+                    </PriceDetails>
+                  )}
+                </>
+              )}
               <PriceDetails>
-                <span>Số ngày:</span>
-                <span>{numberOfHours <= 24 ? 1 : Math.ceil(numberOfHours / 24)} ngày</span>
+                <span>Tổng giờ:</span>
+                <span>{numberOfHours} giờ</span>
               </PriceDetails>
               <TotalPrice>
                 <span>Tổng cộng:</span>
