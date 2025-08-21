@@ -67,27 +67,35 @@ const ChatButton = ({ hostId, houseId, onClick, className }) => {
   const { user } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [conversationId, setConversationId] = useState(null);
 
   useEffect(() => {
     if (user && hostId && houseId) {
-      fetchUnreadCount();
+      // Chỉ kiểm tra conversation đã tồn tại, không tạo mới
+      checkExistingConversation();
     }
   }, [user, hostId, houseId]);
 
-  const fetchUnreadCount = async () => {
+  const checkExistingConversation = async () => {
     try {
       setLoading(true);
-      // Get conversation first
-      const conversationResponse = await chatApi.createOrGetConversation(hostId, houseId);
+      // Chỉ kiểm tra conversation đã tồn tại, không tạo mới
+      const conversationResponse = await chatApi.getUserConversations();
       if (conversationResponse && conversationResponse.data) {
-        const conversationId = conversationResponse.data.id;
-        const unreadResponse = await chatApi.getUnreadMessageCountForConversation(conversationId);
-        if (unreadResponse && unreadResponse.data !== undefined) {
-          setUnreadCount(unreadResponse.data || 0);
+        const existingConversation = conversationResponse.data.find(
+          conv => conv.hostId === hostId && conv.houseId === houseId
+        );
+        if (existingConversation) {
+          setConversationId(existingConversation.id);
+          // Kiểm tra unread count cho conversation đã tồn tại
+          const unreadResponse = await chatApi.getUnreadMessageCountForConversation(existingConversation.id);
+          if (unreadResponse && unreadResponse.data !== undefined) {
+            setUnreadCount(unreadResponse.data || 0);
+          }
         }
       }
     } catch (error) {
-      console.error('Error fetching unread count:', error);
+      console.error('Error checking existing conversation:', error);
       setUnreadCount(0);
     } finally {
       setLoading(false);
@@ -95,20 +103,30 @@ const ChatButton = ({ hostId, houseId, onClick, className }) => {
   };
 
   const handleClick = async () => {
-    if (onClick) {
-      onClick();
-    }
-    // Mark messages as read when chat is opened
-    if (unreadCount > 0) {
-      try {
-        const conversationResponse = await chatApi.createOrGetConversation(hostId, houseId);
-        if (conversationResponse && conversationResponse.data) {
-          await chatApi.markMessagesAsRead(conversationResponse.data.id);
+    try {
+      setLoading(true);
+      
+      // Tạo hoặc lấy conversation khi user click
+      const conversationResponse = await chatApi.createOrGetConversation(hostId, houseId);
+      if (conversationResponse && conversationResponse.data) {
+        const newConversationId = conversationResponse.data.id;
+        setConversationId(newConversationId);
+        
+        // Mark messages as read if there were unread messages
+        if (unreadCount > 0) {
+          await chatApi.markMessagesAsRead(newConversationId);
           setUnreadCount(0);
         }
-      } catch (error) {
-        console.error('Error marking messages as read:', error);
       }
+      
+      // Gọi onClick callback để mở chat modal
+      if (onClick) {
+        onClick();
+      }
+    } catch (error) {
+      console.error('Error creating/getting conversation:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
