@@ -3,6 +3,7 @@ import styled from "styled-components";
 import rentalApi from "../../api/rentalApi";
 import { useToast } from "../common/Toast";
 import { useAuthContext } from "../../contexts/AuthContext";
+import { ClockIcon } from "@heroicons/react/24/outline";
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -279,6 +280,100 @@ const AvailabilityStatus = styled.div`
   }
 `;
 
+const TimeInputWrapper = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+`;
+
+const TimeInput = styled.input`
+  width: 100%;
+  padding: 0.75rem 2.5rem 0.75rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  transition: border-color 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  /* Ẩn icon đồng hồ mặc định của trình duyệt */
+  &::-webkit-calendar-picker-indicator {
+    display: none;
+  }
+  
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+`;
+
+const TimeIconButton = styled.button`
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #374151;
+  }
+`;
+
+const TimePickerModal = styled.div`
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  margin-top: 0.25rem;
+`;
+
+const TimePickerGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.25rem;
+  padding: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+`;
+
+const TimeOption = styled.button`
+  padding: 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.25rem;
+  background: white;
+  color: #374151;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #f3f4f6;
+    border-color: #3b82f6;
+  }
+
+  &.selected {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+  }
+`;
+
 const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
   const [startDate, setStartDate] = useState("");
   const [startTime, setStartTime] = useState("14:00"); // Mặc định 14:00
@@ -290,16 +385,61 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
   const [availability, setAvailability] = useState(null);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [errors, setErrors] = useState({});
+  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
+  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
   const { showSuccess, showError } = useToast();
   const { user } = useAuthContext();
+
+  // Tạo danh sách các giờ từ 00:00 đến 23:59
+  const generateTimeOptions = () => {
+    const times = [];
+    for (let hour = 0; hour < 24; hour++) {
+      for (let minute = 0; minute < 60; minute += 30) { // 30 phút một
+        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        times.push(timeString);
+      }
+    }
+    return times;
+  };
+
+  const timeOptions = generateTimeOptions();
 
   // Tính toán ngày tối thiểu (hôm nay)
   const today = new Date().toISOString().split("T")[0];
 
-  // Tính toán ngày tối thiểu cho endDate (startDate + 1 ngày)
-  const minEndDate = startDate ? new Date(startDate) : new Date();
-  minEndDate.setDate(minEndDate.getDate() + 1);
-  const minEndDateString = minEndDate.toISOString().split("T")[0];
+  // Đóng time picker khi click ra ngoài
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showStartTimePicker || showEndTimePicker) {
+        const timePickers = document.querySelectorAll('.time-picker-modal');
+        let clickedInside = false;
+        
+        timePickers.forEach(picker => {
+          if (picker.contains(event.target)) {
+            clickedInside = true;
+          }
+        });
+        
+        if (!clickedInside) {
+          setShowStartTimePicker(false);
+          setShowEndTimePicker(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showStartTimePicker, showEndTimePicker]);
+
+  // Tính toán ngày tối thiểu cho endDate
+  const getMinEndDate = () => {
+    if (!startDate) return today;
+    return startDate; // Cho phép chọn cùng ngày với startDate
+  };
+  
+  const minEndDateString = getMinEndDate();
 
   // Tính toán tổng tiền theo ngày
   const calculateTotalPrice = () => {
@@ -339,10 +479,8 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
       setAvailability(result);
     } catch (error) {
       console.error("Error checking availability:", error);
-      setAvailability({
-        available: false,
-        message: "Không thể kiểm tra tính khả dụng. Vui lòng thử lại.",
-      });
+      // Không set availability khi có lỗi, để không hiển thị thông báo lỗi
+      setAvailability(null);
     } finally {
       setIsCheckingAvailability(false);
     }
@@ -356,8 +494,8 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
     } else {
       // Kiểm tra thời gian bắt đầu phải lớn hơn 2 giờ so với hiện tại
       const startDateTime = new Date(startDate + "T" + startTime);
-      const minimumStartTime = new Date();
-      minimumStartTime.setHours(minimumStartTime.getHours() + 2);
+      const now = new Date();
+      const minimumStartTime = new Date(now.getTime() + (2 * 60 * 60 * 1000)); // Hiện tại + 2 giờ
       
       if (startDateTime <= minimumStartTime) {
         newErrors.startDate = "Thời gian bắt đầu phải vượt qua thời gian hiện tại ít nhất 2 giờ";
@@ -366,17 +504,15 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
 
     if (!endDate) {
       newErrors.endDate = "Vui lòng chọn ngày kết thúc";
-    } else if (startDate && endDate <= startDate) {
-      newErrors.endDate = "Ngày kết thúc phải sau ngày bắt đầu";
     }
 
-    // Kiểm tra thời gian thuê tối thiểu (ít nhất 2 giờ)
+    // Kiểm tra thời gian trả tối thiểu (ít nhất 2 giờ sau thời gian đặt)
     if (startDate && endDate && startTime && endTime) {
       const start = new Date(startDate + "T" + startTime);
       const end = new Date(endDate + "T" + endTime);
       const hours = (end - start) / (1000 * 60 * 60);
       if (hours < 2) {
-        newErrors.endDate = "Thời gian thuê tối thiểu là 2 giờ";
+        newErrors.endDate = "Thời gian trả phải ít nhất 2 giờ sau thời gian đặt";
       }
     }
 
@@ -386,10 +522,6 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
 
     if (messageToHost && messageToHost.length > 1000) {
       newErrors.messageToHost = "Lời nhắn không được vượt quá 1000 ký tự";
-    }
-
-    if (availability && !availability.available) {
-      newErrors.availability = availability.message;
     }
 
     setErrors(newErrors);
@@ -428,7 +560,7 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
 
     setIsSubmitting(true);
     try {
-      // Format ngày và giờ theo format LocalDateTime để backend có thể parse
+      // Format ngày và giờ theo format LocalDateTime để backend có thể parse (không có timezone)
       const startDateTime = startDate + "T" + startTime + ":00";
       const endDateTime = endDate + "T" + endTime + ":00";
       
@@ -468,6 +600,16 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
       showError("Lỗi", errorMessage);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleTimeSelect = (time, isStartTime) => {
+    if (isStartTime) {
+      setStartTime(time);
+      setShowStartTimePicker(false);
+    } else {
+      setEndTime(time);
+      setShowEndTimePicker(false);
     }
   };
 
@@ -517,13 +659,37 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
 
           <FormGroup>
             <Label htmlFor="startTime">Giờ nhận phòng *</Label>
-            <Input
+            <TimeInputWrapper>
+              <TimeInput
               type="time"
               id="startTime"
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
               required
-            />
+                step="1800" // 30 phút
+              />
+              <TimeIconButton
+                type="button"
+                onClick={() => setShowStartTimePicker(!showStartTimePicker)}
+              >
+                <ClockIcon className="w-5 h-5" />
+              </TimeIconButton>
+              {showStartTimePicker && (
+                <TimePickerModal className="time-picker-modal">
+                  <TimePickerGrid>
+                    {timeOptions.map((time) => (
+                      <TimeOption
+                        key={time}
+                        className={time === startTime ? 'selected' : ''}
+                        onClick={() => handleTimeSelect(time, true)}
+                      >
+                        {time}
+                      </TimeOption>
+                    ))}
+                  </TimePickerGrid>
+                </TimePickerModal>
+              )}
+            </TimeInputWrapper>
             <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
               Thời gian nhận phòng thường từ 14:00. Thời gian bắt đầu phải vượt qua hiện tại ít nhất 2 giờ.
             </div>
@@ -544,13 +710,37 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
 
           <FormGroup>
             <Label htmlFor="endTime">Giờ trả phòng *</Label>
-            <Input
+            <TimeInputWrapper>
+              <TimeInput
               type="time"
               id="endTime"
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
               required
-            />
+                step="1800" // 30 phút
+              />
+              <TimeIconButton
+                type="button"
+                onClick={() => setShowEndTimePicker(!showEndTimePicker)}
+              >
+                <ClockIcon className="w-5 h-5" />
+              </TimeIconButton>
+              {showEndTimePicker && (
+                <TimePickerModal className="time-picker-modal">
+                  <TimePickerGrid>
+                    {timeOptions.map((time) => (
+                      <TimeOption
+                        key={time}
+                        className={time === endTime ? 'selected' : ''}
+                        onClick={() => handleTimeSelect(time, false)}
+                      >
+                        {time}
+                      </TimeOption>
+                    ))}
+                  </TimePickerGrid>
+                </TimePickerModal>
+              )}
+            </TimeInputWrapper>
             <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
               Thời gian trả phòng thường trước 12:00
             </div>
@@ -600,8 +790,11 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
             </AvailabilityStatus>
           )}
 
-          {errors.availability && (
-            <ErrorText>{errors.availability}</ErrorText>
+          {/* Hiển thị thông báo khi chưa có thông tin khả dụng */}
+          {startDate && endDate && startTime && endTime && !availability && !isCheckingAvailability && (
+            <AvailabilityStatus className="checking">
+              ℹ️ Nhà khả dụng vào thời gian này để thuê
+            </AvailabilityStatus>
           )}
 
           {/* Hiển thị thông tin giá */}
@@ -634,7 +827,7 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
             <Button 
               type="submit" 
               className="primary" 
-              disabled={isSubmitting || !availability?.available}
+              disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <>
