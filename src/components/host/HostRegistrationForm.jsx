@@ -8,6 +8,9 @@ import {
   UserIcon,
   PhoneIcon,
   EnvelopeIcon,
+  HomeIcon,
+  CheckCircleIcon,
+  ExclamationCircleIcon,
 } from "@heroicons/react/24/outline";
 import styled from "styled-components";
 
@@ -17,66 +20,111 @@ const ModalOverlay = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 1rem;
 `;
 
 const ModalContent = styled.div`
-  background-color: white;
-  border-radius: 0.5rem;
+  background: white;
+  border-radius: 1rem;
   width: 100%;
-  max-width: 500px;
+  max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3182ce, #667eea);
+    z-index: 1;
+  }
+
+  /* Custom scrollbar */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
 `;
 
 const ModalHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 1.5rem;
+  padding: 1.5rem 2rem;
   border-bottom: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  position: relative;
+  z-index: 2;
 `;
 
 const ModalTitle = styled.h3`
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #111827;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  svg {
+    color: #3182ce;
+  }
 `;
 
 const CloseButton = styled.button`
   background: none;
   border: none;
-  color: #6b7280;
+  color: #64748b;
   cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 0.25rem;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
 
   &:hover {
-    background-color: #f3f4f6;
-    color: #4b5563;
+    background-color: #f1f5f9;
+    color: #475569;
+    transform: scale(1.05);
   }
 `;
 
 const Form = styled.form`
-  padding: 1.5rem;
+  padding: 2rem;
+  padding-bottom: 3rem;
 `;
 
 const FormGroup = styled.div`
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
 `;
 
 const Label = styled.label`
   display: block;
   margin-bottom: 0.5rem;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   color: #374151;
 
   span {
@@ -87,27 +135,41 @@ const Label = styled.label`
 
 const Input = styled.input`
   width: 100%;
-  padding: 0.625rem 0.75rem 0.625rem 2.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
+  padding: 0.75rem 0.75rem 0.75rem 2.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.75rem;
   font-size: 0.875rem;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition: all 0.2s;
+  background-color: #fafafa;
 
   &:focus {
     outline: none;
-    border-color: #4f46e5;
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    border-color: #3182ce;
+    background-color: white;
+    box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
   }
 
   &[type="file"] {
-    padding: 0.5rem 0.75rem;
-    border: 1px dashed #d1d5db;
-    background-color: #f9fafb;
+    padding: 1rem;
+    border: 2px dashed #d1d5db;
+    background-color: #f8fafc;
     cursor: pointer;
+    text-align: center;
 
     &::file-selector-button {
       display: none;
     }
+
+    &:hover {
+      border-color: #3182ce;
+      background-color: #f0f9ff;
+    }
+  }
+
+  &:disabled {
+    background-color: #f3f4f6;
+    color: #9ca3af;
+    cursor: not-allowed;
   }
 `;
 
@@ -122,47 +184,140 @@ const InputIcon = styled.div`
   transform: translateY(-50%);
   color: #9ca3af;
   pointer-events: none;
+  transition: color 0.2s;
+
+  ${Input}:focus + & {
+    color: #3182ce;
+  }
 `;
 
 const ErrorText = styled.p`
-  margin-top: 0.25rem;
+  margin-top: 0.5rem;
   font-size: 0.75rem;
   color: #ef4444;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 `;
 
 const FilePreview = styled.div`
-  margin-top: 0.5rem;
-  padding: 0.5rem;
-  background-color: #f9fafb;
-  border: 1px dashed #d1d5db;
-  border-radius: 0.375rem;
-  font-size: 0.75rem;
-  color: #6b7280;
+  margin-top: 0.75rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 2px solid #bae6fd;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  color: #0369a1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+`;
+
+const ProfileSection = styled.div`
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  margin-bottom: 2rem;
+  border: 2px solid #bae6fd;
+`;
+
+const ProfileTitle = styled.h4`
+  margin: 0 0 1rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #0c4a6e;
   display: flex;
   align-items: center;
   gap: 0.5rem;
 `;
 
+const ProfileGrid = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+`;
+
+const ProfileItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 0.5rem;
+  border: 1px solid rgba(186, 230, 253, 0.5);
+`;
+
+const ProfileLabel = styled.span`
+  font-weight: 600;
+  color: #0c4a6e;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  min-width: 120px;
+`;
+
+const ProfileValue = styled.span`
+  color: #0369a1;
+  font-weight: 500;
+  font-size: 1rem;
+  flex: 1;
+`;
+
 const SubmitButton = styled.button`
   width: 100%;
-  padding: 0.625rem 1rem;
-  background-color: #4f46e5;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #3182ce 0%, #667eea 100%);
   color: white;
   border: none;
-  border-radius: 0.375rem;
-  font-weight: 500;
-  font-size: 0.875rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 1rem;
   cursor: pointer;
-  transition: background-color 0.2s;
-  margin-top: 1rem;
+  transition: all 0.2s;
+  margin-top: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 
-  &:hover {
-    background-color: #4338ca;
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(49, 130, 206, 0.4);
   }
 
   &:disabled {
-    background-color: #9ca3af;
+    background: #9ca3af;
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+`;
+
+const InfoText = styled.p`
+  margin-top: 1rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-align: center;
+  padding: 0.75rem;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+`;
+
+const LoadingSpinner = styled.div`
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
 `;
 
@@ -388,7 +543,10 @@ const HostRegistrationForm = ({ isOpen, onClose, onSubmit }) => {
     <ModalOverlay onClick={(e) => e.target === e.currentTarget && onClose()}>
       <ModalContent onClick={(e) => e.stopPropagation()}>
         <ModalHeader>
-          <ModalTitle>Đăng ký trở thành chủ nhà</ModalTitle>
+          <ModalTitle>
+            <HomeIcon className="w-6 h-6" />
+            Đăng ký trở thành chủ nhà
+          </ModalTitle>
           <CloseButton onClick={onClose}>
             <XMarkIcon className="w-5 h-5" />
           </CloseButton>
@@ -397,116 +555,54 @@ const HostRegistrationForm = ({ isOpen, onClose, onSubmit }) => {
         <Form onSubmit={handleSubmit}>
           {/* Hiển thị thông tin từ profile */}
           {userProfile && (
-            <div
-              style={{
-                backgroundColor: "#f8fafc",
-                padding: "1rem",
-                borderRadius: "0.5rem",
-                marginBottom: "1.5rem",
-                border: "1px solid #e2e8f0",
-              }}
-            >
-              <h4
-                style={{
-                  margin: "0 0 1rem 0",
-                  fontSize: "1rem",
-                  fontWeight: "600",
-                  color: "#374151",
-                }}
-              >
+            <ProfileSection>
+              <ProfileTitle>
+                <UserIcon className="w-5 h-5" />
                 Thông tin từ hồ sơ cá nhân
-              </h4>
-
-              <div
-                style={{ display: "grid", gap: "0.5rem", fontSize: "0.875rem" }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                  }}
-                >
-                  <UserIcon className="w-4 h-4" style={{ color: "#6b7280" }} />
-                  <span style={{ fontWeight: "500", color: "#374151" }}>
-                    Họ tên:
-                  </span>
-                  <span style={{ color: "#6b7280" }}>
-                    {userProfile.fullName || "Chưa cập nhật"}
-                  </span>
-                </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                  }}
-                >
-                  <EnvelopeIcon
-                    className="w-4 h-4"
-                    style={{ color: "#6b7280" }}
-                  />
-                  <span style={{ fontWeight: "500", color: "#374151" }}>
-                    Email:
-                  </span>
-                  <span style={{ color: "#6b7280" }}>{userProfile.email}</span>
-                </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                  }}
-                >
-                  <PhoneIcon className="w-4 h-4" style={{ color: "#6b7280" }} />
-                  <span style={{ fontWeight: "500", color: "#374151" }}>
-                    Số điện thoại:
-                  </span>
-                  <span style={{ color: "#6b7280" }}>
-                    {userProfile.phone || "Chưa cập nhật"}
-                  </span>
-                </div>
-
-                {userProfile.address && (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.5rem",
-                    }}
-                  >
-                    <MapPinIcon
-                      className="w-4 h-4"
-                      style={{ color: "#6b7280" }}
-                    />
-                    <span style={{ fontWeight: "500", color: "#374151" }}>
-                      Địa chỉ:
-                    </span>
-                    <span style={{ color: "#6b7280" }}>
-                      {userProfile.address}
-                    </span>
-                  </div>
+              </ProfileTitle>
+                             <ProfileGrid>
+                 <ProfileItem>
+                   <ProfileLabel>
+                     <UserIcon className="w-4 h-4" />
+                     Họ tên:
+                   </ProfileLabel>
+                   <ProfileValue>
+                     {userProfile.fullName || "Chưa cập nhật"}
+                   </ProfileValue>
+                 </ProfileItem>
+                 <ProfileItem>
+                   <ProfileLabel>
+                     <EnvelopeIcon className="w-4 h-4" />
+                     Email:
+                   </ProfileLabel>
+                   <ProfileValue>{userProfile.email}</ProfileValue>
+                 </ProfileItem>
+                 <ProfileItem>
+                   <ProfileLabel>
+                     <PhoneIcon className="w-4 h-4" />
+                     Số điện thoại:
+                   </ProfileLabel>
+                   <ProfileValue>
+                     {userProfile.phone || "Chưa cập nhật"}
+                   </ProfileValue>
+                 </ProfileItem>
+                 {userProfile.address && (
+                   <ProfileItem>
+                     <ProfileLabel>
+                       <MapPinIcon className="w-4 h-4" />
+                       Địa chỉ:
+                     </ProfileLabel>
+                     <ProfileValue>{userProfile.address}</ProfileValue>
+                   </ProfileItem>
+                 )}
+               </ProfileGrid>
+                              {errors.profile && (
+                 <ErrorText>
+                   <ExclamationCircleIcon className="w-4 h-4" />
+                   {errors.profile}
+                 </ErrorText>
                 )}
-              </div>
-
-              {errors.profile && (
-                <div
-                  style={{
-                    marginTop: "0.75rem",
-                    padding: "0.5rem",
-                    backgroundColor: "#fef2f2",
-                    border: "1px solid #fecaca",
-                    borderRadius: "0.375rem",
-                    fontSize: "0.75rem",
-                    color: "#dc2626",
-                  }}
-                >
-                  {errors.profile}
-                </div>
-              )}
-            </div>
+            </ProfileSection>
           )}
 
           <FormGroup>
@@ -527,7 +623,7 @@ const HostRegistrationForm = ({ isOpen, onClose, onSubmit }) => {
                 className={errors.nationalId ? "border-red-500" : ""}
               />
             </InputWrapper>
-            {errors.nationalId && <ErrorText>{errors.nationalId}</ErrorText>}
+                         {errors.nationalId && <ErrorText><ExclamationCircleIcon className="w-4 h-4" />{errors.nationalId}</ErrorText>}
           </FormGroup>
 
           <FormGroup>
@@ -548,7 +644,7 @@ const HostRegistrationForm = ({ isOpen, onClose, onSubmit }) => {
                 className={errors.address ? "border-red-500" : ""}
               />
             </InputWrapper>
-            {errors.address && <ErrorText>{errors.address}</ErrorText>}
+                         {errors.address && <ErrorText><ExclamationCircleIcon className="w-4 h-4" />{errors.address}</ErrorText>}
           </FormGroup>
 
           <FormGroup>
@@ -569,7 +665,7 @@ const HostRegistrationForm = ({ isOpen, onClose, onSubmit }) => {
                 className={errors.phone ? "border-red-500" : ""}
               />
             </InputWrapper>
-            {errors.phone && <ErrorText>{errors.phone}</ErrorText>}
+                         {errors.phone && <ErrorText><ExclamationCircleIcon className="w-4 h-4" />{errors.phone}</ErrorText>}
           </FormGroup>
 
           <FormGroup>
@@ -601,9 +697,7 @@ const HostRegistrationForm = ({ isOpen, onClose, onSubmit }) => {
               onChange={handleChange}
               disabled={isSubmitting}
             />
-            {errors.idFrontPhoto && (
-              <ErrorText>{errors.idFrontPhoto}</ErrorText>
-            )}
+                         {errors.idFrontPhoto && <ErrorText><ExclamationCircleIcon className="w-4 h-4" />{errors.idFrontPhoto}</ErrorText>}
 
             {frontPreviewUrl && (
               <FilePreview>
@@ -637,7 +731,7 @@ const HostRegistrationForm = ({ isOpen, onClose, onSubmit }) => {
               onChange={handleChange}
               className={errors.idBackPhoto ? "border-red-500" : ""}
             />
-            {errors.idBackPhoto && <ErrorText>{errors.idBackPhoto}</ErrorText>}
+                         {errors.idBackPhoto && <ErrorText><ExclamationCircleIcon className="w-4 h-4" />{errors.idBackPhoto}</ErrorText>}
 
             {backPreviewUrl && (
               <FilePreview>
@@ -671,9 +765,7 @@ const HostRegistrationForm = ({ isOpen, onClose, onSubmit }) => {
               onChange={handleChange}
               className={errors.proofOfOwnership ? "border-red-500" : ""}
             />
-            {errors.proofOfOwnership && (
-              <ErrorText>{errors.proofOfOwnership}</ErrorText>
-            )}
+                         {errors.proofOfOwnership && <ErrorText><ExclamationCircleIcon className="w-4 h-4" />{errors.proofOfOwnership}</ErrorText>}
 
             {proofPreviewUrl && (
               <FilePreview>
@@ -695,12 +787,23 @@ const HostRegistrationForm = ({ isOpen, onClose, onSubmit }) => {
             )}
           </FormGroup>
 
-          <p className="mt-1 text-xs text-gray-500">
+          <InfoText>
+            <PhotoIcon className="w-4 h-4" />
             Vui lòng tải lên ảnh rõ nét, đầy đủ thông tin trên giấy tờ tùy thân
-          </p>
+          </InfoText>
 
           <SubmitButton type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Đang gửi..." : "Gửi đơn đăng ký"}
+            {isSubmitting ? (
+              <>
+                <LoadingSpinner />
+                Đang gửi...
+              </>
+            ) : (
+              <>
+                <CheckCircleIcon className="w-5 h-5" />
+                Gửi đơn đăng ký
+              </>
+            )}
           </SubmitButton>
         </Form>
       </ModalContent>
