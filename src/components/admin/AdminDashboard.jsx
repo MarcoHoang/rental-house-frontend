@@ -738,16 +738,6 @@ const AdminDashboard = () => {
         <Header>
           <div className="header-content">
             <h2>{sidebarItems.find((item) => item.id === activeTab)?.label}</h2>
-            <div className="header-actions">
-              <Button>
-                <Filter />
-                Lọc
-              </Button>
-              <Button $primary>
-                <Plus />
-                Thêm mới
-              </Button>
-            </div>
           </div>
         </Header>
 

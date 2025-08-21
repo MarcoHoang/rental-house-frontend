@@ -180,8 +180,7 @@ const UserManagement = () => {
   // Search và filter states - tính năng mới
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
-    role: 'ALL',
-    active: 'ALL'
+    status: 'ALL'
   });
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
@@ -198,7 +197,7 @@ const UserManagement = () => {
       setError(null);
 
       // Backend đã được sửa để chỉ trả về các User có vai trò là USER
-      const data = await usersApi.getAll({ page: page, size: 10 });
+      const data = await usersApi.getAll({ page: page, size: 8 });
 
       // Lấy dữ liệu từ response và đảm bảo luôn là một mảng
       const userList = data?.content || [];
@@ -223,14 +222,9 @@ const UserManagement = () => {
 
     let filtered = users;
 
-    // Filter theo role
-    if (filters.role !== 'ALL') {
-      filtered = filtered.filter(user => user.roleName === filters.role);
-    }
-
-    // Filter theo active status  
-    if (filters.active !== 'ALL') {
-      const isActive = filters.active === 'true';
+    // Filter theo status
+    if (filters.status !== 'ALL') {
+      const isActive = filters.status === 'true';
       filtered = filtered.filter(user => user.active === isActive);
     }
 
@@ -253,7 +247,7 @@ const UserManagement = () => {
     });
 
     setSearchResults(filtered);
-    setIsSearchMode(searchTerm.trim() || filters.role !== 'ALL' || filters.active !== 'ALL');
+    setIsSearchMode(searchTerm.trim() || filters.status !== 'ALL');
   }, [users, searchTerm, filters]);
 
   // Search users với API - chỉ khi bấm nút tìm kiếm
@@ -264,8 +258,8 @@ const UserManagement = () => {
       
       const data = await usersApi.searchUsers(
         searchTerm.trim() || undefined,
-        filters.role !== 'ALL' ? filters.role : undefined,
-        filters.active !== 'ALL' ? filters.active === 'true' : undefined
+        undefined, // role parameter removed
+        filters.status !== 'ALL' ? filters.status === 'true' : undefined
       );
       
       setUsers(Array.isArray(data) ? data : []);
@@ -361,18 +355,12 @@ const UserManagement = () => {
         onSearch={searchUsers}
         onClear={() => {
           setSearchTerm("");
-          setFilters({ role: "ALL", active: "ALL" });
+          setFilters({ status: "ALL" });
           setIsSearchMode(false);
           fetchUsers(0);
         }}
         filterOptions={{
-          role: [
-            { value: "ALL", label: "Tất cả vai trò" },
-            { value: "USER", label: "Người dùng" },
-            { value: "HOST", label: "Chủ nhà" },
-            { value: "ADMIN", label: "Quản trị viên" },
-          ],
-          active: [
+          status: [
             { value: "ALL", label: "Tất cả trạng thái" },
             { value: "true", label: "Hoạt động" },
             { value: "false", label: "Đã khóa" },

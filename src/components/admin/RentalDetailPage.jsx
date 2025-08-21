@@ -18,6 +18,18 @@ import { adminApi } from '../../api/adminApi';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { formatDate, formatCurrency } from '../../utils/timeUtils';
 
+// Function tính số ngày giữa 2 ngày (giống logic trong RentHouseModal)
+const calculateDurationInDays = (startDate, endDate) => {
+  if (!startDate || !endDate) return 0;
+  
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const hours = (end - start) / (1000 * 60 * 60);
+  
+  // Tính số ngày, nếu ít hơn hoặc bằng 24 giờ thì tính 1 ngày, nếu nhiều hơn thì làm tròn lên
+  return hours <= 24 ? 1 : Math.ceil(hours / 24);
+};
+
 const Container = styled.div`
   padding: 2rem;
   max-width: 1200px;
@@ -297,7 +309,7 @@ const RentalDetailPage = () => {
 
             <InfoItem>
               <InfoLabel>Thời hạn</InfoLabel>
-              <InfoValue>{rental.duration || 'N/A'} tháng</InfoValue>
+              <InfoValue>{calculateDurationInDays(rental.startDate, rental.endDate)} ngày</InfoValue>
             </InfoItem>
 
             <InfoItem>

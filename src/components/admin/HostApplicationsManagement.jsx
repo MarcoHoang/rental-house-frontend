@@ -259,7 +259,7 @@ const HostApplicationsManagement = () => {
       setError(null);
       const data = await hostApplicationsApi.getAllRequests({
         page,
-        size: 10,
+        size: 8,
       });
       
       console.log('Applications data:', data); // Debug log
@@ -319,7 +319,7 @@ const HostApplicationsManagement = () => {
       const data = await hostApplicationsApi.searchRequests(
         searchTerm.trim() || undefined,
         filters.status !== 'ALL' ? filters.status : undefined,
-        { page: 0, size: 10 }
+        { page: 0, size: 8 }
       );
       setApplications(Array.isArray(data.content) ? data.content : []);
       // Local filter sẽ tự động chạy sau khi setApplications
@@ -371,29 +371,7 @@ const HostApplicationsManagement = () => {
     setRejectModal({ isOpen: true, app: app, reason: "" });
   };
 
-  const handleCreateTestApplication = async () => {
-    try {
-      // Tạo đơn đăng ký test
-      const testApplication = {
-        userId: 1, // ID của user test
-        nationalId: "123456789",
-        proofOfOwnershipUrl: "test-url",
-        idFrontPhotoUrl: "test-front",
-        idBackPhotoUrl: "test-back"
-      };
-      
-      // Gọi API tạo đơn đăng ký
-      await hostApplicationsApi.createRequest(testApplication);
-      
-      // Refresh danh sách
-      fetchApplications(0);
-      
-      showSuccess("Tạo thành công!", "Đã tạo đơn đăng ký test");
-    } catch (err) {
-      console.error('Error creating test application:', err);
-      showError("Tạo thất bại!", "Không thể tạo đơn đăng ký test");
-    }
-  };
+
 
   const performReject = async () => {
     if (!rejectModal.reason.trim()) {
@@ -434,7 +412,7 @@ const HostApplicationsManagement = () => {
 
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+      <div style={{ marginBottom: '1rem' }}>
         <AdminSearchBar
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
@@ -459,22 +437,6 @@ const HostApplicationsManagement = () => {
           $showFilters={true}
           debounceMs={300}
         />
-        
-        {/* Nút tạo đơn test */}
-        <button
-          onClick={handleCreateTestApplication}
-          style={{
-            padding: '0.5rem 1rem',
-            background: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '0.375rem',
-            cursor: 'pointer',
-            fontSize: '0.875rem'
-          }}
-        >
-          Tạo đơn test
-        </button>
       </div>
 
       <Card>

@@ -178,7 +178,7 @@ const HostManagement = () => {
   // Thêm state cho tìm kiếm
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
-    active: "ALL",
+    status: "ALL",
   });
   const [searchResults, setSearchResults] = useState([]);
   const [isSearchMode, setIsSearchMode] = useState(false);
@@ -189,7 +189,7 @@ const HostManagement = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await hostApplicationsApi.getAllHosts({ page, size: 10 });
+      const data = await hostApplicationsApi.getAllHosts({ page, size: 8 });
       setHosts(data.content || []);
       setPagination({
         number: data.number || 0,
@@ -209,9 +209,9 @@ const HostManagement = () => {
 
     let filtered = hosts;
 
-    // Filter theo active status  
-    if (filters.active !== 'ALL') {
-      const isActive = filters.active === 'true';
+    // Filter theo status
+    if (filters.status !== 'ALL') {
+      const isActive = filters.status === 'true';
       filtered = filtered.filter(host => host.active === isActive);
     }
 
@@ -234,7 +234,7 @@ const HostManagement = () => {
     });
 
     setSearchResults(filtered);
-    setIsSearchMode(searchTerm.trim() || filters.active !== 'ALL');
+    setIsSearchMode(searchTerm.trim() || filters.status !== 'ALL');
   }, [hosts, searchTerm, filters]);
 
   // Search hosts với API - chỉ khi bấm nút tìm kiếm
@@ -244,8 +244,8 @@ const HostManagement = () => {
       setError(null);
       const data = await hostApplicationsApi.searchHosts(
         searchTerm.trim() || undefined,
-        filters.active !== 'ALL' ? filters.active === 'true' : undefined,
-        { page: 0, size: 10 }
+        filters.status !== 'ALL' ? filters.status === 'true' : undefined,
+        { page: 0, size: 8 }
       );
       setHosts(Array.isArray(data.content) ? data.content : []);
       // Local filter sẽ tự động chạy sau khi setHosts
@@ -326,12 +326,12 @@ const HostManagement = () => {
         onSearch={searchHosts}
         onClear={() => {
           setSearchTerm("");
-          setFilters({ active: "ALL" });
+          setFilters({ status: "ALL" });
           setIsSearchMode(false);
           fetchHosts(0);
         }}
         filterOptions={{
-          active: [
+          status: [
             { value: "ALL", label: "Tất cả trạng thái" },
             { value: "true", label: "Đang hoạt động" },
             { value: "false", label: "Đã khóa" },

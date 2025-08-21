@@ -178,6 +178,18 @@ const PageButton = styled.button`
   }
 `;
 
+// Function tính số ngày giữa 2 ngày (giống logic trong RentHouseModal)
+const calculateDurationInDays = (startDate, endDate) => {
+  if (!startDate || !endDate) return 0;
+  
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const hours = (end - start) / (1000 * 60 * 60);
+  
+  // Tính số ngày, nếu ít hơn hoặc bằng 24 giờ thì tính 1 ngày, nếu nhiều hơn thì làm tròn lên
+  return hours <= 24 ? 1 : Math.ceil(hours / 24);
+};
+
 const RentalManagement = () => {
   const [rentals, setRentals] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
@@ -204,7 +216,7 @@ const RentalManagement = () => {
       setError(null);
       const data = await adminApi.getAllRentals({
         page,
-        size: 10,
+        size: 8,
       });
       
       console.log('Rentals data:', data); // Debug log
@@ -345,16 +357,17 @@ const RentalManagement = () => {
 
       <Card>
         <Table>
-        <thead>
-          <tr>
-            <th style={{ width: '25%' }}>Nhà thuê</th>
-            <th style={{ width: '20%' }}>Người thuê</th>
-            <th style={{ width: '15%' }}>Ngày thuê</th>
-            <th style={{ width: '12%' }}>Thời hạn</th>
-            <th style={{ width: '15%' }}>Trạng thái</th>
-            <th style={{ width: '13%' }}>Thao tác</th>
-          </tr>
-        </thead>
+                 <thead>
+           <tr>
+             <th style={{ width: '20%' }}>Nhà thuê</th>
+             <th style={{ width: '15%' }}>Người thuê</th>
+             <th style={{ width: '12%' }}>Ngày thuê</th>
+             <th style={{ width: '12%' }}>Ngày trả</th>
+             <th style={{ width: '10%' }}>Số ngày</th>
+             <th style={{ width: '15%' }}>Trạng thái</th>
+             <th style={{ width: '16%' }}>Thao tác</th>
+           </tr>
+         </thead>
         <tbody>
           {displayRentals.length > 0 ? (
             displayRentals
@@ -412,12 +425,18 @@ const RentalManagement = () => {
                     {formatDate(rental.startDate)}
                   </div>
                 </td>
-                <td>
-                  <div style={{ fontSize: '0.875rem' }}>
-                    <Clock size={14} style={{ display: 'inline', marginRight: '0.25rem' }} />
-                    {rental.duration} tháng
-                  </div>
-                </td>
+                                 <td>
+                   <div style={{ fontSize: '0.875rem' }}>
+                     <Calendar size={14} style={{ display: 'inline', marginRight: '0.25rem' }} />
+                     {formatDate(rental.endDate)}
+                   </div>
+                 </td>
+                                   <td>
+                    <div style={{ fontSize: '0.875rem' }}>
+                      <Clock size={14} style={{ display: 'inline', marginRight: '0.25rem' }} />
+                      {calculateDurationInDays(rental.startDate, rental.endDate)} ngày
+                    </div>
+                  </td>
                 <td>
                   <Badge className={rental.status?.toLowerCase()}>
                     {rental.status === 'PENDING' && 'Chờ duyệt'}
@@ -453,10 +472,10 @@ const RentalManagement = () => {
             ))
           ) : (
             <tr>
-              <td
-                colSpan="6"
-                style={{ textAlign: "center", padding: "2rem" }}
-              >
+                             <td
+                 colSpan="7"
+                 style={{ textAlign: "center", padding: "2rem" }}
+               >
                 {isSearchMode 
                   ? 'Không tìm thấy hợp đồng nào phù hợp với điều kiện tìm kiếm.'
                   : 'Không có hợp đồng nào.'

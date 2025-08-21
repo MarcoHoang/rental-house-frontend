@@ -263,7 +263,7 @@ const HouseManagement = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await housesApi.getAll({ page, size: 10 });
+      const data = await housesApi.getAll({ page, size: 8 });
       console.log("Houses data:", data);
       console.log("Houses pagination:", {
         number: data?.number,
