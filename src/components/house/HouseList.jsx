@@ -1,6 +1,6 @@
 // src/components/house/HouseList.jsx
 import React, { useState, useMemo, useEffect } from "react";
-import HouseCard from "./HouseCard";
+import HouseCard from "./HouseCard.jsx";
 import HouseFilter from "./HouseFilter";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../common/Toast";
