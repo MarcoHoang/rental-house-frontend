@@ -3,7 +3,7 @@ import styled from "styled-components";
 import rentalApi from "../../api/rentalApi";
 import { useToast } from "../common/Toast";
 import { useAuthContext } from "../../contexts/AuthContext";
-import { ClockIcon } from "@heroicons/react/24/outline";
+import { ClockIcon, MapPinIcon, CurrencyDollarIcon, HomeIcon, UserIcon, EnvelopeIcon, PhoneIcon } from "@heroicons/react/24/outline";
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -11,7 +11,8 @@ const ModalOverlay = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -21,89 +22,148 @@ const ModalOverlay = styled.div`
 
 const ModalContent = styled.div`
   background: white;
-  border-radius: 1rem;
-  padding: 2rem;
-  max-width: 500px;
+  border-radius: 24px;
+  padding: 2.5rem;
+  max-width: 600px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 `;
 
 const ModalHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid #f1f5f9;
 `;
 
 const ModalTitle = styled.h2`
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1f2937;
+  font-size: 1.75rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   margin: 0;
 `;
 
 const CloseButton = styled.button`
-  background: none;
-  border: none;
-  font-size: 1.5rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  font-size: 1.25rem;
   cursor: pointer;
-  color: #6b7280;
-  padding: 0.25rem;
-  border-radius: 0.25rem;
-  transition: color 0.2s;
+  color: #64748b;
+  padding: 0.75rem;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
 
   &:hover {
-    color: #374151;
+    background: #e2e8f0;
+    color: #475569;
+    transform: scale(1.05);
   }
 `;
 
 const HouseInfo = styled.div`
-  background: #f8fafc;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid #e2e8f0;
 `;
 
 const HouseTitle = styled.h3`
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 1rem 0;
 `;
 
 const HouseDetails = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #475569;
+`;
+
+const DetailItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  font-weight: 500;
+  border: 1px solid rgba(226, 232, 240, 0.5);
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.95);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  svg {
+    color: #667eea;
+    flex-shrink: 0;
+  }
+`;
+
+const DetailLabel = styled.span`
+  font-weight: 600;
+  color: #374151;
+  min-width: 80px;
+`;
+
+const DetailValue = styled.span`
+  color: #475569;
+  flex: 1;
 `;
 
 const UserInfo = styled.div`
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 1px solid #bae6fd;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
 `;
 
 const UserInfoTitle = styled.h4`
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 600;
-  color: #374151;
-  margin: 0 0 0.75rem 0;
+  color: #0c4a6e;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 `;
 
 const UserInfoDetails = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
   font-size: 0.875rem;
-  color: #4b5563;
+  color: #0c4a6e;
+`;
+
+const UserDetailItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  font-weight: 500;
 `;
 
 const FormGroup = styled.div`
@@ -112,40 +172,54 @@ const FormGroup = styled.div`
 
 const Label = styled.label`
   display: block;
-  font-weight: 500;
+  font-weight: 600;
   color: #374151;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
 `;
 
 const Input = styled.input`
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
+  padding: 0.875rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
   font-size: 0.875rem;
-  transition: border-color 0.2s;
+  transition: all 0.2s ease;
+  background: #f8fafc;
 
   &:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background: white;
+  }
+
+  &::placeholder {
+    color: #9ca3af;
   }
 `;
 
 const Textarea = styled.textarea`
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
+  padding: 0.875rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
   font-size: 0.875rem;
   font-family: inherit;
   resize: vertical;
-  transition: border-color 0.2s;
+  transition: all 0.2s ease;
+  background: #f8fafc;
+  min-height: 100px;
 
   &:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background: white;
+  }
+
+  &::placeholder {
+    color: #9ca3af;
   }
 `;
 
@@ -153,44 +227,51 @@ const CharacterCount = styled.div`
   font-size: 0.75rem;
   color: #6b7280;
   text-align: right;
-  margin-top: 0.25rem;
+  margin-top: 0.5rem;
+  font-weight: 500;
 `;
 
 const ErrorText = styled.p`
   color: #ef4444;
   font-size: 0.875rem;
-  margin-top: 0.25rem;
+  margin-top: 0.5rem;
+  font-weight: 500;
 `;
 
 const PriceInfo = styled.div`
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 10px 25px -5px rgba(102, 126, 234, 0.3);
 `;
 
 const PriceTitle = styled.h4`
-  font-size: 1rem;
-  font-weight: 600;
-  margin: 0 0 0.5rem 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 `;
 
 const PriceDetails = styled.div`
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
   font-size: 0.875rem;
+  padding: 0.5rem 0;
 `;
 
 const TotalPrice = styled.div`
   display: flex;
   justify-content: space-between;
-  font-size: 1.125rem;
-  font-weight: 600;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-  padding-top: 0.5rem;
-  margin-top: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  border-top: 2px solid rgba(255, 255, 255, 0.3);
+  padding-top: 1rem;
+  margin-top: 1rem;
 `;
 
 const ButtonGroup = styled.div`
@@ -201,21 +282,26 @@ const ButtonGroup = styled.div`
 
 const Button = styled.button`
   flex: 1;
-  padding: 0.875rem 1.5rem;
+  padding: 1rem 1.5rem;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: 12px;
   font-weight: 600;
   font-size: 0.875rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 
   &.primary {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 
     &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
     }
 
     &:disabled {
@@ -227,12 +313,13 @@ const Button = styled.button`
   }
 
   &.secondary {
-    background: #f3f4f6;
+    background: #f8fafc;
     color: #374151;
-    border: 1px solid #d1d5db;
+    border: 2px solid #e2e8f0;
 
     &:hover {
-      background: #e5e7eb;
+      background: #e2e8f0;
+      border-color: #cbd5e1;
     }
   }
 `;
@@ -245,7 +332,6 @@ const LoadingSpinner = styled.div`
   border-radius: 50%;
   border-top-color: transparent;
   animation: spin 1s ease-in-out infinite;
-  margin-right: 0.5rem;
   
   @keyframes spin {
     to { transform: rotate(360deg); }
@@ -253,28 +339,29 @@ const LoadingSpinner = styled.div`
 `;
 
 const AvailabilityStatus = styled.div`
-  padding: 0.75rem;
-  border-radius: 0.375rem;
-  margin-bottom: 1rem;
+  padding: 1rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
   font-size: 0.875rem;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  font-weight: 500;
 
   &.available {
-    background: #f0fdf4;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
     color: #166534;
     border: 1px solid #bbf7d0;
   }
 
   &.unavailable {
-    background: #fef2f2;
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
     color: #dc2626;
     border: 1px solid #fecaca;
   }
 
   &.checking {
-    background: #f0f9ff;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
     color: #1e40af;
     border: 1px solid #bfdbfe;
   }
@@ -288,19 +375,20 @@ const TimeInputWrapper = styled.div`
 
 const TimeInput = styled.input`
   width: 100%;
-  padding: 0.75rem 2.5rem 0.75rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
+  padding: 0.875rem 3rem 0.875rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
   font-size: 0.875rem;
-  transition: border-color 0.2s;
+  transition: all 0.2s ease;
+  background: #f8fafc;
 
   &:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background: white;
   }
 
-  /* Ẩn icon đồng hồ mặc định của trình duyệt */
   &::-webkit-calendar-picker-indicator {
     display: none;
   }
@@ -317,16 +405,17 @@ const TimeIconButton = styled.button`
   right: 0.5rem;
   top: 50%;
   transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: #6b7280;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
   cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 0.25rem;
-  transition: color 0.2s;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
 
   &:hover {
-    color: #374151;
+    background: #e2e8f0;
+    color: #475569;
   }
 `;
 
@@ -336,46 +425,61 @@ const TimePickerModal = styled.div`
   left: 0;
   right: 0;
   background: white;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   z-index: 10;
-  margin-top: 0.25rem;
+  margin-top: 0.5rem;
 `;
 
 const TimePickerGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 0.25rem;
-  padding: 0.5rem;
+  gap: 0.5rem;
+  padding: 1rem;
   max-height: 200px;
   overflow-y: auto;
 `;
 
 const TimeOption = styled.button`
-  padding: 0.5rem;
+  padding: 0.75rem;
   border: 1px solid #e5e7eb;
-  border-radius: 0.25rem;
+  border-radius: 8px;
   background: white;
   color: #374151;
   font-size: 0.75rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  font-weight: 500;
 
   &:hover {
     background: #f3f4f6;
-    border-color: #3b82f6;
+    border-color: #667eea;
   }
 
   &.selected {
-    background: #3b82f6;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    border-color: #3b82f6;
+    border-color: #667eea;
   }
 `;
 
+const InfoText = styled.div`
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border-left: 3px solid #667eea;
+  font-weight: 500;
+`;
+
 const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
-  const [startDate, setStartDate] = useState("");
+  // Lấy ngày hiện tại và format thành YYYY-MM-DD
+  const today = new Date().toISOString().split("T")[0];
+  
+  const [startDate, setStartDate] = useState(today);
   const [startTime, setStartTime] = useState("14:00"); // Mặc định 14:00
   const [endDate, setEndDate] = useState("");
   const [endTime, setEndTime] = useState("12:00"); // Mặc định 12:00
@@ -404,8 +508,7 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
 
   const timeOptions = generateTimeOptions();
 
-  // Tính toán ngày tối thiểu (hôm nay)
-  const today = new Date().toISOString().split("T")[0];
+  // Tính toán ngày tối thiểu (hôm nay) - đã được định nghĩa ở trên
 
   // Đóng time picker khi click ra ngoài
   useEffect(() => {
@@ -625,21 +728,51 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
 
         <HouseInfo>
           <HouseTitle>{house.title}</HouseTitle>
-                     <HouseDetails>
-             <div>📍 {house.address}</div>
-             <div>💰 {house.price?.toLocaleString()} VNĐ/ngày</div>
-             <div>🏠 {house.houseType}</div>
-             <div>📏 {house.area} m²</div>
-           </HouseDetails>
+          <HouseDetails>
+            <DetailItem>
+              <MapPinIcon className="w-5 h-5" />
+              <DetailLabel>Địa chỉ:</DetailLabel>
+              <DetailValue>{house.address}</DetailValue>
+            </DetailItem>
+            <DetailItem>
+              <CurrencyDollarIcon className="w-5 h-5" />
+              <DetailLabel>Giá:</DetailLabel>
+              <DetailValue>{house.price?.toLocaleString()} VNĐ/ngày</DetailValue>
+            </DetailItem>
+            <DetailItem>
+              <HomeIcon className="w-5 h-5" />
+              <DetailLabel>Loại nhà:</DetailLabel>
+              <DetailValue>{house.houseType}</DetailValue>
+            </DetailItem>
+            <DetailItem>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              <DetailLabel>Diện tích:</DetailLabel>
+              <DetailValue>{house.area} m²</DetailValue>
+            </DetailItem>
+          </HouseDetails>
         </HouseInfo>
 
         {/* Thông tin người thuê */}
         <UserInfo>
-          <UserInfoTitle>Thông tin người thuê</UserInfoTitle>
+          <UserInfoTitle>
+            <UserIcon className="w-5 h-5" />
+            Thông tin người thuê
+          </UserInfoTitle>
           <UserInfoDetails>
-            <div>👤 <strong>{user?.fullName || user?.username || 'Chưa có tên'}</strong></div>
-            <div>📧 {user?.email || 'Chưa có email'}</div>
-            <div>📱 {user?.phone || 'Chưa có số điện thoại'}</div>
+            <UserDetailItem>
+              <UserIcon className="w-4 h-4" />
+              <strong>{user?.fullName || user?.username || 'Chưa có tên'}</strong>
+            </UserDetailItem>
+            <UserDetailItem>
+              <EnvelopeIcon className="w-4 h-4" />
+              {user?.email || 'Chưa có email'}
+            </UserDetailItem>
+            <UserDetailItem>
+              <PhoneIcon className="w-4 h-4" />
+              {user?.phone || 'Chưa có số điện thoại'}
+            </UserDetailItem>
           </UserInfoDetails>
         </UserInfo>
 
@@ -690,9 +823,9 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
                 </TimePickerModal>
               )}
             </TimeInputWrapper>
-            <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
+            <InfoText>
               Thời gian nhận phòng thường từ 14:00. Thời gian bắt đầu phải vượt qua hiện tại ít nhất 2 giờ.
-            </div>
+            </InfoText>
           </FormGroup>
 
           <FormGroup>
@@ -741,9 +874,9 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
                 </TimePickerModal>
               )}
             </TimeInputWrapper>
-            <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
+            <InfoText>
               Thời gian trả phòng thường trước 12:00
-            </div>
+            </InfoText>
           </FormGroup>
 
           <FormGroup>
@@ -786,21 +919,42 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
 
           {startDate && endDate && startTime && endTime && availability && !isCheckingAvailability && (
             <AvailabilityStatus className={availability.available ? "available" : "unavailable"}>
-              {availability.available ? "✅" : "❌"} {availability.message}
+              {availability.available ? (
+                <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              ) : (
+                <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              )}
+              {availability.message}
             </AvailabilityStatus>
           )}
 
           {/* Hiển thị thông báo khi chưa có thông tin khả dụng */}
           {startDate && endDate && startTime && endTime && !availability && !isCheckingAvailability && (
             <AvailabilityStatus className="checking">
-              ℹ️ Nhà khả dụng vào thời gian này để thuê
+              <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+              </div>
+              Nhà khả dụng vào thời gian này để thuê
             </AvailabilityStatus>
           )}
 
           {/* Hiển thị thông tin giá */}
           {startDate && endDate && startTime && endTime && numberOfHours > 0 && (
             <PriceInfo>
-              <PriceTitle>Chi tiết giá</PriceTitle>
+              <PriceTitle>
+                <CurrencyDollarIcon className="w-5 h-5" />
+                Chi tiết giá
+              </PriceTitle>
               <PriceDetails>
                 <span>Giá/ngày:</span>
                 <span>{house.price?.toLocaleString()} VNĐ</span>
@@ -822,6 +976,9 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
 
           <ButtonGroup>
             <Button type="button" className="secondary" onClick={onClose}>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
               Hủy
             </Button>
             <Button 
@@ -835,7 +992,12 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
                   Đang gửi yêu cầu...
                 </>
               ) : (
-                "Gửi yêu cầu thuê nhà"
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                  Gửi yêu cầu thuê nhà
+                </>
               )}
             </Button>
           </ButtonGroup>
