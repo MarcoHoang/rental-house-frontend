@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useToast } from "../common/Toast";
 import AdminSearchBar from "./AdminSearchBar";
+import { getHouseTypeLabel, getHouseStatusLabel } from "../../utils/constants";
 
 const Card = styled.div`
   background: white;
@@ -401,9 +402,9 @@ const HouseManagement = () => {
         filterOptions={{
           status: [
             { value: "ALL", label: "Tất cả trạng thái" },
-            { value: "AVAILABLE", label: "Có sẵn" },
-            { value: "RENTED", label: "Đã thuê" },
-            { value: "INACTIVE", label: "Không hoạt động" },
+            { value: "AVAILABLE", label: getHouseStatusLabel("AVAILABLE") },
+            { value: "RENTED", label: getHouseStatusLabel("RENTED") },
+            { value: "INACTIVE", label: getHouseStatusLabel("INACTIVE") },
           ],
           houseType: [
             { value: "ALL", label: "Tất cả loại" },
@@ -451,22 +452,14 @@ const HouseManagement = () => {
                         {house.price ? `${house.price.toLocaleString()} VNĐ` : 'N/A'}
                       </div>
                     </td>
-                    <td>
-                      {house.houseType === 'APARTMENT' && 'Chung cư'}
-                      {house.houseType === 'VILLA' && 'Biệt thự'}
-                      {house.houseType === 'TOWNHOUSE' && 'Nhà phố'}
-                      {house.houseType === 'BOARDING_HOUSE' && 'Nhà trọ'}
-                      {house.houseType === 'WHOLE_HOUSE' && 'Nhà nguyên căn'}
-                      {!house.houseType && 'N/A'}
-                    </td>
-                    <td>
-                      <Badge className={house.status?.toLowerCase()}>
-                        {house.status === 'AVAILABLE' && 'Có sẵn'}
-                        {house.status === 'RENTED' && 'Đã thuê'}
-                        {house.status === 'INACTIVE' && 'Không hoạt động'}
-                        {!house.status && 'N/A'}
-                      </Badge>
-                    </td>
+                                         <td>
+                       {getHouseTypeLabel(house.houseType) || 'N/A'}
+                     </td>
+                     <td>
+                       <Badge className={house.status?.toLowerCase()}>
+                         {getHouseStatusLabel(house.status) || 'N/A'}
+                       </Badge>
+                     </td>
                     <td>{house.hostName || 'N/A'}</td>
                     <td>
                       <ActionContainer>

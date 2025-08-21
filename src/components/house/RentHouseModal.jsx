@@ -475,9 +475,17 @@ const InfoText = styled.div`
   font-weight: 500;
 `;
 
+// Lấy ngày hiện tại và format thành YYYY-MM-DD theo múi giờ địa phương
+const getTodayString = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
-  // Lấy ngày hiện tại và format thành YYYY-MM-DD
-  const today = new Date().toISOString().split("T")[0];
+  const today = getTodayString();
   
   const [startDate, setStartDate] = useState(today);
   const [startTime, setStartTime] = useState("14:00"); // Mặc định 14:00
@@ -507,6 +515,23 @@ const RentHouseModal = ({ isOpen, onClose, house, onSuccess }) => {
   };
 
   const timeOptions = generateTimeOptions();
+
+  // Reset form khi modal mở
+  useEffect(() => {
+    if (isOpen) {
+      const currentToday = getTodayString();
+      setStartDate(currentToday);
+      setStartTime("14:00");
+      setEndDate("");
+      setEndTime("12:00");
+      setGuestCount(1);
+      setMessageToHost("");
+      setErrors({});
+      setAvailability(null);
+      setShowStartTimePicker(false);
+      setShowEndTimePicker(false);
+    }
+  }, [isOpen]);
 
   // Tính toán ngày tối thiểu (hôm nay) - đã được định nghĩa ở trên
 

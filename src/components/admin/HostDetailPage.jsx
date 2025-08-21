@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import styled from "styled-components";
 import { hostApplicationsApi } from "../../api/adminApi";
 import { RefreshCw, AlertTriangle, ArrowLeft, User } from "lucide-react";
+import { getHouseTypeLabel, getHouseStatusLabel } from "../../utils/constants";
 
 // === STYLED COMPONENTS (Đồng bộ 100% với UserDetailPage) ===
 const PageWrapper = styled.div`
@@ -325,14 +326,12 @@ const HostDetailPage = () => {
               <tbody>
                 {host.houses.map((house) => (
                   <tr key={house.id}>
-                    <td>{house.title || "Không có tên"}</td>
-                    <td>{house.address || "Chưa cập nhật"}</td>
-                    <td>{house.houseType || "Không xác định"}</td>
-                    <td>
-                      {house.status === 'AVAILABLE' && '🟢 Có sẵn'}
-                      {house.status === 'RENTED' && '🔴 Đã thuê'}
-                      {house.status === 'INACTIVE' && '⚫ Không hoạt động'}
-                    </td>
+                                         <td>{house.title || "Không có tên"}</td>
+                     <td>{house.address || "Chưa cập nhật"}</td>
+                     <td>{getHouseTypeLabel(house.houseType) || "Không xác định"}</td>
+                     <td>
+                       {getHouseStatusLabel(house.status) || "Không xác định"}
+                     </td>
                     <td>{formatCurrency(house.price)}</td>
                   </tr>
                 ))}

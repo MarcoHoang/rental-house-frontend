@@ -29,6 +29,7 @@ import RentalDetailPage from "./RentalDetailPage";
 import ConfirmDialog from "../common/ConfirmDialog";
 import { useToast } from "../common/Toast";
 import UserDetailPage from "./UserDetailPage";
+import { getHouseStatusLabel } from "../../utils/constants";
 import HostApplicationDetailPage from "./HostApplicationDetailPage";
 import HostDetailPage from "./HostDetailPage";
 import HouseDetailPage from "./HouseDetailPage";
@@ -624,8 +625,8 @@ const AdminDashboard = () => {
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      available: { label: "Có sẵn", className: "available" },
-      rented: { label: "Đã thuê", className: "rented" },
+      available: { label: getHouseStatusLabel('AVAILABLE'), className: "available" },
+      rented: { label: getHouseStatusLabel('RENTED'), className: "rented" },
       maintenance: { label: "Bảo trì", className: "maintenance" },
     };
     return statusConfig[status] || statusConfig.available;
@@ -841,9 +842,9 @@ const DashboardContent = () => {
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      AVAILABLE: { label: "Có sẵn", className: "available" },
-      RENTED: { label: "Đã thuê", className: "rented" },
-      INACTIVE: { label: "Không hoạt động", className: "maintenance" },
+      AVAILABLE: { label: getHouseStatusLabel('AVAILABLE'), className: "available" },
+      RENTED: { label: getHouseStatusLabel('RENTED'), className: "rented" },
+      INACTIVE: { label: getHouseStatusLabel('INACTIVE'), className: "maintenance" },
       PENDING: { label: "Chờ duyệt", className: "pending" },
       APPROVED: { label: "Đã duyệt", className: "approved" },
       SCHEDULED: { label: "Đã lên lịch", className: "scheduled" },
@@ -905,7 +906,7 @@ const DashboardContent = () => {
           </div>
           <div className="stat-value">{stats.houses?.total || 0}</div>
           <div className="stat-change">
-            <span>Có sẵn: {stats.houses?.available || 0} | Đã thuê: {stats.houses?.rented || 0}</span>
+            <span>{getHouseStatusLabel('AVAILABLE')}: {stats.houses?.available || 0} | {getHouseStatusLabel('RENTED')}: {stats.houses?.rented || 0}</span>
           </div>
         </StatCard>
 

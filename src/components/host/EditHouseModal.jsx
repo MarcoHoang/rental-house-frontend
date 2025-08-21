@@ -7,6 +7,7 @@ import {
   HOUSE_TYPES, 
   HOUSE_STATUS, 
   HOUSE_TYPE_LABELS, 
+  HOUSE_STATUS_LABELS,
   VALIDATION_RULES 
 } from '../../utils/constants';
 
@@ -302,8 +303,7 @@ const EditHouseModal = ({ isOpen, onClose, house, onHouseUpdated }) => {
                   >
                     {Object.entries(HOUSE_STATUS).map(([key, value]) => (
                       <option key={key} value={value}>
-                        {key === 'AVAILABLE' ? 'Có sẵn' : 
-                         key === 'RENTED' ? 'Đã thuê' : 'Không hoạt động'}
+                        {HOUSE_STATUS_LABELS[value] || key}
                       </option>
                     ))}
                   </select>

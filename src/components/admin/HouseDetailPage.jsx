@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useToast } from "../common/Toast";
 import ImageGallery from "../house/ImageGallery";
+import { getHouseTypeLabel, getHouseStatusLabel } from "../../utils/constants";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -292,16 +293,24 @@ const HouseDetailPage = () => {
   };
 
   const getStatusDisplay = (status) => {
+    const statusLabel = getHouseStatusLabel(status);
+    let className = 'inactive';
+    
     switch (status) {
       case 'AVAILABLE':
-        return { text: 'Có sẵn', className: 'available' };
+        className = 'available';
+        break;
       case 'RENTED':
-        return { text: 'Đã thuê', className: 'rented' };
+        className = 'rented';
+        break;
       case 'INACTIVE':
-        return { text: 'Không hoạt động', className: 'inactive' };
+        className = 'inactive';
+        break;
       default:
-        return { text: 'Không xác định', className: 'inactive' };
+        className = 'inactive';
     }
+    
+    return { text: statusLabel, className };
   };
 
   if (loading) {
