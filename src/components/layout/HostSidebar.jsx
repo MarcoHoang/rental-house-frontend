@@ -18,38 +18,65 @@ import { useToast } from '../common/Toast';
 import HostNotificationBadge from '../host/HostNotificationBadge';
 
 const SidebarContainer = styled.div`
-  width: 250px;
-  background: white;
-  border-right: 1px solid #e2e8f0;
+  width: 280px;
+  background: #F7FAFC;
+  border-right: 1px solid #E2E8F0;
   height: 100vh;
   position: fixed;
   left: 0;
   top: 0;
   z-index: 40;
-  padding-top: 64px; // Để tránh bị che bởi header
+  padding-top: 70px; // Để tránh bị che bởi header
+  backdrop-filter: blur(10px);
+  
+  @media (max-width: 768px) {
+    padding-top: 60px;
+    width: 250px;
+  }
 `;
 
 const SidebarContent = styled.div`
-  padding: 1.5rem 0;
+  padding: 2rem 0;
+  height: 100%;
+  overflow-y: auto;
+  
+  /* Custom scrollbar */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #E2E8F0;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #CBD5E0;
+    border-radius: 3px;
+    
+    &:hover {
+      background: #A0AEC0;
+    }
+  }
 `;
 
 const SidebarHeader = styled.div`
-  padding: 0 1.5rem 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
-  margin-bottom: 1rem;
+  padding: 0 2rem 2rem;
+  border-bottom: 1px solid #E2E8F0;
+  margin-bottom: 1.5rem;
 
   h3 {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #6b7280;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #2D3748;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.1em;
     margin: 0;
   }
 `;
 
 const NavSection = styled.div`
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 
   &:last-child {
     margin-bottom: 0;
@@ -59,61 +86,132 @@ const NavSection = styled.div`
 const NavTitle = styled.h4`
   font-size: 0.75rem;
   font-weight: 600;
-  color: #6b7280;
+  color: #718096;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin: 0 0 0.5rem 1.5rem;
+  letter-spacing: 0.1em;
+  margin: 0 0 1rem 2rem;
 `;
 
 const NavItem = styled(Link)`
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.75rem 1.5rem;
-  color: ${props => props.$active ? '#1e40af' : '#4b5563'};
+  padding: 0.875rem 1.25rem;
+  color: ${(props) => (props.$active ? "#4299E1" : "#2D3748")};
   text-decoration: none;
+  font-weight: 600;
   font-size: 0.875rem;
-  font-weight: ${props => props.$active ? '500' : '400'};
-  background: ${props => props.$active ? '#eff6ff' : 'transparent'};
-  border-right: ${props => props.$active ? '3px solid #1e40af' : 'none'};
-  transition: all 0.2s;
+  background: ${(props) => (props.$active ? "#EDF2F7" : "transparent")};
+  border-right: ${(props) => (props.$active ? "3px solid #4299E1" : "none")};
+  transition: all 0.3s ease;
   position: relative;
-
-  &:hover {
-    background: ${props => props.$active ? '#eff6ff' : '#f9fafb'};
-    color: ${props => props.$active ? '#1e40af' : '#1f2937'};
+  overflow: visible;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(66, 153, 225, 0.1), transparent);
+    transition: left 0.5s;
   }
-
-  .icon {
-    width: 1.25rem;
+  
+  &:hover {
+    background: #EDF2F7;
+    color: #4299E1;
+    transform: translateX(4px);
+    
+    &::before {
+      left: 100%;
+    }
+  }
+  
+  .notification-badge {
+    background: #ef4444;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.125rem 0.375rem;
+    border-radius: 9999px;
+    min-width: 1.25rem;
     height: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+    position: relative;
+    z-index: 10;
   }
 `;
 
 const LogoutButton = styled.button`
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1.5rem;
-  color: #ef4444;
+  gap: 1rem;
+  padding: 1rem 2rem;
+  color: #E53E3E;
   text-decoration: none;
   font-size: 0.875rem;
-  font-weight: 400;
+  font-weight: 500;
   background: transparent;
   border: none;
   width: 100%;
   text-align: left;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(229, 62, 62, 0.1), transparent);
+    transition: left 0.5s;
+  }
 
   &:hover {
-    background: #fef2f2;
-    color: #dc2626;
+    background: #FED7D7;
+    color: #C53030;
+    transform: translateX(8px);
+    
+    &::before {
+      left: 100%;
+    }
   }
 
   .icon {
     width: 1.25rem;
     height: 1.25rem;
+    flex-shrink: 0;
+  }
+`;
+
+const SidebarFooter = styled.div`
+  padding: 2rem;
+  border-top: 1px solid #E2E8F0;
+  margin-top: auto;
+`;
+
+const UserInfo = styled.div`
+  text-align: center;
+  color: #4A5568;
+  
+  .user-name {
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  .user-role {
+    font-size: 0.75rem;
+    opacity: 0.7;
   }
 `;
 

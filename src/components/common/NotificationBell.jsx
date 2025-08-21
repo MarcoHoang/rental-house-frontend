@@ -12,21 +12,24 @@ const NotificationBellContainer = styled.div`
 `;
 
 const BellButton = styled.button`
-  background: none;
-  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.2);
   cursor: pointer;
   padding: 0.5rem;
   border-radius: 50%;
-  color: #6b7280;
-  transition: all 0.2s;
+  color: white;
+  transition: all 0.3s ease;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+  backdrop-filter: blur(10px);
 
   &:hover {
-    background: #f3f4f6;
-    color: #374151;
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   }
 
   svg {
