@@ -147,8 +147,26 @@ const ForgotPassword = () => {
       return;
     }
 
+    // Validation email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setMessage({ text: "Email không hợp lệ. Vui lòng nhập email đúng định dạng (ví dụ: example@gmail.com)", type: "error" });
+      return;
+    }
+
     setIsLoading(true);
     try {
+      // Bước 1: Check email có tồn tại trong database không
+      const checkResponse = await authService.checkEmailExists(email);
+      if (!checkResponse.data) {
+        setMessage({
+          text: "Email không tồn tại trong hệ thống. Vui lòng kiểm tra lại email hoặc đăng ký tài khoản mới.",
+          type: "error",
+        });
+        return;
+      }
+
+      // Bước 2: Nếu email tồn tại, gửi OTP
       await authService.requestPasswordReset(email);
       setEmailSent(true);
       setStep(2); // Chuyển đến bước kiểm tra email
@@ -257,8 +275,25 @@ const ForgotPassword = () => {
       return;
     }
 
+    // Validation email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setMessage({ text: "Email không hợp lệ. Vui lòng nhập email đúng định dạng (ví dụ: example@gmail.com)", type: "error" });
+      return;
+    }
+
     setIsLoading(true);
     try {
+      // Check email trước khi gửi lại
+      const checkResponse = await authService.checkEmailExists(email);
+      if (!checkResponse.data) {
+        setMessage({
+          text: "Email không tồn tại trong hệ thống. Vui lòng kiểm tra lại email hoặc đăng ký tài khoản mới.",
+          type: "error",
+        });
+        return;
+      }
+
       await authService.requestPasswordReset(email);
       setMessage({
         text: "Mã OTP 6 số đã được gửi lại đến email của bạn",
@@ -301,9 +336,7 @@ const ForgotPassword = () => {
            <p>Vui lòng làm theo các bước để đặt lại mật khẩu</p>
          </ForgotPasswordHeader>
 
-         {message.text && (
-           <ErrorMessage type={message.type} message={message.text} />
-         )}
+         {/* Thông báo sẽ hiển thị ở dưới step indicator */}
 
         {/* Step Indicator */}
         <div
@@ -379,8 +412,8 @@ const ForgotPassword = () => {
           ))}
         </div>
 
-        {/* Hộp thông báo */}
-        {message.text && (
+        {/* Hộp thông báo - chỉ hiển thị ở step 1 */}
+        {step === 1 && message.text && (
           <div
             style={{
               background: message.type === "error" ? "#fed7d7" : "#c6f6d5",
@@ -423,11 +456,6 @@ const ForgotPassword = () => {
 
         {step === 2 && (
           <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-            <SuccessMessage>
-              <Mail color="white" size={24} />
-              Email đã được gửi!
-            </SuccessMessage>
-
             <InfoMessage>
               <Mail color="white" size={24} />
               📧 Hướng dẫn kiểm tra email:

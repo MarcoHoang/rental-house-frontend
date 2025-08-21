@@ -686,6 +686,19 @@ const authService = {
         }
     },
 
+    // Check email exists
+    checkEmailExists: async (email) => {
+        try {
+            const response = await api.get('/users/check-email', {
+                params: { email }
+            });
+            return response.data;
+        } catch (error) {
+            logApiError(error, 'checkEmailExists');
+            throw error;
+        }
+    },
+
     // Request password reset (alias cho forgotPassword)
     requestPasswordReset: async (email) => {
         try {
