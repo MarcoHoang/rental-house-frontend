@@ -233,29 +233,16 @@ const getAvatarImageUrl = (avatarUrl) => {
     return null;
   }
 
-  // Nếu đã là URL đầy đủ từ backend (ví dụ: http://localhost:8080/api/files/avatar/filename.jpg)
+  // Nếu đã là URL đầy đủ từ backend
   if (avatarUrl.startsWith("http://") || avatarUrl.startsWith("https://")) {
     console.log("Avatar URL is already full URL:", avatarUrl);
     return avatarUrl;
   }
 
-  // Nếu là filename đơn giản (ví dụ: "user123.jpg")
-  if (!avatarUrl.includes("/")) {
-    const url = `http://localhost:8080/api/files/avatar/${avatarUrl}`;
-    console.log("Avatar URL is simple filename, generated URL:", url);
-    return url;
-  }
-
-  // Nếu có dạng "avatar/filename.jpg"
-  if (avatarUrl.startsWith("avatar/")) {
-    const url = `http://localhost:8080/api/files/${avatarUrl}`;
-    console.log("Avatar URL starts with avatar/, generated URL:", url);
-    return url;
-  }
-
-  // Trường hợp khác, thử trực tiếp
-  const url = `http://localhost:8080/api/files/avatar/${avatarUrl}`;
-  console.log("Avatar URL fallback, generated URL:", url);
+  // Nếu là filename đơn giản hoặc có đường dẫn tương đối
+  const baseUrl = import.meta.env.DEV ? "http://localhost:8080" : "";
+  const url = `${baseUrl}/api/files/avatar/${avatarUrl.replace(/^avatar\//, '')}`;
+  console.log("Generated avatar URL:", url);
   return url;
 };
 
@@ -272,12 +259,15 @@ const UserDetailPage = () => {
       setError(null);
       setAvatarError(false);
       try {
-        const data = await usersApi.getById(userId);
+        console.log("Fetching user details for userId:", userId);
+        const data = await usersApi.getUserDetails(userId);
         console.log("User data from backend:", data);
         console.log("Avatar URL from backend:", data.avatarUrl);
         setUser(data);
       } catch (err) {
         console.error("Error fetching user:", err);
+        console.error("Error response:", err.response);
+        console.error("Error message:", err.message);
         setError("Không thể tải thông tin chi tiết người dùng.");
       } finally {
         setLoading(false);
@@ -349,7 +339,7 @@ const UserDetailPage = () => {
             user.avatarUrl &&
             user.avatarUrl !== "/images/default-avatar.png" ? (
               <Avatar
-                src={user.avatarUrl}
+                src={getAvatarImageUrl(user.avatarUrl)}
                 alt={`Avatar của ${
                   user.fullName || user.username || user.email
                 }`}

@@ -175,11 +175,14 @@ export const usersApi = {
 
   getUserDetails: async (userId) => {
     try {
+      console.log("Calling getUserDetails API for userId:", userId);
       const response = await apiClient.get(
         `${API_PREFIX}/admin/users/${userId}`
       );
+      console.log("getUserDetails API response:", response.data);
       return response.data.data;
     } catch (error) {
+      console.error("getUserDetails API error:", error);
       logApiError(error, "getUserDetails");
       throw error;
     }
