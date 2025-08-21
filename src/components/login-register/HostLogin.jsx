@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import styled from "styled-components";
-import { LogIn, Mail, Lock, Home, CheckCircle, Building2 } from "lucide-react";
+import { Building2, Mail, Lock, Home, CheckCircle } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { useForm, validationRules } from "../../hooks/useForm";
 import FormField from "../common/FormField";
@@ -14,16 +14,17 @@ const LoginContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1e40af 0%, #3730a3 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 1rem;
 `;
 
 const LoginCard = styled.div`
-  background: white;
-  padding: 2.5rem;
-  border-radius: 1rem;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 2rem;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   width: 100%;
   max-width: 480px;
   position: relative;
@@ -36,13 +37,13 @@ const LoginCard = styled.div`
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #1e40af, #3730a3);
+    background: linear-gradient(90deg, #667eea, #764ba2);
   }
 `;
 
 const LoginHeader = styled.div`
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 
   .icon-wrapper {
     display: inline-flex;
@@ -50,15 +51,16 @@ const LoginHeader = styled.div`
     justify-content: center;
     width: 4rem;
     height: 4rem;
-    background: linear-gradient(135deg, #1e40af, #3730a3);
+    background: linear-gradient(135deg, #667eea, #764ba2);
     border-radius: 50%;
     margin-bottom: 1rem;
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.25);
   }
 
   h1 {
     color: #1a202c;
     font-size: 1.75rem;
-    font-weight: bold;
+    font-weight: 700;
     margin: 0 0 0.5rem 0;
   }
 
@@ -72,43 +74,44 @@ const LoginHeader = styled.div`
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    background: linear-gradient(135deg, #1e40af, #3730a3);
+    background: linear-gradient(135deg, #667eea, #764ba2);
     color: white;
     padding: 0.5rem 1rem;
     border-radius: 2rem;
     font-size: 0.875rem;
-    font-weight: 500;
+    font-weight: 600;
     margin-top: 0.5rem;
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.25);
   }
 `;
 
 const Form = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 0.75rem;
 `;
 
 const FooterLinks = styled.div`
   text-align: center;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
   border-top: 1px solid #e2e8f0;
 
   p {
-    margin: 0 0 1rem 0;
+    margin: 0 0 0.75rem 0;
     color: #718096;
     font-size: 0.875rem;
   }
 
   a {
-    color: #1e40af;
+    color: #667eea;
     text-decoration: none;
     font-size: 0.875rem;
-    font-weight: 500;
-    transition: color 0.2s;
+    font-weight: 600;
+    transition: all 0.2s ease-in-out;
 
     &:hover {
-      color: #1e3a8a;
+      color: #5a67d8;
       text-decoration: underline;
     }
   }
@@ -242,7 +245,7 @@ const HostLogin = () => {
           <Link to="/forgot-password">Quên mật khẩu?</Link>
           <br />
           <Link to="/login">
-            <LogIn size={16} style={{ marginRight: '0.5rem' }} />
+            <Home size={16} style={{ marginRight: '0.5rem' }} />
             Đăng nhập người dùng thường
           </Link>
           <br />

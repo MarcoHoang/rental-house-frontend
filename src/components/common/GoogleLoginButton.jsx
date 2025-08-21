@@ -3,7 +3,7 @@ import styled from 'styled-components';
 
 const GoogleButtonContainer = styled.div`
   width: 100%;
-  margin: 1rem 0;
+  margin: 0.5rem 0;
 `;
 
 const GoogleButton = styled.button`
@@ -12,57 +12,85 @@ const GoogleButton = styled.button`
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  padding: 0.75rem 1rem;
+  padding: 0.875rem 1.5rem;
   background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   color: #374151;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  min-height: 3rem;
+  position: relative;
+  overflow: hidden;
 
   &:hover {
     background: #f9fafb;
     border-color: #d1d5db;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
   }
 
   &:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
   }
 
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+    transform: none;
   }
 
   .google-icon {
     width: 18px;
     height: 18px;
   }
+
+  /* Thêm hiệu ứng gradient border khi hover */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+  }
+
+  &:hover::before {
+    transform: scaleX(1);
+  }
 `;
 
 const Divider = styled.div`
-  display: flex;
-  align-items: center;
-  margin: 1.5rem 0;
-  color: #6b7280;
+  text-align: center;
+  margin: 0.5rem 0;
+  position: relative;
   font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
 
-  &::before,
-  &::after {
+  &::before {
     content: '';
-    flex: 1;
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
     height: 1px;
     background: #e5e7eb;
   }
 
   span {
+    background: white;
     padding: 0 1rem;
+    position: relative;
+    z-index: 1;
   }
 `;
 
@@ -71,6 +99,7 @@ const ErrorMessage = styled.div`
   font-size: 0.875rem;
   margin-top: 0.5rem;
   text-align: center;
+  font-weight: 500;
 `;
 
 const GoogleLoginButton = ({ onSuccess, onError, disabled = false }) => {

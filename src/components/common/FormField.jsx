@@ -2,14 +2,14 @@ import React from 'react';
 import styled from 'styled-components';
 
 const FieldContainer = styled.div`
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.75rem;
 `;
 
 const Label = styled.label`
   display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #4a5568;
+  margin-bottom: 0.375rem;
+  font-weight: 600;
+  color: #374151;
   font-size: 0.875rem;
 
   .required {
@@ -26,16 +26,16 @@ const StyledInput = styled.input`
   width: 100%;
   padding: 0.875rem 1rem 0.875rem 2.75rem;
   border: 2px solid ${props => props.hasError ? '#e53e3e' : '#e2e8f0'};
-  border-radius: 0.5rem;
+  border-radius: 12px;
   font-size: 1rem;
-  transition: all 0.2s;
+  transition: all 0.2s ease-in-out;
   background: #f7fafc;
 
   &:focus {
     outline: none;
-    border-color: #3182ce;
+    border-color: #667eea;
     background: white;
-    box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
   }
 
   &:disabled {
@@ -44,7 +44,7 @@ const StyledInput = styled.input`
   }
 
   &::placeholder {
-    color: #a0aec0;
+    color: #9ca3af;
   }
 `;
 
@@ -53,7 +53,7 @@ const IconWrapper = styled.div`
   left: 0.875rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #a0aec0;
+  color: #9ca3af;
   width: 1.25rem;
   height: 1.25rem;
   display: flex;
@@ -66,11 +66,11 @@ const ToggleButton = styled.button`
   right: 0.875rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #a0aec0;
+  color: #9ca3af;
   cursor: pointer;
   width: 1.25rem;
   height: 1.25rem;
-  transition: color 0.2s;
+  transition: color 0.2s ease-in-out;
   background: none;
   border: none;
   padding: 0;
@@ -87,6 +87,7 @@ const ErrorMessage = styled.p`
   margin-top: 0.5rem;
   font-size: 0.875rem;
   color: #e53e3e;
+  font-weight: 500;
 `;
 
 const FormField = ({

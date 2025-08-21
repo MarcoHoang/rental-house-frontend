@@ -2,9 +2,10 @@ import React from 'react';
 import styled from 'styled-components';
 
 const MessageContainer = styled.div`
-  padding: 0.875rem 1rem;
-  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
   font-size: 0.875rem;
+  font-weight: 500;
   text-align: center;
   margin-bottom: 1rem;
   border-left: 4px solid;
@@ -12,27 +13,31 @@ const MessageContainer = styled.div`
   ${props => {
     if (props.type === 'error') {
       return `
-        background: #fed7d7;
-        color: #742a2a;
+        background: #fef2f2;
+        color: #991b1b;
         border-left-color: #e53e3e;
+        box-shadow: 0 2px 4px rgba(239, 68, 68, 0.1);
       `;
     } else if (props.type === 'success') {
       return `
-        background: #c6f6d5;
-        color: #22543d;
+        background: #f0fdf4;
+        color: #166534;
         border-left-color: #38a169;
+        box-shadow: 0 2px 4px rgba(56, 161, 105, 0.1);
       `;
     } else if (props.type === 'warning') {
       return `
-        background: #fef5e7;
-        color: #744210;
+        background: #fffbeb;
+        color: #92400e;
         border-left-color: #d69e2e;
+        box-shadow: 0 2px 4px rgba(214, 158, 46, 0.1);
       `;
     } else {
       return `
-        background: #e2e8f0;
-        color: #4a5568;
-        border-left-color: #a0aec0;
+        background: #f8fafc;
+        color: #475569;
+        border-left-color: #94a3b8;
+        box-shadow: 0 2px 4px rgba(148, 163, 184, 0.1);
       `;
     }
   }}

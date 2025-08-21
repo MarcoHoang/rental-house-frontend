@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import styled from "styled-components";
 import {
-  UserPlus,
+  UserPlus2,
   User,
   Phone,
   Mail,
@@ -30,11 +30,12 @@ const RegisterContainer = styled.div`
 `;
 
 const RegisterCard = styled.div`
-  background: white;
-  padding: 2.5rem;
-  border-radius: 1rem;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 2rem;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   width: 100%;
   max-width: 480px;
   position: relative;
@@ -47,13 +48,13 @@ const RegisterCard = styled.div`
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #3182ce, #667eea);
+    background: linear-gradient(90deg, #667eea, #764ba2);
   }
 `;
 
 const RegisterHeader = styled.div`
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 
   .icon-wrapper {
     display: inline-flex;
@@ -61,15 +62,16 @@ const RegisterHeader = styled.div`
     justify-content: center;
     width: 4rem;
     height: 4rem;
-    background: linear-gradient(135deg, #3182ce, #667eea);
+    background: linear-gradient(135deg, #667eea, #764ba2);
     border-radius: 50%;
     margin-bottom: 1rem;
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.25);
   }
 
   h1 {
     color: #1a202c;
     font-size: 1.75rem;
-    font-weight: bold;
+    font-weight: 700;
     margin: 0 0 0.5rem 0;
   }
 
@@ -83,13 +85,13 @@ const RegisterHeader = styled.div`
 const Form = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 0.75rem;
 `;
 
 const FooterLinks = styled.div`
   text-align: center;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
   border-top: 1px solid #e2e8f0;
 
   p {
@@ -99,13 +101,13 @@ const FooterLinks = styled.div`
   }
 
   a {
-    color: #3182ce;
+    color: #667eea;
     text-decoration: none;
-    font-weight: 500;
-    transition: color 0.2s;
+    font-weight: 600;
+    transition: all 0.2s ease-in-out;
 
     &:hover {
-      color: #2c5aa0;
+      color: #5a67d8;
       text-decoration: underline;
     }
   }
@@ -118,7 +120,7 @@ const ValidationErrorContainer = styled.div`
 const ValidationErrorBox = styled.div`
   background: #fef2f2;
   border: 1px solid #fecaca;
-  border-radius: 0.375rem;
+  border-radius: 12px;
   padding: 1rem;
   display: flex;
   align-items: flex-start;
@@ -141,7 +143,7 @@ const ErrorContent = styled.div`
 
 const ErrorTitle = styled.h3`
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   color: #991b1b;
   margin: 0 0 0.5rem 0;
 `;
@@ -286,7 +288,7 @@ const Register = () => {
       <RegisterCard>
         <RegisterHeader>
           <div className="icon-wrapper">
-            <UserPlus color="white" size={32} />
+            <UserPlus2 color="white" size={32} />
           </div>
           <h1>Đăng ký tài khoản</h1>
           <p>Tạo tài khoản mới để bắt đầu</p>

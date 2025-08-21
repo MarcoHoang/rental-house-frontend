@@ -6,13 +6,13 @@ const StyledButton = styled.button`
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.75rem 1rem;
+  padding: 0.875rem 1.5rem;
   font-size: 1rem;
   font-weight: 600;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease-in-out;
   min-height: 3rem;
   text-decoration: none;
   
@@ -26,6 +26,7 @@ const StyledButton = styled.button`
           
           &:hover:not(:disabled) {
             background: #cbd5e0;
+            transform: translateY(-1px);
           }
         `;
       case 'danger':
@@ -35,23 +36,30 @@ const StyledButton = styled.button`
           
           &:hover:not(:disabled) {
             background: #c53030;
+            transform: translateY(-1px);
           }
         `;
       case 'outline':
         return `
           background: transparent;
-          color: #3182ce;
-          border: 2px solid #3182ce;
+          color: #667eea;
+          border: 2px solid #667eea;
           
           &:hover:not(:disabled) {
-            background: #3182ce;
+            background: #667eea;
             color: white;
+            transform: translateY(-1px);
           }
         `;
       default:
         return `
-          background: linear-gradient(135deg, #3182ce, #667eea);
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           color: white;
+          
+          &:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.25);
+          }
         `;
     }
   }}
@@ -61,15 +69,17 @@ const StyledButton = styled.button`
     switch (props.size) {
       case 'small':
         return `
-          padding: 0.5rem 0.75rem;
+          padding: 0.5rem 1rem;
           font-size: 0.875rem;
           min-height: 2.5rem;
+          border-radius: 8px;
         `;
       case 'large':
         return `
-          padding: 1rem 1.5rem;
+          padding: 1rem 2rem;
           font-size: 1.125rem;
           min-height: 3.5rem;
+          border-radius: 16px;
         `;
       default:
         return '';
