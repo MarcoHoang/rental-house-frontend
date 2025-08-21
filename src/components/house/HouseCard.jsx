@@ -198,7 +198,7 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete, fromPage }) =
         : 'border-gray-100'
     }`}>
       {/* Hình ảnh - Chiều cao cố định */}
-      <div className="relative card-image">
+      <div className="relative card-image h-48">
         <img
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           src={displayImage}
@@ -227,14 +227,14 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete, fromPage }) =
       {/* Nội dung - Flex grow để chiếm hết không gian còn lại */}
       <div className="p-4 flex-1 flex flex-col">
         {/* Tiêu đề - Chiều cao cố định */}
-        <h3 className="text-base font-bold text-gray-800 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors duration-200 card-title">
+        <h3 className="text-base font-bold text-gray-800 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors duration-200 card-title min-h-[3rem]">
           {displayName}
         </h3>
         
         {/* Thông tin cơ bản - Chiều cao cố định */}
         <div className="space-y-2 mb-3 flex-1">
           {/* Địa chỉ - Chiều cao cố định */}
-          <div className="flex items-start gap-2 text-gray-600 card-address">
+          <div className="flex items-start gap-2 text-gray-600 card-address min-h-[2.5rem]">
             <MapPin size={16} className="mt-0.5 flex-shrink-0" />
             <span className="text-sm line-clamp-2 leading-relaxed">
               {address || 'Chưa có địa chỉ'}
@@ -242,7 +242,7 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete, fromPage }) =
           </div>
           
           {/* Diện tích và loại nhà - Chiều cao cố định */}
-          <div className="flex items-center justify-between text-sm card-info">
+          <div className="flex items-center justify-between text-sm card-info min-h-[2rem]">
             <div className="flex items-center gap-2 text-gray-600">
               {area ? (
                 <React.Fragment>
@@ -266,7 +266,7 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete, fromPage }) =
           </div>
           
                   {/* Thông tin chủ nhà - Chiều cao cố định */}
-        <div className="flex items-center gap-3 text-sm text-gray-600 pt-2 border-t border-gray-100 card-host">
+        <div className="flex items-center gap-3 text-sm text-gray-600 pt-2 border-t border-gray-100 card-host min-h-[2.5rem]">
             {hostName ? (
               <React.Fragment>
                 <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden shadow-md flex-shrink-0">
@@ -299,7 +299,7 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete, fromPage }) =
         </div>
 
         {/* Giá tiền - Chiều cao cố định */}
-        <div className="flex items-center gap-2 mb-3 card-price">
+        <div className="flex items-center gap-2 mb-3 card-price min-h-[2rem]">
           <DollarSign size={18} className="text-green-600 flex-shrink-0" />
           <h4 className="text-green-600 font-bold text-lg truncate">
             {formatPrice(price)}
@@ -307,7 +307,7 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete, fromPage }) =
         </div>
 
         {/* Hiển thị số lượng yêu thích - Chiều cao cố định */}
-        <div className="flex items-center gap-2 mb-3 text-sm text-gray-600 card-favorites">
+        <div className="flex items-center gap-2 mb-3 text-sm text-gray-600 card-favorites min-h-[1.5rem]">
           {house.favoriteCount !== undefined && house.favoriteCount > 0 ? (
             <React.Fragment>
               <Heart size={16} className="text-red-500 flex-shrink-0" />
@@ -321,7 +321,7 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete, fromPage }) =
         {/* Nút xem chi tiết và các nút hành động quản lý */}
         {showActions ? (
           // Khi ở trang quản lý chủ nhà - hiển thị tất cả nút trên 1 hàng
-          <div className="flex gap-2 card-actions">
+          <div className="flex gap-2 card-actions min-h-[3rem]">
             {/* Nút xem chi tiết */}
             <Link
               to={`/houses/${id}`}
@@ -380,7 +380,7 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete, fromPage }) =
           </div>
         ) : (
           // Khi ở trang chủ - hiển thị thời gian đăng bài và nút yêu thích
-          <div className="card-actions">
+          <div className="card-actions min-h-[2.5rem]">
             <div className="flex items-center justify-between">
               {/* Thời gian đăng bài */}
               <div className="text-sm text-gray-500 font-medium">

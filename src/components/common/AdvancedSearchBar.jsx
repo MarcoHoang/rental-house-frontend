@@ -22,12 +22,12 @@ const SearchContainer = styled.div`
 
 const SearchForm = styled.form`
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  grid-template-columns: repeat(4, 1fr) auto;
   gap: 1rem;
   align-items: end;
 
   @media (max-width: 1200px) {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
   
   @media (max-width: 768px) {
@@ -39,6 +39,7 @@ const SearchField = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  min-width: 0; /* Đảm bảo flex item có thể co lại */
 `;
 
 const Label = styled.label`
@@ -64,6 +65,9 @@ const baseInputStyles = `
   
   display: flex;
   align-items: center;
+  min-width: 0; /* Đảm bảo input có thể co lại */
+  overflow: hidden; /* Ẩn nội dung tràn */
+  text-overflow: ellipsis; /* Hiển thị dấu ... khi text quá dài */
 
   &:focus {
     outline: none;
@@ -87,6 +91,7 @@ const Select = styled.select`
   background-repeat: no-repeat;
   background-size: 1.25em 1.25em;
   padding-right: 2.5rem;
+  white-space: nowrap; /* Ngăn text xuống dòng */
   
   &:invalid {
     color: #9ca3af;
@@ -129,6 +134,7 @@ const InputWrapper = styled.div`
   display: flex;
   align-items: center;
   width: 100%;
+  min-width: 0; /* Đảm bảo wrapper có thể co lại */
 
   svg {
     position: absolute;
@@ -139,6 +145,7 @@ const InputWrapper = styled.div`
     width: 20px;
     height: 20px;
     pointer-events: none;
+    flex-shrink: 0; /* Icon không bị co lại */
   }
 `;
 
