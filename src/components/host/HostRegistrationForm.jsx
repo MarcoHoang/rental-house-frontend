@@ -22,22 +22,21 @@ const ModalOverlay = styled.div`
   bottom: 0;
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
+  z-index: 9999;
 `;
 
 const ModalContent = styled.div`
+  position: fixed;
+  top: 50vh;
+  left: 50vw;
+  transform: translate(-50%, -50%);
   background: white;
   border-radius: 1rem;
-  width: 100%;
+  width: calc(100vw - 2rem);
   max-width: 600px;
-  max-height: 90vh;
+  max-height: 80vh;
   overflow-y: auto;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  position: relative;
 
   &::before {
     content: "";
@@ -326,7 +325,7 @@ const HostRegistrationForm = ({ isOpen, onClose, onSubmit }) => {
     nationalId: "",
     address: "",
     phone: "",
-    submissionDate: new Date().toISOString().split("T")[0],
+    submissionDate: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }),
   });
   const [userProfile, setUserProfile] = useState(null);
   const [frontPreviewUrl, setFrontPreviewUrl] = useState(null);

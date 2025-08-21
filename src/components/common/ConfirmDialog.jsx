@@ -9,9 +9,6 @@ const Overlay = styled.div`
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   z-index: 10000;
   animation: fadeIn 0.2s ease-in-out;
 
@@ -26,21 +23,25 @@ const Overlay = styled.div`
 `;
 
 const Dialog = styled.div`
+  position: fixed;
+  top: 50vh;
+  left: 50vw;
+  transform: translate(-50%, -50%);
   background: white;
   border-radius: 12px;
   padding: 24px;
+  width: calc(100vw - 2rem);
   max-width: 400px;
-  width: 90%;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   animation: slideIn 0.2s ease-in-out;
 
   @keyframes slideIn {
     from {
-      transform: scale(0.95);
+      transform: translate(-50%, -50%) scale(0.95);
       opacity: 0;
     }
     to {
-      transform: scale(1);
+      transform: translate(-50%, -50%) scale(1);
       opacity: 1;
     }
   }
@@ -63,7 +64,7 @@ const IconWrapper = styled.div`
   background: ${props => {
     switch (props.$type) {
       case 'danger': return '#fef2f2';
-      case 'warning': return '#fffbeb';
+      case 'warning': return '#fef2f2'; // Đổi từ màu cam sang màu đỏ nhạt
       case 'info': return '#eff6ff';
       default: return '#f0fdf4';
     }
@@ -75,7 +76,7 @@ const IconWrapper = styled.div`
     color: ${props => {
       switch (props.$type) {
         case 'danger': return '#dc2626';
-        case 'warning': return '#d97706';
+        case 'warning': return '#dc2626'; // Đổi từ cam sang đỏ
         case 'info': return '#2563eb';
         default: return '#16a34a';
       }
@@ -153,7 +154,7 @@ const Button = styled.button`
     background: ${props => {
       switch (props.$type) {
         case 'danger': return '#dc2626';
-        case 'warning': return '#d97706';
+        case 'warning': return '#dc2626'; // Đổi từ cam sang đỏ
         case 'info': return '#2563eb';
         default: return '#16a34a';
       }
@@ -164,7 +165,7 @@ const Button = styled.button`
       background: ${props => {
         switch (props.$type) {
           case 'danger': return '#b91c1c';
-          case 'warning': return '#b45309';
+          case 'warning': return '#b91c1c'; // Đổi từ cam sang đỏ
           case 'info': return '#1d4ed8';
           default: return '#15803d';
         }

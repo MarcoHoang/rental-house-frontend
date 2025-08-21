@@ -9,18 +9,18 @@ const ModalOverlay = styled.div`
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
+  z-index: 9999;
 `;
 
 const ModalContent = styled.div`
+  position: fixed;
+  top: 50vh;
+  left: 50vw;
+  transform: translate(-50%, -50%);
   background: white;
   border-radius: 12px;
+  width: calc(100vw - 2rem);
   max-width: 400px;
-  width: 100%;
   padding: 2rem;
   text-align: center;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);

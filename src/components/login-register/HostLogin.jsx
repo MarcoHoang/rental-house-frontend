@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import styled from "styled-components";
+
 import { Building2, Mail, Lock, Home, CheckCircle } from "lucide-react";
+
 import { useAuth } from "../../hooks/useAuth";
 import { useForm, validationRules } from "../../hooks/useForm";
 import FormField from "../common/FormField";
