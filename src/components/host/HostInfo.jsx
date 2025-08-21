@@ -278,11 +278,12 @@ const HostInfo = () => {
       </Header>
 
       <AvatarSection>
-        {hostInfo.avatar ? (
-          <Avatar src={hostInfo.avatar} alt="Avatar" />
-        ) : (
-          <Avatar src="/default-avatar.png" alt="Default Avatar" />
-        )}
+        <Avatar 
+          src={hostInfo.avatar} 
+          alt={hostInfo.fullName || hostInfo.username || "Host Avatar"}
+          name={hostInfo.fullName || hostInfo.username}
+          size="80px"
+        />
         <AvatarInfo>
           <AvatarName>{hostInfo.fullName || hostInfo.username}</AvatarName>
           <AvatarEmail>{hostInfo.email}</AvatarEmail>

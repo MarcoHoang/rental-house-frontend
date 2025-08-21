@@ -17,6 +17,7 @@ import hostApi from "../../api/hostApi";
 import authService from "../../api/authService";
 import HostPageWrapper from "../../components/layout/HostPageWrapper";
 import { getAvatarUrl } from "../../utils/avatarHelper";
+import Avatar from "../../components/common/Avatar";
 
 const ProfileContainer = styled.div`
   min-height: 100vh;
@@ -110,18 +111,16 @@ const AvatarSection = styled.div`
     margin-bottom: 1rem;
   }
   
-  .avatar {
-    width: 160px;
-    height: 160px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid white;
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-    transition: all 0.3s ease;
+  .avatar-container > div {
+    width: 160px !important;
+    height: 160px !important;
+    border: 3px solid white !important;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15) !important;
+    transition: all 0.3s ease !important;
     
     &:hover {
-      transform: scale(1.05);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      transform: scale(1.05) !important;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2) !important;
     }
   }
   
@@ -569,12 +568,11 @@ const HostProfilePage = () => {
           
           <AvatarSection>
             <div className="avatar-container" style={{ position: 'relative' }}>
-              <img 
-                src={avatarPreview} 
-                alt="Avatar" 
-                className="avatar" 
-                onLoad={() => console.log('HostProfilePage - Avatar image loaded successfully:', avatarPreview)}
-                onError={(e) => console.error('HostProfilePage - Avatar image failed to load:', avatarPreview, e)}
+              <Avatar
+                src={avatarPreview}
+                alt={formData.fullName || "Host Avatar"}
+                name={formData.fullName}
+                size="120px"
               />
               {formData.avatarFile && (
                 <div

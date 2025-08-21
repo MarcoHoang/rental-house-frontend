@@ -17,7 +17,7 @@ const API_BASE_URL = import.meta.env.DEV
  */
 export const getAvatarUrl = (fileUrl) => {
   if (!fileUrl) {
-    return 'https://via.placeholder.com/150x150/cccccc/666666?text=Avatar';
+    return null; // Trả về null để component Avatar tự xử lý với chữ cái đầu
   }
 
   // Nếu đã là URL đầy đủ (bắt đầu bằng http), trả về nguyên
@@ -25,9 +25,9 @@ export const getAvatarUrl = (fileUrl) => {
     return fileUrl;
   }
 
-  // Nếu là default avatar, trả về placeholder
+  // Nếu là default avatar, trả về null để component Avatar tự xử lý
   if (fileUrl === '/default-avatar.png' || fileUrl === 'default-avatar.png' || fileUrl === '/images/default-avatar.png') {
-    return 'https://via.placeholder.com/150x150/cccccc/666666?text=Avatar';
+    return null;
   }
 
   // Nếu là URL tương đối từ backend (ví dụ: "avatar/filename.jpg")
@@ -48,8 +48,8 @@ export const getAvatarUrl = (fileUrl) => {
 export const loadAuthenticatedImage = async (imageUrl) => {
   try {
     // Không load authenticated image cho placeholder
-    if (imageUrl.includes('via.placeholder.com') || imageUrl === '/default-avatar.png' || imageUrl.includes('placeholder.com')) {
-      return imageUrl;
+    if (imageUrl.includes('via.placeholder.com') || imageUrl.includes('placeholder.com')) {
+      return null;
     }
 
     // Kiểm tra token validity trước
@@ -112,7 +112,7 @@ export const loadAuthenticatedImage = async (imageUrl) => {
  */
 export const requiresAuthentication = (url) => {
   // Không cần authentication cho placeholder
-  if (url.includes('via.placeholder.com')) {
+  if (url.includes('via.placeholder.com') || url.includes('placeholder.com')) {
     return false;
   }
 

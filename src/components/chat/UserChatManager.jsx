@@ -4,6 +4,7 @@ import { Send, User, Home, RefreshCw, MessageCircle } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import chatApi from '../../api/chatApi';
 import LoadingSpinner from '../common/LoadingSpinner';
+import Avatar from '../common/Avatar';
 import { extractConversationsFromResponse, extractMessagesFromResponse } from '../../utils/apiHelpers';
 
 const ChatManagerContainer = styled.div`
@@ -112,14 +113,14 @@ const HostInfo = styled.div`
 const HostAvatar = styled.div`
   width: 2.5rem;
   height: 2.5rem;
-  border-radius: 50%;
-  background: #3b82f6;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-weight: 600;
-  font-size: 0.875rem;
+
+  > div {
+    width: 100% !important;
+    height: 100% !important;
+  }
 `;
 
 const HostDetails = styled.div`
@@ -189,14 +190,14 @@ const ChatHeader = styled.div`
 const ChatAvatar = styled.div`
   width: 2.5rem;
   height: 2.5rem;
-  border-radius: 50%;
-  background: #3b82f6;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-weight: 600;
-  font-size: 0.875rem;
+
+  > div {
+    width: 100% !important;
+    height: 100% !important;
+  }
 `;
 
 const ChatInfo = styled.div`
@@ -634,7 +635,12 @@ const UserChatManager = () => {
                 <ConversationHeader>
                   <HostInfo>
                     <HostAvatar>
-                      {getInitials(conversation.hostName)}
+                      <Avatar
+                        src={conversation.hostAvatar}
+                        alt={conversation.hostName || 'Chủ nhà'}
+                        name={conversation.hostName || 'Chủ nhà'}
+                        size="40px"
+                      />
                     </HostAvatar>
                     <HostDetails>
                       <h4>{conversation.hostName || 'Chủ nhà'}</h4>
@@ -670,7 +676,12 @@ const UserChatManager = () => {
           <>
             <ChatHeader>
               <ChatAvatar>
-                {getInitials(selectedConversation.hostName)}
+                <Avatar
+                  src={selectedConversation.hostAvatar}
+                  alt={selectedConversation.hostName || 'Chủ nhà'}
+                  name={selectedConversation.hostName || 'Chủ nhà'}
+                  size="40px"
+                />
               </ChatAvatar>
               <ChatInfo>
                 <h3>{selectedConversation.hostName || 'Chủ nhà'}</h3>

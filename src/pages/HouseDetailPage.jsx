@@ -13,6 +13,7 @@ import { extractHouseFromResponse } from '../utils/apiHelpers';
 import { useAuthContext } from '../contexts/AuthContext';
 import GoogleMap from '../components/map/GoogleMap';
 import ImageGallery from '../components/house/ImageGallery';
+import Avatar from '../components/common/Avatar';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -435,33 +436,37 @@ const ContactHostSection = styled.div`
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    overflow: hidden;
     border: 2px solid white;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
-  .host-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+  .host-avatar > div {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 50%;
+    overflow: hidden;
   }
 
   .verification-badge {
     position: absolute;
-    bottom: -1px;
-    right: -1px;
-    width: 18px;
-    height: 18px;
+    bottom: 0px;
+    right: 0px;
+    width: 12px;
+    height: 12px;
     background: #14b8a6;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid white;
+    border: 1.5px solid white;
     color: white;
-    font-size: 9px;
+    font-size: 6px;
     font-weight: bold;
+    z-index: 10;
   }
 
   .host-info {
@@ -684,10 +689,14 @@ const HouseDetailPage = () => {
           if (user.phone) {
             houseData.hostPhone = user.phone;
           }
+          // Cập nhật avatar từ user context
+          houseData.hostAvatar = user.avatar || user.avatarUrl;
           console.log('Updated house data with user info:', {
             hostName: houseData.hostName,
             hostPhone: houseData.hostPhone,
-            userPhone: user.phone
+            hostAvatar: houseData.hostAvatar,
+            userPhone: user.phone,
+            userAvatar: user.avatar || user.avatarUrl
           });
         }
         
@@ -971,14 +980,12 @@ const HouseDetailPage = () => {
               <div className="contact-container">
                 <div className="host-contact-row">
                   <div className="host-avatar">
-                    <img 
-                      src={house.hostAvatar || "/default-avatar.png" || "https://via.placeholder.com/50x50/6B7280/FFFFFF?text=CH"}
+                    <Avatar
+                      src={house.hostAvatar}
                       alt={house.hostName}
-                      onError={(e) => {
-                        e.target.src = "/default-avatar.png";
-                      }}
+                      name={house.hostName}
+                      size="50px"
                     />
-                    <div className="verification-badge">✓</div>
                   </div>
                   
                   <div className="host-info">
@@ -1264,6 +1271,7 @@ const HouseDetailPage = () => {
           houseId={house.id}
           hostName={house.hostName}
           houseTitle={house.title}
+          hostAvatar={house.hostAvatar}
         />
       )}
     </Container>

@@ -735,41 +735,12 @@ const UserProfilePage = () => {
                 <Label>Ảnh đại diện</Label>
                 <AvatarSection>
                   <AvatarWrapper>
-                    {previewUrl ? (
-                      // Sử dụng img trực tiếp cho blob URLs (preview)
-                      <div
-                        style={{
-                          width: '100px',
-                          height: '100px',
-                          borderRadius: '50%',
-                          overflow: 'hidden',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          backgroundColor: '#e5e7eb',
-                          border: '2px solid transparent'
-                        }}
-                      >
-                        <img
-                          src={previewUrl}
-                          alt="Avatar Preview"
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                            borderRadius: '50%'
-                          }}
-                        />
-                      </div>
-                    ) : (
-                      // Sử dụng component Avatar cho URLs khác
-                      <Avatar
-                        src={profile.avatarPreview}
-                        alt="Avatar"
-                        size="100px"
-                        name={profile.fullName}
-                      />
-                    )}
+                    <Avatar
+                      src={previewUrl || profile.avatarPreview}
+                      alt={profile.fullName || "User Avatar"}
+                      name={profile.fullName}
+                      size="100px"
+                    />
                     {profile.avatar && (
                       <div
                         style={{

@@ -6,6 +6,7 @@ import rentalApi from '../../api/rentalApi';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { useToast } from '../common/Toast';
 import ConfirmDialog from '../common/ConfirmDialog';
+import Avatar from '../common/Avatar';
 
 const ReviewSectionContainer = styled.div`
   margin-top: 2rem;
@@ -215,35 +216,15 @@ const UserInfo = styled.div`
 const UserAvatar = styled.div`
   width: 40px;
   height: 40px;
-  background: #e5e7eb;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6b7280;
-  font-weight: 600;
-  font-size: 0.875rem;
   overflow: hidden;
   position: relative;
 
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
-  }
-
-  span {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #e5e7eb;
-    color: #6b7280;
+  > div {
+    width: 100% !important;
+    height: 100% !important;
   }
 `;
 
@@ -971,20 +952,12 @@ const ReviewSection = ({ houseId, house }) => {
               <ReviewHeaderItem>
                 <UserInfo>
                   <UserAvatar>
-                    {review.reviewerAvatarUrl ? (
-                      <img 
-                        src={review.reviewerAvatarUrl} 
-                        alt={review.reviewerFullName || review.reviewerName || 'User'}
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
-                        }}
-                      />
-                    ) : null}
-                    <span style={{ display: review.reviewerAvatarUrl ? 'none' : 'flex' }}>
-                      {review.reviewerFullName ? review.reviewerFullName.charAt(0).toUpperCase() : 
-                       review.reviewerName ? review.reviewerName.charAt(0).toUpperCase() : 'U'}
-                    </span>
+                    <Avatar
+                      src={review.reviewerAvatarUrl}
+                      alt={review.reviewerFullName || review.reviewerName || 'User'}
+                      name={review.reviewerFullName || review.reviewerName}
+                      size="40px"
+                    />
                   </UserAvatar>
                   <UserDetails>
                     <div className="username">

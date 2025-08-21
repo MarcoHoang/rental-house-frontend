@@ -10,6 +10,7 @@ import { formatPostingTime } from "../../utils/timeUtils";
 import favoriteApi from "../../api/favoriteApi";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../common/Toast";
+import Avatar from "../common/Avatar";
 
 const HouseCard = ({ house, showActions = false, onEdit, onDelete, fromPage }) => {
   const { id, title, name, address, price, area, houseType, status, imageUrls, imageUrl, createdAt, favoriteCount, hostId, hostName, hostPhone, hostAvatar } = house;
@@ -269,22 +270,12 @@ const HouseCard = ({ house, showActions = false, onEdit, onDelete, fromPage }) =
         <div className="flex items-center gap-3 text-sm text-gray-600 pt-2 border-t border-gray-100 card-host min-h-[2.5rem]">
             {hostName ? (
               <React.Fragment>
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden shadow-md flex-shrink-0">
-                  {hostAvatar ? (
-                    <img 
-                      src={hostAvatar} 
-                      alt={hostName} 
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                      }}
-                    />
-                  ) : null}
-                  <div className="w-full h-full text-white text-sm font-bold flex items-center justify-center" style={{ display: hostAvatar ? 'none' : 'flex' }}>
-                    {hostName.charAt(0).toUpperCase()}
-                  </div>
-                </div>
+                <Avatar
+                  src={hostAvatar}
+                  alt={hostName}
+                  name={hostName}
+                  size="32px"
+                />
                 <div className="flex-1 min-w-0">
                   <span className="font-semibold text-gray-700 truncate block">{hostName}</span>
                   {isMyHouse && (

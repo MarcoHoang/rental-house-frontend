@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { adminApi } from '../../api/adminApi';
 import LoadingSpinner from '../common/LoadingSpinner';
+import Avatar from '../common/Avatar';
 import { formatDate, formatCurrency } from '../../utils/timeUtils';
 
 // Function tính số ngày giữa 2 ngày (giống logic trong RentHouseModal)
@@ -368,18 +369,17 @@ const RentalDetailPage = () => {
                 <InfoLabel>Địa chỉ</InfoLabel>
                 <InfoValue>{rental.renterAddress || 'N/A'}</InfoValue>
               </InfoItem>
-              {rental.renterAvatar && (
-                <InfoItem>
-                  <InfoLabel>Avatar</InfoLabel>
-                  <InfoValue>
-                    <img 
-                      src={rental.renterAvatar} 
-                      alt="Avatar" 
-                      style={{ width: '40px', height: '40px', borderRadius: '50%' }}
-                    />
-                  </InfoValue>
-                </InfoItem>
-              )}
+                             <InfoItem>
+                 <InfoLabel>Avatar</InfoLabel>
+                 <InfoValue>
+                   <Avatar
+                     src={rental.renterAvatar}
+                     alt={rental.renterName || "Renter Avatar"}
+                     name={rental.renterName}
+                     size="40px"
+                   />
+                 </InfoValue>
+               </InfoItem>
             </InfoGrid>
           </Card>
 
@@ -444,18 +444,17 @@ const RentalDetailPage = () => {
                 <InfoLabel>Địa chỉ</InfoLabel>
                 <InfoValue>{rental.hostAddress || 'N/A'}</InfoValue>
               </InfoItem>
-              {rental.hostAvatar && (
-                <InfoItem>
-                  <InfoLabel>Avatar</InfoLabel>
-                  <InfoValue>
-                    <img 
-                      src={rental.hostAvatar} 
-                      alt="Host Avatar" 
-                      style={{ width: '40px', height: '40px', borderRadius: '50%' }}
-                    />
-                  </InfoValue>
-                </InfoItem>
-              )}
+              <InfoItem>
+                <InfoLabel>Avatar</InfoLabel>
+                <InfoValue>
+                  <Avatar
+                    src={rental.hostAvatar}
+                    alt={rental.hostName || "Host Avatar"}
+                    name={rental.hostName}
+                    size="40px"
+                  />
+                </InfoValue>
+              </InfoItem>
             </InfoGrid>
           </Card>
 

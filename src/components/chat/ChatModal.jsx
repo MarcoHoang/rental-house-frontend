@@ -4,6 +4,7 @@ import { X, Send, User, Home } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import chatApi from '../../api/chatApi';
 import LoadingSpinner from '../common/LoadingSpinner';
+import Avatar from '../common/Avatar';
 import { extractMessagesFromResponse } from '../../utils/apiHelpers';
 
 const ModalOverlay = styled.div`
@@ -52,7 +53,7 @@ const HeaderInfo = styled.div`
   gap: 0.75rem;
 `;
 
-const Avatar = styled.div`
+const AvatarContainer = styled.div`
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 50%;
@@ -240,7 +241,7 @@ const ErrorMessage = styled.div`
   font-size: 0.875rem;
 `;
 
-const ChatModal = ({ isOpen, onClose, hostId, houseId, hostName, houseTitle }) => {
+const ChatModal = ({ isOpen, onClose, hostId, houseId, hostName, houseTitle, hostAvatar }) => {
   const { user } = useAuth();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -452,9 +453,12 @@ const ChatModal = ({ isOpen, onClose, hostId, houseId, hostName, houseTitle }) =
       <ModalContent onClick={(e) => e.stopPropagation()}>
         <ModalHeader>
           <HeaderInfo>
-            <Avatar>
-              <User size={16} />
-            </Avatar>
+            <Avatar
+              src={hostAvatar}
+              alt={hostName || 'Chủ nhà'}
+              name={hostName || 'Chủ nhà'}
+              size="40px"
+            />
             <UserInfo>
               <h3>{hostName || 'Chủ nhà'}</h3>
               <p>{houseTitle || 'Nhà cho thuê'}</p>
