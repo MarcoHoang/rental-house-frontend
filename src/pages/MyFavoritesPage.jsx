@@ -6,7 +6,7 @@ import favoriteApi from '../api/favoriteApi';
 import { useToast } from '../components/common/Toast';
 import { useAuthContext } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/common/LoadingSpinner';
-import HouseCard from '../components/house/HouseCard';
+import HouseCard from '../components/house/HouseCard.jsx';
 
 const Container = styled.div`
   max-width: 1200px;
