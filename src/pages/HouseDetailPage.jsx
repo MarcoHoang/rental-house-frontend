@@ -12,6 +12,7 @@ import ChatModal from '../components/chat/ChatModal';
 import { extractHouseFromResponse } from '../utils/apiHelpers';
 import { useAuthContext } from '../contexts/AuthContext';
 import GoogleMap from '../components/map/GoogleMap';
+import ImageGallery from '../components/house/ImageGallery';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -77,32 +78,7 @@ const MainContent = styled.div`
 `;
 
 const ImageSection = styled.div`
-  .main-image {
-    width: 100%;
-    height: 400px;
-    object-fit: cover;
-    border-radius: 0.75rem;
-    margin-bottom: 1rem;
-  }
-  
-  .image-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 0.5rem;
-  }
-  
-  .thumbnail {
-    width: 100%;
-    height: 80px;
-    object-fit: cover;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    transition: opacity 0.2s;
-    
-    &:hover {
-      opacity: 0.8;
-    }
-  }
+  /* Styles for the image gallery container */
 `;
 
 const InfoSection = styled.div`
@@ -628,7 +604,7 @@ const HouseDetailPage = () => {
   const [house, setHouse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedImage, setSelectedImage] = useState(0);
+
   const [showRentModal, setShowRentModal] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
   const [showPhoneNumber, setShowPhoneNumber] = useState(false);
@@ -801,7 +777,6 @@ const HouseDetailPage = () => {
   }
 
   const images = getImages();
-  const mainImage = images[selectedImage] || "https://via.placeholder.com/600x400/6B7280/FFFFFF?text=Không+có+ảnh";
   
   const handleBackClick = () => {
     console.log('Current location state:', location.state);
@@ -887,28 +862,10 @@ const HouseDetailPage = () => {
       <MainContent>
         <div>
           <ImageSection>
-            <img
-              src={mainImage}
-              alt={house.title || house.name}
-              className="main-image"
+            <ImageGallery 
+              images={images}
+              title={house.title || house.name}
             />
-            {images.length > 1 && (
-              <div className="image-grid">
-                {images.map((image, index) => (
-                  <img
-                    key={index}
-                    src={image}
-                    alt={`Ảnh ${index + 1}`}
-                    className="thumbnail"
-                    onClick={() => setSelectedImage(index)}
-                    style={{
-                      border: selectedImage === index ? '2px solid #3b82f6' : 'none',
-                      cursor: 'pointer'
-                    }}
-                  />
-                ))}
-              </div>
-            )}
           </ImageSection>
 
           <DescriptionSection>

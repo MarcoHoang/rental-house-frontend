@@ -14,6 +14,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useToast } from "../common/Toast";
+import ImageGallery from "../house/ImageGallery";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -93,52 +94,6 @@ const ImageSection = styled.div`
   overflow: hidden;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
   border: 1px solid #e2e8f0;
-`;
-
-const MainImage = styled.div`
-  width: 100%;
-  height: 400px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 3rem;
-  position: relative;
-  overflow: hidden;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-`;
-
-const ImageGallery = styled.div`
-  display: flex;
-  gap: 0.5rem;
-  padding: 1rem;
-  overflow-x: auto;
-`;
-
-const Thumbnail = styled.div`
-  width: 80px;
-  height: 60px;
-  border-radius: 0.375rem;
-  background: #f7fafc;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  border: 2px solid ${props => props.$active ? '#3182ce' : 'transparent'};
-  flex-shrink: 0;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 0.25rem;
-  }
 `;
 
 const InfoSection = styled.div`
@@ -302,7 +257,7 @@ const HouseDetailPage = () => {
   const [house, setHouse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedImage, setSelectedImage] = useState(0);
+
   const { showSuccess, showError } = useToast();
 
   useEffect(() => {
@@ -385,7 +340,6 @@ const HouseDetailPage = () => {
 
   const status = getStatusDisplay(house.status);
   const images = house.imageUrls ? [...new Set(house.imageUrls)] : [];
-  const mainImage = images[selectedImage] || images[0] || null;
 
   return (
     <Container>
@@ -407,47 +361,10 @@ const HouseDetailPage = () => {
 
       <Content>
         <ImageSection>
-          <MainImage>
-            {mainImage ? (
-              <img 
-                src={mainImage} 
-                alt={house.title}
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'flex';
-                }}
-              />
-            ) : null}
-            <div style={{ 
-              display: mainImage ? 'none' : 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '100%',
-              height: '100%'
-            }}>
-              <Home size={64} />
-            </div>
-          </MainImage>
-          
-          {images.length > 1 && (
-            <ImageGallery>
-              {images.map((image, index) => (
-                <Thumbnail
-                  key={index}
-                  $active={index === selectedImage}
-                  onClick={() => setSelectedImage(index)}
-                >
-                  <img 
-                    src={image} 
-                    alt={`${house.title} - Ảnh ${index + 1}`}
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                    }}
-                  />
-                </Thumbnail>
-              ))}
-            </ImageGallery>
-          )}
+          <ImageGallery 
+            images={images}
+            title={house.title || "Không có tên"}
+          />
         </ImageSection>
 
         <InfoSection>
