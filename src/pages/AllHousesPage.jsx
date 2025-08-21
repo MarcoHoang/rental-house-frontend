@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import propertyApi from "../api/propertyApi";
 import HouseList from "../components/house/HouseList.jsx";
 import Header from "../components/layout/Header";
@@ -243,6 +243,7 @@ const EmptyStateIcon = styled.div`
 `;
 
 const AllHousesPage = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [houses, setHouses] = useState([]);
   const [filteredHouses, setFilteredHouses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -259,6 +260,20 @@ const AllHousesPage = () => {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize] = useState(8); // 8 nhà mỗi trang
+
+  // Đọc query parameters từ URL khi component mount
+  useEffect(() => {
+    const search = searchParams.get('search') || '';
+    const status = searchParams.get('status') || 'ALL';
+    const type = searchParams.get('type') || 'ALL';
+    const minPrice = searchParams.get('minPrice') || '';
+    const maxPrice = searchParams.get('maxPrice') || '';
+
+    setSearchTerm(search);
+    setStatusFilter(status);
+    setTypeFilter(type);
+    setPriceRange({ min: minPrice, max: maxPrice });
+  }, [searchParams]);
 
   // Fetch tất cả nhà khi component mount
   useEffect(() => {
@@ -341,8 +356,27 @@ const AllHousesPage = () => {
     setCurrentPage(0); // Reset về trang đầu khi filter thay đổi
   }, [houses, searchTerm, statusFilter, typeFilter, priceRange, sortBy]);
 
+  // Cập nhật URL khi filter thay đổi (trừ khi đang đọc từ URL)
+  useEffect(() => {
+    // Chỉ cập nhật URL nếu không phải là lần đầu load từ URL
+    if (houses.length > 0) {
+      updateURLParams();
+    }
+  }, [searchTerm, statusFilter, typeFilter, priceRange]);
+
   const handleSearch = () => {
     setIsSearching(true);
+    
+    // Cập nhật URL với các tham số tìm kiếm hiện tại
+    const params = new URLSearchParams();
+    if (searchTerm) params.append('search', searchTerm);
+    if (statusFilter !== 'ALL') params.append('status', statusFilter);
+    if (typeFilter !== 'ALL') params.append('type', typeFilter);
+    if (priceRange.min) params.append('minPrice', priceRange.min);
+    if (priceRange.max) params.append('maxPrice', priceRange.max);
+    
+    setSearchParams(params);
+    
     // Search logic đã được xử lý trong useEffect
     setTimeout(() => setIsSearching(false), 500);
   };
@@ -354,6 +388,9 @@ const AllHousesPage = () => {
     setPriceRange({ min: '', max: '' });
     setSortBy('newest');
     setCurrentPage(0);
+    
+    // Xóa tất cả query parameters khỏi URL
+    setSearchParams({});
   };
 
   const formatPrice = (price) => {
@@ -361,6 +398,39 @@ const AllHousesPage = () => {
       style: 'currency',
       currency: 'VND'
     }).format(price);
+  };
+
+  // Hàm cập nhật URL khi filter thay đổi
+  const updateURLParams = () => {
+    const params = new URLSearchParams();
+    if (searchTerm) params.append('search', searchTerm);
+    if (statusFilter !== 'ALL') params.append('status', statusFilter);
+    if (typeFilter !== 'ALL') params.append('type', typeFilter);
+    if (priceRange.min) params.append('minPrice', priceRange.min);
+    if (priceRange.max) params.append('maxPrice', priceRange.max);
+    
+    setSearchParams(params);
+  };
+
+  // Các hàm xử lý thay đổi filter với cập nhật URL
+  const handleStatusFilterChange = (value) => {
+    setStatusFilter(value);
+    setCurrentPage(0);
+  };
+
+  const handleTypeFilterChange = (value) => {
+    setTypeFilter(value);
+    setCurrentPage(0);
+  };
+
+  const handlePriceRangeChange = (field, value) => {
+    setPriceRange(prev => ({ ...prev, [field]: value }));
+    setCurrentPage(0);
+  };
+
+  const handleSortByChange = (value) => {
+    setSortBy(value);
+    setCurrentPage(0);
   };
 
   const renderContent = () => {
@@ -454,7 +524,7 @@ const AllHousesPage = () => {
               <FilterLabel>Trạng thái</FilterLabel>
               <FilterSelect
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                onChange={(e) => handleStatusFilterChange(e.target.value)}
               >
                 <option value="ALL">Tất cả trạng thái</option>
                 {Object.entries(HOUSE_STATUS_LABELS).map(([value, label]) => (
@@ -467,7 +537,7 @@ const AllHousesPage = () => {
               <FilterLabel>Loại nhà</FilterLabel>
               <FilterSelect
                 value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
+                onChange={(e) => handleTypeFilterChange(e.target.value)}
               >
                 <option value="ALL">Tất cả loại nhà</option>
                 {Object.entries(HOUSE_TYPE_LABELS).map(([value, label]) => (
@@ -482,7 +552,7 @@ const AllHousesPage = () => {
                 type="number"
                 placeholder="0"
                 value={priceRange.min}
-                onChange={(e) => setPriceRange(prev => ({ ...prev, min: e.target.value }))}
+                onChange={(e) => handlePriceRangeChange('min', e.target.value)}
               />
             </FilterGroup>
 
@@ -492,7 +562,7 @@ const AllHousesPage = () => {
                 type="number"
                 placeholder="Không giới hạn"
                 value={priceRange.max}
-                onChange={(e) => setPriceRange(prev => ({ ...prev, max: e.target.value }))}
+                onChange={(e) => handlePriceRangeChange('max', e.target.value)}
               />
             </FilterGroup>
           </FilterSection>
@@ -523,7 +593,7 @@ const AllHousesPage = () => {
             </ResultsInfo>
             
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              <SortSelect value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+              <SortSelect value={sortBy} onChange={(e) => handleSortByChange(e.target.value)}>
                 <option value="newest">Mới nhất</option>
                 <option value="oldest">Cũ nhất</option>
                 <option value="price-low">Giá thấp → cao</option>

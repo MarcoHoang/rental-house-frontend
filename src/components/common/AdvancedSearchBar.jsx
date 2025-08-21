@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { FaMapMarkerAlt, FaHome, FaDollarSign, FaRulerCombined, FaSearch } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import { FaMapMarkerAlt, FaHome, FaDollarSign, FaRulerCombined, FaSearch, FaFilter } from 'react-icons/fa';
+import { HOUSE_STATUS_LABELS, HOUSE_TYPE_LABELS } from '../../utils/constants';
 
 const SearchContainer = styled.div`
   background: rgba(255, 255, 255, 0.95);
@@ -21,8 +23,25 @@ const SearchContainer = styled.div`
 `;
 
 const SearchForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`;
+
+const SearchRow = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, 1fr) auto;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: end;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const FilterRow = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
   align-items: end;
 
@@ -39,7 +58,7 @@ const SearchField = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  min-width: 0; /* Đảm bảo flex item có thể co lại */
+  min-width: 0;
 `;
 
 const Label = styled.label`
@@ -59,15 +78,15 @@ const baseInputStyles = `
   border-radius: 12px;
   font-size: 1rem;
   background-color: white;
-  color: #1f2937;
+  color: #000000;
   transition: all 0.2s ease-in-out;
   box-sizing: border-box;
   
   display: flex;
   align-items: center;
-  min-width: 0; /* Đảm bảo input có thể co lại */
-  overflow: hidden; /* Ẩn nội dung tràn */
-  text-overflow: ellipsis; /* Hiển thị dấu ... khi text quá dài */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 
   &:focus {
     outline: none;
@@ -91,10 +110,15 @@ const Select = styled.select`
   background-repeat: no-repeat;
   background-size: 1.25em 1.25em;
   padding-right: 2.5rem;
-  white-space: nowrap; /* Ngăn text xuống dòng */
+  white-space: nowrap;
   
   &:invalid {
     color: #9ca3af;
+  }
+
+  option {
+    color: #000000;
+    background-color: white;
   }
 `;
 
@@ -122,11 +146,6 @@ const SearchButton = styled.button`
   &:active {
     transform: translateY(0);
   }
-  
-  @media (max-width: 1200px) {
-    grid-column: 1 / -1;
-    margin-top: 0.5rem;
-  }
 `;
 
 const InputWrapper = styled.div`
@@ -134,32 +153,62 @@ const InputWrapper = styled.div`
   display: flex;
   align-items: center;
   width: 100%;
-  min-width: 0; /* Đảm bảo wrapper có thể co lại */
+  min-width: 0;
 
   svg {
     position: absolute;
     left: 0.875rem;
     top: 50%;
     transform: translateY(-50%);
-    color: #9ca3af;
+    color: #000000;
     width: 20px;
     height: 20px;
     pointer-events: none;
-    flex-shrink: 0; /* Icon không bị co lại */
+    flex-shrink: 0;
   }
 `;
 
 const AdvancedSearchBar = ({ onSearch }) => {
+  const navigate = useNavigate();
   const [searchData, setSearchData] = useState({
-    location: '',
-    houseType: '',
-    priceRange: '',
-    area: ''
+    searchTerm: '',
+    statusFilter: 'ALL',
+    typeFilter: 'ALL',
+    minPrice: '',
+    maxPrice: ''
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSearch(searchData);
+    
+    // Tạo query parameters cho URL
+    const params = new URLSearchParams();
+    
+    if (searchData.searchTerm) {
+      params.append('search', searchData.searchTerm);
+    }
+    if (searchData.statusFilter !== 'ALL') {
+      params.append('status', searchData.statusFilter);
+    }
+    if (searchData.typeFilter !== 'ALL') {
+      params.append('type', searchData.typeFilter);
+    }
+    if (searchData.minPrice) {
+      params.append('minPrice', searchData.minPrice);
+    }
+    if (searchData.maxPrice) {
+      params.append('maxPrice', searchData.maxPrice);
+    }
+    
+    // Chuyển hướng đến trang "Tất cả nhà" với query parameters
+    const queryString = params.toString();
+    const url = queryString ? `/all-houses?${queryString}` : '/all-houses';
+    navigate(url);
+    
+    // Gọi callback onSearch nếu được truyền vào (cho backward compatibility)
+    if (onSearch) {
+      onSearch(searchData);
+    }
   };
 
   const handleChange = (field, value) => {
@@ -172,79 +221,84 @@ const AdvancedSearchBar = ({ onSearch }) => {
   return (
     <SearchContainer>
       <SearchForm onSubmit={handleSubmit}>
-        <SearchField>
-          <Label><FaMapMarkerAlt /> Địa điểm</Label>
-          <InputWrapper>
-            <FaMapMarkerAlt />
-            <Input
-              type="text"
-              placeholder="Quận, thành phố, dự án..."
-              value={searchData.location}
-              onChange={(e) => handleChange('location', e.target.value)}
-            />
-          </InputWrapper>
-        </SearchField>
+        <SearchRow>
+          <SearchField>
+            <Label><FaMapMarkerAlt /> Tìm kiếm</Label>
+            <InputWrapper>
+              <FaMapMarkerAlt />
+              <Input
+                type="text"
+                placeholder="Tìm kiếm theo tên, địa chỉ, mô tả..."
+                value={searchData.searchTerm}
+                onChange={(e) => handleChange('searchTerm', e.target.value)}
+              />
+            </InputWrapper>
+          </SearchField>
 
-        <SearchField>
-          <Label><FaHome /> Loại nhà</Label>
-          <InputWrapper>
-            <FaHome />
-            <Select
-              required
-              value={searchData.houseType}
-              onChange={(e) => handleChange('houseType', e.target.value)}
-            >
-              <option value="" disabled hidden>Chọn loại nhà</option>
-              <option value="APARTMENT">Căn hộ</option>
-              <option value="VILLA">Biệt thự</option>
-              <option value="TOWNHOUSE">Nhà phố</option>
-              <option value="HOUSE">Nhà nguyên căn</option>
-              <option value="STUDIO">Nhà trọ</option>
-            </Select>
-          </InputWrapper>
-        </SearchField>
+          <SearchButton type="submit">
+            <FaSearch /> Tìm kiếm
+          </SearchButton>
+        </SearchRow>
 
-        <SearchField>
-          <Label><FaDollarSign /> Mức giá</Label>
-          <InputWrapper>
-            <FaDollarSign />
-            <Select
-              required
-              value={searchData.priceRange}
-              onChange={(e) => handleChange('priceRange', e.target.value)}
-            >
-              <option value="" disabled hidden>Chọn mức giá</option>
-              <option value="0-2000000">Dưới 2 triệu</option>
-              <option value="2000000-5000000">2 - 5 triệu</option>
-              <option value="5000000-10000000">5 - 10 triệu</option>
-              <option value="10000000-20000000">10 - 20 triệu</option>
-              <option value="20000000+">Trên 20 triệu</option>
-            </Select>
-          </InputWrapper>
-        </SearchField>
+        <FilterRow>
+          <SearchField>
+            <Label><FaFilter /> Trạng thái</Label>
+            <InputWrapper>
+              <FaFilter />
+              <Select
+                value={searchData.statusFilter}
+                onChange={(e) => handleChange('statusFilter', e.target.value)}
+              >
+                <option value="ALL">Tất cả trạng thái</option>
+                {Object.entries(HOUSE_STATUS_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </Select>
+            </InputWrapper>
+          </SearchField>
 
-        <SearchField>
-          <Label><FaRulerCombined /> Diện tích</Label>
-          <InputWrapper>
-            <FaRulerCombined />
-            <Select 
-              required 
-              value={searchData.area} 
-              onChange={e => handleChange('area', e.target.value)}
-            >
-              <option value="" disabled hidden>Chọn diện tích</option>
-              <option value="0-30">Dưới 30m²</option>
-              <option value="30-50">30 - 50m²</option>
-              <option value="50-80">50 - 80m²</option>
-              <option value="80-120">80 - 120m²</option>
-              <option value="120+">Trên 120m²</option>
-            </Select>
-          </InputWrapper>
-        </SearchField>
+          <SearchField>
+            <Label><FaHome /> Loại nhà</Label>
+            <InputWrapper>
+              <FaHome />
+              <Select
+                value={searchData.typeFilter}
+                onChange={(e) => handleChange('typeFilter', e.target.value)}
+              >
+                <option value="ALL">Tất cả loại nhà</option>
+                {Object.entries(HOUSE_TYPE_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </Select>
+            </InputWrapper>
+          </SearchField>
 
-        <SearchButton type="submit">
-          <FaSearch /> Tìm kiếm
-        </SearchButton>
+          <SearchField>
+            <Label><FaDollarSign /> Giá tối thiểu (VNĐ)</Label>
+            <InputWrapper>
+              <FaDollarSign />
+              <Input
+                type="number"
+                placeholder="0"
+                value={searchData.minPrice}
+                onChange={(e) => handleChange('minPrice', e.target.value)}
+              />
+            </InputWrapper>
+          </SearchField>
+
+          <SearchField>
+            <Label><FaDollarSign /> Giá tối đa (VNĐ)</Label>
+            <InputWrapper>
+              <FaDollarSign />
+              <Input
+                type="number"
+                placeholder="Không giới hạn"
+                value={searchData.maxPrice}
+                onChange={(e) => handleChange('maxPrice', e.target.value)}
+              />
+            </InputWrapper>
+          </SearchField>
+        </FilterRow>
       </SearchForm>
     </SearchContainer>
   );

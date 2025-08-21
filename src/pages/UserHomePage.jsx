@@ -6,7 +6,7 @@ import HouseList from "../components/house/HouseList.jsx";
 import HouseCard from "../components/house/HouseCard.jsx";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
-import SearchBar from "../components/house/SearchBar";
+
 import AdvancedSearchBar from "../components/common/AdvancedSearchBar";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import Pagination from "../components/common/Pagination";
@@ -175,51 +175,7 @@ const SearchSection = styled.section`
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
 `;
 
-const SearchAndFilterBar = styled.div`
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-  justify-content: center;
-  
-  @media (max-width: 768px) {
-    flex-direction: column;
-    align-items: center;
-  }
-`;
 
-const SearchInput = styled.input`
-  flex: 1;
-  min-width: 250px;
-  max-width: 400px;
-  padding: 1rem 1.5rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 0.75rem;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  
-  &:focus {
-    outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-  }
-`;
-
-const FilterSelect = styled.select`
-  padding: 1rem 1.5rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 0.75rem;
-  font-size: 1rem;
-  background: white;
-  min-width: 180px;
-  transition: all 0.3s ease;
-  
-  &:focus {
-    outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-  }
-`;
 
 const ResultsInfo = styled.div`
   text-align: center;
@@ -254,9 +210,6 @@ const HomePage = () => {
   const [topHouses, setTopHouses] = useState([]); // State cho nhà nổi bật
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
-  const [typeFilter, setTypeFilter] = useState('ALL');
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(0);
@@ -296,115 +249,23 @@ const HomePage = () => {
     fetchHouses();
   }, []); // Mảng rỗng `[]` đảm bảo useEffect chỉ chạy một lần duy nhất
 
-  // Filter và search nhà
+  // Filter và search nhà - giờ chỉ hiển thị tất cả nhà
   useEffect(() => {
-    let filtered = houses;
-    
-    // Filter theo status
-    if (statusFilter !== 'ALL') {
-      filtered = filtered.filter(house => house.status === statusFilter);
-    }
-    
-    // Filter theo loại nhà
-    if (typeFilter !== 'ALL') {
-      filtered = filtered.filter(house => house.houseType === typeFilter);
-    }
-    
-    // Search theo tên hoặc địa chỉ (local search)
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(house => 
-        (house.title && house.title.toLowerCase().includes(term)) ||
-        (house.name && house.name.toLowerCase().includes(term)) ||
-        (house.address && house.address.toLowerCase().includes(term))
-      );
-    }
-    
-    setFilteredHouses(filtered);
-    setCurrentPage(0); // Reset về trang đầu khi filter thay đổi
-  }, [houses, searchTerm, statusFilter, typeFilter]);
+    setFilteredHouses(houses);
+    setCurrentPage(0);
+  }, [houses]);
 
-  // Hàm search sử dụng API backend
+  // Hàm search sử dụng API backend (giờ không cần thiết vì đã chuyển sang trang tất cả nhà)
   const handleSearch = async (keyword) => {
-    if (!keyword || keyword.trim() === '') {
-      // Nếu không có từ khóa, hiển thị tất cả nhà
-      setFilteredHouses(houses);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      
-      const response = await propertyApi.searchHouses(keyword);
-      const searchResults = extractHousesFromResponse(response);
-      setFilteredHouses(searchResults);
-    } catch (error) {
-              console.error('Search error:', error);
-      // Nếu search API thất bại, fallback về local search
-      const term = keyword.toLowerCase();
-      const localResults = houses.filter(house => 
-        (house.title && house.title.toLowerCase().includes(term)) ||
-        (house.name && house.name.toLowerCase().includes(term)) ||
-        (house.address && house.address.toLowerCase().includes(term))
-      );
-      setFilteredHouses(localResults);
-    } finally {
-      setLoading(false);
-    }
+    // Hàm này giờ không cần thiết vì tìm kiếm đã được chuyển sang trang tất cả nhà
+    console.log('Search keyword:', keyword);
   };
 
-  // Hàm xử lý tìm kiếm nâng cao
+  // Hàm xử lý tìm kiếm nâng cao (giờ sẽ chuyển hướng đến trang tất cả nhà)
   const handleAdvancedSearch = async (searchData) => {
-    try {
-      setLoading(true);
-      let filtered = houses;
-
-      // Filter theo địa điểm
-      if (searchData.location) {
-        const locationTerm = searchData.location.toLowerCase();
-        filtered = filtered.filter(house => 
-          (house.address && house.address.toLowerCase().includes(locationTerm)) ||
-          (house.title && house.title.toLowerCase().includes(locationTerm))
-        );
-      }
-
-      // Filter theo loại nhà
-      if (searchData.houseType !== 'ALL') {
-        filtered = filtered.filter(house => house.houseType === searchData.houseType);
-      }
-
-      // Filter theo mức giá
-      if (searchData.priceRange !== 'ALL') {
-        const [minPrice, maxPrice] = searchData.priceRange.split('-').map(Number);
-        filtered = filtered.filter(house => {
-          const price = house.price || 0;
-          if (searchData.priceRange === '50000000+') {
-            return price >= 50000000;
-          }
-          return price >= minPrice && price <= maxPrice;
-        });
-      }
-
-      // Filter theo diện tích
-      if (searchData.area !== 'ALL') {
-        const [minArea, maxArea] = searchData.area.split('-').map(Number);
-        filtered = filtered.filter(house => {
-          const area = house.area || 0;
-          if (searchData.area === '200+') {
-            return area >= 200;
-          }
-          return area >= minArea && area <= maxArea;
-        });
-      }
-
-      setFilteredHouses(filtered);
-      setCurrentPage(0);
-    } catch (error) {
-      console.error('Advanced search error:', error);
-      setFilteredHouses([]);
-    } finally {
-      setLoading(false);
-    }
+    // AdvancedSearchBar giờ sẽ tự động chuyển hướng đến trang tất cả nhà
+    // Hàm này chỉ để backward compatibility
+    console.log('Advanced search data:', searchData);
   };
 
   // --- Content Rendering Logic ---
@@ -543,32 +404,37 @@ const HomePage = () => {
             Khám phá và tìm kiếm ngôi nhà phù hợp với nhu cầu của bạn
           </SectionSubtitle>
           
-          <SearchAndFilterBar>
-            <SearchInput
-              type="text"
-              placeholder="Tìm kiếm theo tên hoặc địa chỉ..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <FilterSelect
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <Link 
+              to="/all-houses" 
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '1rem 2rem',
+                backgroundColor: '#667eea',
+                color: 'white',
+                textDecoration: 'none',
+                borderRadius: '0.75rem',
+                fontWeight: '600',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = '#5a67d8';
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = '#667eea';
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.3)';
+              }}
             >
-              <option value="ALL">Tất cả trạng thái</option>
-              {Object.entries(HOUSE_STATUS_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </FilterSelect>
-            <FilterSelect
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-            >
-              <option value="ALL">Tất cả loại nhà</option>
-              {Object.entries(HOUSE_TYPE_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </FilterSelect>
-          </SearchAndFilterBar>
+              <Search size={20} />
+              Xem tất cả nhà cho thuê
+            </Link>
+          </div>
           
           <ResultsInfo>
             Hiển thị {filteredHouses.length} trong tổng số {houses.length} nhà cho thuê
