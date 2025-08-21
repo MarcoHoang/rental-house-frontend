@@ -7,6 +7,7 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EditHouseModal from '../../components/admin/EditHouseModal';
 import ToastContainer from '../../components/common/ToastContainer';
 import ConfirmModal from '../../components/common/ConfirmModal';
+import Pagination from '../../components/common/Pagination';
 import { extractHousesFromResponse } from '../../utils/apiHelpers';
 import { HOUSE_STATUS_LABELS } from '../../utils/constants';
 import HostPageWrapper from '../../components/layout/HostPageWrapper';
@@ -132,6 +133,10 @@ const HostPropertiesPage = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedHouse, setSelectedHouse] = useState(null);
   
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize] = useState(8); // Tối đa 8 nhà mỗi trang
+  
   // Toast state
   const [toasts, setToasts] = useState([]);
   
@@ -233,7 +238,14 @@ const HostPropertiesPage = () => {
     }
 
     setFilteredHouses(filtered);
+    setCurrentPage(0); // Reset về trang đầu khi filter/search
   }, [houses, searchTerm, statusFilter]);
+
+  // Tính toán dữ liệu phân trang
+  const totalPages = Math.ceil(filteredHouses.length / pageSize);
+  const startIndex = currentPage * pageSize;
+  const endIndex = startIndex + pageSize;
+  const currentHouses = filteredHouses.slice(startIndex, endIndex);
 
   const handleEditHouse = (house) => {
     setSelectedHouse(house);
@@ -379,13 +391,28 @@ const HostPropertiesPage = () => {
             Không tìm thấy nhà nào phù hợp với tiêu chí tìm kiếm.
           </div>
         ) : (
-          <HouseList 
-            houses={filteredHouses} 
-            showActions={true}
-            onEdit={handleEditHouse}
-            onDelete={handleDeleteHouse}
-            fromPage="host"
-          />
+          <>
+            <HouseList 
+              houses={currentHouses} 
+              showActions={true}
+              onEdit={handleEditHouse}
+              onDelete={handleDeleteHouse}
+              fromPage="host"
+            />
+            
+            {totalPages > 1 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalElements={filteredHouses.length}
+                pageSize={pageSize}
+                onPageChange={setCurrentPage}
+                showInfo={true}
+                showFirstLast={true}
+                maxVisiblePages={5}
+              />
+            )}
+          </>
         )}
       </>
     );

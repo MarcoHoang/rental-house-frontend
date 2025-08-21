@@ -6,6 +6,7 @@ import rentalApi from '../../api/rentalApi';
 import hostApi from '../../api/hostApi';
 import RejectRequestModal from './RejectRequestModal';
 import RequestDetailModal from './RequestDetailModal';
+import Pagination from '../common/Pagination';
 import { Clock, CheckCircle, XCircle, Eye, Calendar, Users, MessageSquare } from 'lucide-react';
 import HostPageWrapper from '../layout/HostPageWrapper';
 
@@ -253,6 +254,11 @@ const HostRentalRequests = () => {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedRequestForDetail, setSelectedRequestForDetail] = useState(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize] = useState(5); // Tối đa 5 đơn mỗi trang
+  
   const { user } = useAuthContext();
   const { showSuccess, showError } = useToast();
 
@@ -404,6 +410,12 @@ const HostRentalRequests = () => {
     return new Intl.NumberFormat('vi-VN').format(price);
   };
 
+  // Tính toán dữ liệu phân trang
+  const totalPages = Math.ceil(requests.length / pageSize);
+  const startIndex = currentPage * pageSize;
+  const endIndex = startIndex + pageSize;
+  const currentRequests = requests.slice(startIndex, endIndex);
+
   if (loading) {
     return (
       <Container>
@@ -448,97 +460,110 @@ const HostRentalRequests = () => {
             <p>Khi có người gửi yêu cầu thuê nhà của bạn, chúng sẽ xuất hiện ở đây.</p>
           </EmptyState>
         ) : (
-          requests.map((request) => (
-            <RequestCard key={request.id}>
-              <RequestHeader>
-                <RequestInfo>
-                  <RequestTitle>{request.house?.title || 'Nhà cho thuê'}</RequestTitle>
-                  <RequestMeta>
-                    <MetaItem>
-                      <Calendar size={14} />
-                      {formatDate(request.startDate)} - {formatDate(request.endDate)}
-                    </MetaItem>
-                    <MetaItem>
-                      <Users size={14} />
-                      {request.guestCount} khách
-                    </MetaItem>
-                    <MetaItem>
-                      <MessageSquare size={14} />
-                      {request.renterName}
-                    </MetaItem>
-                  </RequestMeta>
-                </RequestInfo>
-                <StatusBadge status={request.status}>
-                  {getStatusLabel(request.status)}
-                </StatusBadge>
-              </RequestHeader>
+          <>
+            {currentRequests.map((request) => (
+              <RequestCard key={request.id}>
+                <RequestHeader>
+                  <RequestInfo>
+                    <RequestTitle>{request.house?.title || 'Nhà cho thuê'}</RequestTitle>
+                    <RequestMeta>
+                      <MetaItem>
+                        <Calendar size={14} />
+                        {formatDate(request.startDate)} - {formatDate(request.endDate)}
+                      </MetaItem>
+                      <MetaItem>
+                        <Users size={14} />
+                        {request.guestCount} khách
+                      </MetaItem>
+                      <MetaItem>
+                        <MessageSquare size={14} />
+                        {request.renterName}
+                      </MetaItem>
+                    </RequestMeta>
+                  </RequestInfo>
+                  <StatusBadge status={request.status}>
+                    {getStatusLabel(request.status)}
+                  </StatusBadge>
+                </RequestHeader>
 
-              <RequestDetails>
-                <DetailItem>
-                  <DetailLabel>Người thuê:</DetailLabel>
-                  <span>{request.renterName}</span>
-                </DetailItem>
-                <DetailItem>
-                  <DetailLabel>Thời gian:</DetailLabel>
-                  <span>{formatDate(request.startDate)} - {formatDate(request.endDate)}</span>
-                </DetailItem>
-                <DetailItem>
-                  <DetailLabel>Số khách:</DetailLabel>
-                  <span>{request.guestCount} người</span>
-                </DetailItem>
-                <DetailItem>
-                  <DetailLabel>Tổng tiền:</DetailLabel>
-                  <span>{formatPrice(request.totalPrice)} VNĐ</span>
-                </DetailItem>
-                {request.messageToHost && (
-                  <DetailItem style={{ gridColumn: '1 / -1' }}>
-                    <DetailLabel>Lời nhắn:</DetailLabel>
-                    <span>{request.messageToHost}</span>
+                <RequestDetails>
+                  <DetailItem>
+                    <DetailLabel>Người thuê:</DetailLabel>
+                    <span>{request.renterName}</span>
                   </DetailItem>
-                )}
-              </RequestDetails>
+                  <DetailItem>
+                    <DetailLabel>Thời gian:</DetailLabel>
+                    <span>{formatDate(request.startDate)} - {formatDate(request.endDate)}</span>
+                  </DetailItem>
+                  <DetailItem>
+                    <DetailLabel>Số khách:</DetailLabel>
+                    <span>{request.guestCount} người</span>
+                  </DetailItem>
+                  <DetailItem>
+                    <DetailLabel>Tổng tiền:</DetailLabel>
+                    <span>{formatPrice(request.totalPrice)} VNĐ</span>
+                  </DetailItem>
+                  {request.messageToHost && (
+                    <DetailItem style={{ gridColumn: '1 / -1' }}>
+                      <DetailLabel>Lời nhắn:</DetailLabel>
+                      <span>{request.messageToHost}</span>
+                    </DetailItem>
+                  )}
+                </RequestDetails>
 
-              <ActionButtons>
-                <Button
-                  className="secondary"
-                  onClick={() => openDetailModal(request)}
-                >
-                  <Eye size={16} />
-                  Xem chi tiết
-                </Button>
-                {request.status === 'PENDING' && (
-                  <>
-                    <Button
-                      className="primary"
-                      onClick={() => handleApprove(request.id)}
-                      disabled={processingRequest === request.id}
-                    >
-                      {processingRequest === request.id ? (
-                        <LoadingSpinner />
-                      ) : (
-                        <CheckCircle size={16} />
-                      )}
-                      Chấp nhận
-                    </Button>
-                    <Button
-                      className="danger"
-                      onClick={() => openRejectModal(request)}
-                      disabled={processingRequest === request.id}
-                    >
-                      {processingRequest === request.id ? (
-                        <LoadingSpinner />
-                      ) : (
-                        <XCircle size={16} />
-                      )}
-                      Từ chối
-                    </Button>
-                  </>
-                )}
-              </ActionButtons>
-
-
-            </RequestCard>
-          ))
+                <ActionButtons>
+                  <Button
+                    className="secondary"
+                    onClick={() => openDetailModal(request)}
+                  >
+                    <Eye size={16} />
+                    Xem chi tiết
+                  </Button>
+                  {request.status === 'PENDING' && (
+                    <>
+                      <Button
+                        className="primary"
+                        onClick={() => handleApprove(request.id)}
+                        disabled={processingRequest === request.id}
+                      >
+                        {processingRequest === request.id ? (
+                          <LoadingSpinner />
+                        ) : (
+                          <CheckCircle size={16} />
+                        )}
+                        Chấp nhận
+                      </Button>
+                      <Button
+                        className="danger"
+                        onClick={() => openRejectModal(request)}
+                        disabled={processingRequest === request.id}
+                      >
+                        {processingRequest === request.id ? (
+                          <LoadingSpinner />
+                        ) : (
+                          <XCircle size={16} />
+                        )}
+                        Từ chối
+                      </Button>
+                    </>
+                  )}
+                </ActionButtons>
+              </RequestCard>
+            ))}
+            
+            {totalPages > 1 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalElements={requests.length}
+                pageSize={pageSize}
+                onPageChange={setCurrentPage}
+                showInfo={true}
+                showFirstLast={true}
+                maxVisiblePages={5}
+              />
+            )}
+          </>
         )}
       </RequestsContainer>
 
