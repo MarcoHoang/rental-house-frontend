@@ -6,6 +6,7 @@ import { HOUSE_TYPE_LABELS, HOUSE_STATUS_LABELS } from "../../utils/constants";
 import { useToast } from "../common/Toast";
 import houseImageApi from "../../api/houseImageApi";
 import fileUploadService from "../../api/fileUploadApi";
+import ImageViewerModal from "../common/ImageViewerModal";
 
 const EditHouseModal = ({ isOpen, onClose, house, onSave, onHouseUpdate }) => {
   const [activeTab, setActiveTab] = useState('details');
@@ -14,6 +15,8 @@ const EditHouseModal = ({ isOpen, onClose, house, onSave, onHouseUpdate }) => {
   const [uploadingImages, setUploadingImages] = useState([]);
   const [errors, setErrors] = useState({});
   const [localImages, setLocalImages] = useState([]); // State để quản lý ảnh local
+  const [imageViewerOpen, setImageViewerOpen] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   const { showSuccess, showError } = useToast();
 
@@ -321,6 +324,12 @@ const EditHouseModal = ({ isOpen, onClose, house, onSave, onHouseUpdate }) => {
     }
   };
 
+  // Mở image viewer khi click vào ảnh
+  const handleImageClick = (index) => {
+    setSelectedImageIndex(index);
+    setImageViewerOpen(true);
+  };
+
   // Nếu modal không mở hoặc không có dữ liệu nhà, không render gì cả
   if (!isOpen || !formData) {
     return null;
@@ -551,7 +560,7 @@ const EditHouseModal = ({ isOpen, onClose, house, onSave, onHouseUpdate }) => {
                     {images.length > 0 ? (
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         {images.slice(0, 6).map((imageUrl, index) => (
-                          <div key={`${imageUrl}-${index}`} className="relative bg-white rounded-lg shadow-sm border overflow-hidden group">
+                          <div key={`${imageUrl}-${index}`} className="relative bg-white rounded-lg shadow-sm border overflow-hidden group cursor-pointer" onClick={() => handleImageClick(index)}>
                             <img
                               src={imageUrl}
                               alt={`House image ${index + 1}`}
@@ -561,6 +570,11 @@ const EditHouseModal = ({ isOpen, onClose, house, onSave, onHouseUpdate }) => {
                               {index + 1}
                             </div>
                             <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200"></div>
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                              <div className="bg-white bg-opacity-90 rounded-full p-2">
+                                <FiImage className="h-4 w-4 text-gray-700" />
+                              </div>
+                            </div>
                           </div>
                         ))}
                         
@@ -657,7 +671,8 @@ const EditHouseModal = ({ isOpen, onClose, house, onSave, onHouseUpdate }) => {
                         <img
                           src={imageUrl}
                           alt={`House image ${index + 1}`}
-                          className="w-full h-48 object-cover"
+                          className="w-full h-48 object-cover cursor-pointer"
+                          onClick={() => handleImageClick(index)}
                         />
                         
                         {/* Overlay với các nút */}
@@ -749,6 +764,15 @@ const EditHouseModal = ({ isOpen, onClose, house, onSave, onHouseUpdate }) => {
           )}
         </div>
       </div>
+
+      {/* Image Viewer Modal */}
+      <ImageViewerModal
+        isOpen={imageViewerOpen}
+        onClose={() => setImageViewerOpen(false)}
+        images={images}
+        initialIndex={selectedImageIndex}
+        title={formData?.title || 'Ảnh nhà'}
+      />
     </div>
   );
 };
