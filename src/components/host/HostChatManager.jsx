@@ -325,34 +325,6 @@ const MessagesArea = styled.div`
   }
 `;
 
-const ScrollToBottomButton = styled.button`
-  position: absolute;
-  bottom: 1rem;
-  right: 1rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 3rem;
-  height: 3rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 6px -1px rgba(102, 126, 234, 0.3);
-  z-index: 10;
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 8px -1px rgba(102, 126, 234, 0.4);
-  }
-  
-  ${props => !props.show && `
-    display: none;
-  `}
-`;
-
 const MessageBubble = styled.div`
   max-width: 70%;
   padding: 1rem 1.25rem;
@@ -552,10 +524,7 @@ const HostChatManager = () => {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
-  const messagesEndRef = useRef(null);
   const messagesAreaRef = useRef(null);
-  const [shouldScrollToBottom, setShouldScrollToBottom] = useState(false);
-  const [showScrollButton, setShowScrollButton] = useState(false);
   
   // Auto-refresh state
   const [autoRefreshInterval, setAutoRefreshInterval] = useState(null);
@@ -587,13 +556,7 @@ const HostChatManager = () => {
     }
   }, [selectedConversation]);
 
-  useEffect(() => {
-    // Chỉ scroll xuống khi có tin nhắn mới được gửi
-    if (shouldScrollToBottom) {
-      scrollToBottom();
-      setShouldScrollToBottom(false);
-    }
-  }, [messages, shouldScrollToBottom]);
+  // Removed scroll functionality
 
   // Auto-refresh function
   const autoRefresh = async () => {
@@ -698,7 +661,6 @@ const HostChatManager = () => {
          };
          setMessages(prev => [...prev, newMessageObj]);
          setNewMessage('');
-         setShouldScrollToBottom(true); // Trigger scroll to bottom
          
          // Force immediate refresh to sync with server
          setLastRefresh(0); // Reset last refresh time to force immediate refresh
@@ -725,18 +687,6 @@ const HostChatManager = () => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
-    }
-  };
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const handleScroll = () => {
-    if (messagesAreaRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = messagesAreaRef.current;
-      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
-      setShowScrollButton(!isNearBottom);
     }
   };
 
@@ -891,7 +841,7 @@ const HostChatManager = () => {
               </ChatHeaderRight>
             </ChatHeader>
 
-            <MessagesArea ref={messagesAreaRef} onScroll={handleScroll}>
+            <MessagesArea ref={messagesAreaRef}>
               {messages.length === 0 ? (
                 <EmptyState>
                   <Home size={64} />
@@ -928,14 +878,6 @@ const HostChatManager = () => {
                   );
                 })
               )}
-              <div ref={messagesEndRef} />
-              <ScrollToBottomButton 
-                show={showScrollButton} 
-                onClick={scrollToBottom}
-                title="Cuộn xuống tin nhắn mới nhất"
-              >
-                ↓
-              </ScrollToBottomButton>
             </MessagesArea>
 
             <InputArea>

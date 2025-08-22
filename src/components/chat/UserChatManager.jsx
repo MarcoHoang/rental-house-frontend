@@ -454,7 +454,7 @@ const UserChatManager = () => {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
-  const messagesEndRef = useRef(null);
+  const messagesAreaRef = useRef(null);
   
   // Auto-refresh state
   const [autoRefreshInterval, setAutoRefreshInterval] = useState(null);
@@ -485,10 +485,6 @@ const UserChatManager = () => {
       markMessagesAsRead(selectedConversation.id);
     }
   }, [selectedConversation]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
 
   // Auto-refresh function
   const autoRefresh = async () => {
@@ -619,10 +615,6 @@ const UserChatManager = () => {
       e.preventDefault();
       sendMessage();
     }
-  };
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const formatTime = (dateString) => {
@@ -773,7 +765,7 @@ const UserChatManager = () => {
               </ChatInfo>
             </ChatHeader>
 
-            <MessagesArea>
+            <MessagesArea ref={messagesAreaRef}>
               {messages.length === 0 ? (
                 <EmptyState>
                   <Home size={48} />
@@ -815,7 +807,6 @@ const UserChatManager = () => {
                   );
                 })
               )}
-              <div ref={messagesEndRef} />
             </MessagesArea>
 
             <InputArea>

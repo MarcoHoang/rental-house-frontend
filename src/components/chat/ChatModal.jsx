@@ -249,24 +249,20 @@ const ChatModal = ({ isOpen, onClose, hostId, houseId, hostName, houseTitle, hos
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
-  const messagesEndRef = useRef(null);
+  const [lastRefresh, setLastRefresh] = useState(Date.now());
   
   // Auto-refresh state
-  const [autoRefreshInterval, setAutoRefreshInterval] = useState(null);
-  const [lastRefresh, setLastRefresh] = useState(Date.now());
 
   useEffect(() => {
     if (isOpen && hostId && houseId) {
       initializeConversation();
       
-      // Start auto-refresh every 2 seconds when modal is open
+      // Start auto-refresh every 3 seconds
       const interval = setInterval(() => {
-        if (Date.now() - lastRefresh > 1500) { // Only refresh if last refresh was more than 1.5 seconds ago
+        if (conversationId) {
           autoRefreshMessages();
         }
-      }, 2000);
-      
-      setAutoRefreshInterval(interval);
+      }, 3000);
       
       return () => {
         if (interval) {
@@ -276,9 +272,7 @@ const ChatModal = ({ isOpen, onClose, hostId, houseId, hostName, houseTitle, hos
     }
   }, [isOpen, hostId, houseId]);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  // Removed scroll functionality
 
   // Auto-refresh messages
   const autoRefreshMessages = async () => {
@@ -429,10 +423,6 @@ const ChatModal = ({ isOpen, onClose, hostId, houseId, hostName, houseTitle, hos
     }
   };
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   const formatTime = (dateString) => {
     try {
       const date = new Date(dateString);
@@ -520,7 +510,6 @@ const ChatModal = ({ isOpen, onClose, hostId, houseId, hostName, houseTitle, hos
               );
             })
           )}
-          <div ref={messagesEndRef} />
         </MessagesContainer>
 
         <InputContainer>

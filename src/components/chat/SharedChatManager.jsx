@@ -360,9 +360,8 @@ const SharedChatManager = ({ userType = 'user' }) => {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
-  const messagesEndRef = useRef(null);
   
-  // Optimized refresh state - only refresh when needed
+  // Auto-refresh state
   const [lastRefresh, setLastRefresh] = useState(Date.now());
   const [isPageVisible, setIsPageVisible] = useState(true);
 
@@ -396,9 +395,7 @@ const SharedChatManager = ({ userType = 'user' }) => {
     }
   }, [selectedConversation]);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  // Removed scroll functionality
 
   // Optimized refresh function - only refresh when page is visible
   const autoRefresh = async () => {
@@ -542,10 +539,6 @@ const SharedChatManager = ({ userType = 'user' }) => {
       e.preventDefault();
       sendMessage();
     }
-  };
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const formatTime = (dateString) => {
@@ -771,7 +764,6 @@ const SharedChatManager = ({ userType = 'user' }) => {
                   );
                 })
               )}
-              <div ref={messagesEndRef} />
             </MessagesArea>
 
             <InputArea>
