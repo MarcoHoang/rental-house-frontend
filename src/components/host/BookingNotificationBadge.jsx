@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import chatApi from '../../api/chatApi';
 import { useAuth } from '../../hooks/useAuth';
+import { privateApiClient } from '../../api/apiClient';
 
 const Badge = styled.div`
   background: #ef4444;
@@ -48,45 +48,39 @@ const InlineBadge = styled.div`
   `}
 `;
 
-const HostNotificationBadge = ({ 
+const BookingNotificationBadge = ({ 
   isInline = false, 
-  hideWhenViewed = false, 
-  type = 'message' // 'message', 'booking', 'overview'
+  hideWhenViewed = false 
 }) => {
   const { user } = useAuth();
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      fetchUnreadCount();
+    if (user && user.id) {
+      fetchPendingCount();
       // Polling để cập nhật mỗi 30 giây
-      const interval = setInterval(fetchUnreadCount, 30000);
+      const interval = setInterval(fetchPendingCount, 30000);
       return () => clearInterval(interval);
     }
   }, [user]);
 
-  const fetchUnreadCount = async () => {
+  const fetchPendingCount = async () => {
     try {
       setLoading(true);
-      const response = await chatApi.getUnreadMessageCount();
-      if (response.code === '00') {
-        setUnreadCount(response.data || 0);
+      const response = await privateApiClient.get(`/rentals/host/me/pending/count`);
+      if (response.data.code === '00') {
+        setPendingCount(response.data.data || 0);
       }
     } catch (error) {
-      console.error('Error fetching unread message count:', error);
+      console.error('Error fetching pending booking count:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Chỉ hiển thị thông báo tin nhắn cho mục "Tin nhắn từ người thuê"
-  if (type !== 'message') {
-    return null;
-  }
-
-  // Nếu hideWhenViewed và đang ở trang messages, ẩn badge
-  if (hideWhenViewed && window.location.pathname === '/host/messages') {
+  // Nếu hideWhenViewed và đang ở trang bookings, ẩn badge
+  if (hideWhenViewed && window.location.pathname === '/host/bookings') {
     return null;
   }
 
@@ -96,17 +90,17 @@ const HostNotificationBadge = ({
 
   if (isInline) {
     return (
-      <InlineBadge show={unreadCount > 0}>
-        {unreadCount > 99 ? '99+' : unreadCount}
+      <InlineBadge show={pendingCount > 0}>
+        {pendingCount > 99 ? '99+' : pendingCount}
       </InlineBadge>
     );
   }
 
   return (
-    <Badge show={unreadCount > 0}>
-      {unreadCount > 99 ? '99+' : unreadCount}
+    <Badge show={pendingCount > 0}>
+      {pendingCount > 99 ? '99+' : pendingCount}
     </Badge>
   );
 };
 
-export default HostNotificationBadge;
+export default BookingNotificationBadge;

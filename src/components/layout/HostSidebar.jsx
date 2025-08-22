@@ -16,6 +16,8 @@ import {
 import ConfirmDialog from '../common/ConfirmDialog';
 import { useToast } from '../common/Toast';
 import HostNotificationBadge from '../host/HostNotificationBadge';
+import BookingNotificationBadge from '../host/BookingNotificationBadge';
+import OverviewNotificationBadge from '../host/OverviewNotificationBadge';
 
 const SidebarContainer = styled.div`
   width: 280px;
@@ -133,10 +135,10 @@ const NavItem = styled(Link)`
     color: white;
     font-size: 0.75rem;
     font-weight: 700;
-    padding: 0.125rem 0.375rem;
+    padding: 0.125rem 0.5rem;
     border-radius: 9999px;
-    min-width: 1.25rem;
-    height: 1.25rem;
+    min-width: 1.5rem;
+    height: 1.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -144,6 +146,7 @@ const NavItem = styled(Link)`
     box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
     position: relative;
     z-index: 10;
+    white-space: nowrap;
   }
 `;
 
@@ -252,7 +255,7 @@ const HostSidebar = () => {
           <NavItem to="/host" $active={isActive('/host')}>
             <Home className="icon" />
             Tổng quan
-            <HostNotificationBadge isInline={true} hideWhenViewed={true} />
+            <OverviewNotificationBadge isInline={true} hideWhenViewed={true} />
           </NavItem>
         </NavSection>
 
@@ -273,7 +276,7 @@ const HostSidebar = () => {
           <NavItem to="/host/bookings" $active={isActive('/host/bookings')}>
             <Users className="icon" />
             Quản lý đơn đặt
-            <HostNotificationBadge isInline={true} hideWhenViewed={true} />
+            <BookingNotificationBadge isInline={true} hideWhenViewed={true} />
           </NavItem>
         </NavSection>
 
@@ -282,7 +285,7 @@ const HostSidebar = () => {
           <NavItem to="/host/messages" $active={isActive('/host/messages')}>
             <MessageCircle className="icon" />
             Tin nhắn từ người thuê
-            <HostNotificationBadge isInline={true} hideWhenViewed={true} />
+            <HostNotificationBadge isInline={true} hideWhenViewed={true} type="message" />
           </NavItem>
         </NavSection>
 
