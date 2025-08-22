@@ -313,6 +313,19 @@ export const hostApplicationsApi = {
     }
   },
 
+  updateStatusByUserId: async (userId, active) => {
+    try {
+      const response = await apiClient.patch(
+        `${API_PREFIX}/admin/hosts/user/${userId}/status`,
+        { active }
+      );
+      return response.data;
+    } catch (error) {
+      logApiError(error, "updateHostStatusByUserId");
+      throw error;
+    }
+  },
+
   getHostDetailsByUserId: async (userId) => {
     try {
       const response = await apiClient.get(

@@ -30,6 +30,8 @@ const AvatarContainer = styled.div`
     height: 100%;
     object-fit: cover;
     border-radius: 50%;
+    position: relative;
+    z-index: 1;
   }
 `;
 
@@ -83,10 +85,13 @@ const Avatar = ({
 
   // Load authenticated image if needed
   React.useEffect(() => {
+    // Reset states when avatarUrl changes
+    setImageLoaded(false);
+    setImageError(false);
+    
     // Nếu không có avatar URL, hiển thị chữ cái đầu
     if (!avatarUrl) {
       setAuthenticatedImageUrl(null);
-      setImageError(false);
       setIsLoading(false);
       return;
     }
@@ -94,7 +99,6 @@ const Avatar = ({
     // Nếu là blob URL (preview từ file được chọn), hiển thị ngay lập tức
     if (avatarUrl && avatarUrl.startsWith('blob:')) {
       setAuthenticatedImageUrl(avatarUrl);
-      setImageError(false);
       setIsLoading(false);
       return;
     }
@@ -107,7 +111,6 @@ const Avatar = ({
         setIsLoading(false);
         if (blobUrl) {
           setAuthenticatedImageUrl(blobUrl);
-          setImageError(false);
         } else {
           setImageError(true);
           setAuthenticatedImageUrl(null);
@@ -120,7 +123,6 @@ const Avatar = ({
     } else {
       // This is a public image URL, no need for authentication
       setAuthenticatedImageUrl(avatarUrl);
-      setImageError(false);
       setIsLoading(false);
     }
 
@@ -170,10 +172,6 @@ const Avatar = ({
               alt={alt || displayName}
               onLoad={handleImageLoad}
               onError={handleImageError}
-              style={{ 
-                opacity: imageLoaded ? 1 : 0,
-                transition: 'opacity 0.2s ease'
-              }}
             />
           ) : null}
           

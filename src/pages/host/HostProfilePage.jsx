@@ -280,14 +280,10 @@ const HostProfilePage = () => {
         nationalId: hostData.nationalId || "",
         avatarFile: null,
       });
-                   // Debug avatar data
-      console.log('HostProfilePage - hostData.avatar:', hostData.avatar);
-      console.log('HostProfilePage - hostData:', hostData);
-      
       // Sử dụng avatarHelper để xử lý URL avatar
       const avatarUrl = getAvatarUrl(hostData.avatar);
-      console.log('HostProfilePage - Processed avatar URL:', avatarUrl);
-      setAvatarPreview(avatarUrl);
+      // Chỉ set avatarPreview nếu có URL hợp lệ, nếu không thì để null để hiển thị chữ cái đầu
+      setAvatarPreview(avatarUrl || null);
     } catch (error) {
       showError("Lỗi", "Không thể tải thông tin cá nhân.");
       navigate("/host");
@@ -320,10 +316,7 @@ const HostProfilePage = () => {
     };
   }, [avatarPreview]);
 
-  // Debug: Log khi avatarPreview thay đổi
-  useEffect(() => {
-    console.log('HostProfilePage - Avatar preview changed to:', avatarPreview);
-  }, [avatarPreview]);
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -345,8 +338,6 @@ const HostProfilePage = () => {
       return;
     }
 
-    console.log('HostProfilePage - Selected file:', file.name, file.type, file.size);
-
     // Kiểm tra loại file
     const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
     if (!allowedTypes.includes(file.type)) {
@@ -363,11 +354,9 @@ const HostProfilePage = () => {
 
     // Tạo URL tạm để hiển thị preview
     const previewUrl = URL.createObjectURL(file);
-    console.log('HostProfilePage - Created preview URL:', previewUrl);
     
     setFormData((prev) => ({ ...prev, avatarFile: file }));
     setAvatarPreview(previewUrl);
-    console.log('HostProfilePage - Set avatar preview to:', previewUrl);
 
     // Không hiển thị toast ở đây nữa, chỉ hiển thị khi lưu thành công
   };
@@ -574,29 +563,6 @@ const HostProfilePage = () => {
                 name={formData.fullName}
                 size="120px"
               />
-              {formData.avatarFile && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "-5px",
-                    right: "-5px",
-                    background: "#10b981",
-                    color: "white",
-                    borderRadius: "50%",
-                    width: "24px",
-                    height: "24px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "12px",
-                    border: "2px solid white",
-                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
-                  }}
-                  title="Ảnh mới đã được chọn"
-                >
-                  ✨
-                </div>
-              )}
               <label className="avatar-upload">
                 <Camera size={16} />
                 <input

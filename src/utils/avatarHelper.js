@@ -20,6 +20,11 @@ export const getAvatarUrl = (fileUrl) => {
     return null; // Trả về null để component Avatar tự xử lý với chữ cái đầu
   }
 
+  // Nếu là blob URL (preview từ file được chọn), trả về nguyên
+  if (fileUrl.startsWith('blob:')) {
+    return fileUrl;
+  }
+
   // Nếu đã là URL đầy đủ (bắt đầu bằng http), trả về nguyên
   if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
     return fileUrl;

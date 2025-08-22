@@ -263,15 +263,15 @@ const HostManagement = () => {
   }, [fetchHosts]);
 
   const handleToggleStatus = async (host) => {
-    // Kiểm tra để đảm bảo host.id tồn tại
-    if (!host || !host.id) {
+    // Kiểm tra để đảm bảo host.userId tồn tại (dùng userId thay vì host.id)
+    if (!host || !host.userId) {
       showError("Lỗi", "Không tìm thấy ID của chủ nhà.");
       return;
     }
 
     const currentStatus = host.active;
     try {
-      await hostApplicationsApi.updateStatus(host.id, !host.active);
+      await hostApplicationsApi.updateStatusByUserId(host.userId, !host.active);
 
       showSuccess(
         "Cập nhật thành công!",
@@ -283,7 +283,7 @@ const HostManagement = () => {
       // Cập nhật UI ngay lập tức
       setHosts((currentHosts) =>
         currentHosts.map((h) =>
-          h.id === host.id ? { ...h, active: !currentStatus } : h
+          h.userId === host.userId ? { ...h, active: !currentStatus } : h
         )
       );
     } catch (err) {
