@@ -200,21 +200,118 @@ const PaginationControls = styled.div`
 `;
 
 const PageButton = styled.button`
-  padding: 0.5rem;
-  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
   border: 1px solid #e2e8f0;
+  background: white;
   border-radius: 0.375rem;
   cursor: pointer;
   transition: all 0.2s;
-  font-size: 0.875rem;
 
   &:hover:not(:disabled) {
     background: #f7fafc;
+    border-color: #cbd5e0;
   }
 
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+`;
+
+// Modal styled components
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+const ModalContent = styled.div`
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow: hidden;
+`;
+
+const ModalHeader = styled.div`
+  padding: 1.5rem 1.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2d3748;
+  }
+`;
+
+const ModalBody = styled.div`
+  padding: 1rem 1.5rem;
+
+  p {
+    margin: 0 0 0.5rem 0;
+    color: #4a5568;
+    line-height: 1.5;
+  }
+`;
+
+const ModalFooter = styled.div`
+  padding: 1rem 1.5rem 1.5rem;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  border-top: 1px solid #e2e8f0;
+`;
+
+const CancelButton = styled.button`
+  padding: 0.5rem 1rem;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #4a5568;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #f7fafc;
+    border-color: #cbd5e0;
+  }
+`;
+
+const DeleteButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #e53e3e;
+  background: #e53e3e;
+  color: white;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #c53030;
+    border-color: #c53030;
   }
 `;
 
@@ -240,19 +337,18 @@ const HouseManagement = () => {
   const [houses, setHouses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // Search và filter states - tính năng mới
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState({
-    status: 'ALL',
-    houseType: 'ALL'
-  });
-  const [isSearchMode, setIsSearchMode] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filters, setFilters] = useState({ status: "ALL", houseType: "ALL" });
   const [searchResults, setSearchResults] = useState([]);
+  const [isSearchMode, setIsSearchMode] = useState(false);
   const [pagination, setPagination] = useState({
     number: 0,
-    totalPages: 1
+    size: 10,
+    totalElements: 0,
+    totalPages: 0
   });
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [houseToDelete, setHouseToDelete] = useState(null);
 
   const navigate = useNavigate();
   const { showSuccess, showError } = useToast();
@@ -336,8 +432,71 @@ const HouseManagement = () => {
         showSuccess("Xóa thành công!", "Đã xóa nhà khỏi hệ thống.");
         fetchHouses(pagination.number); // Refresh list với trang hiện tại
       } catch (err) {
-        showError("Xóa thất bại!", "Không thể xóa nhà. Vui lòng thử lại.");
+        console.error('Lỗi khi xóa nhà:', err);
+        
+        let errorMessage = 'Không thể xóa nhà. Vui lòng thử lại.';
+        
+        // Ưu tiên sử dụng message từ error trước
+        if (err.message) {
+          errorMessage = err.message;
+        } else if (err.response) {
+          if (err.response.data && err.response.data.message) {
+            errorMessage = err.response.data.message;
+          } else if (err.response.status === 401) {
+            errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+          } else if (err.response.status === 403) {
+            errorMessage = 'Bạn không có quyền xóa nhà này.';
+          } else if (err.response.status === 404) {
+            errorMessage = 'Không tìm thấy nhà cần xóa.';
+          }
+        } else if (err.request) {
+          errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.';
+        }
+        
+        showError("Xóa thất bại!", errorMessage);
       }
+    }
+  };
+
+  // Handle delete house with modal
+  const handleDeleteClick = (house) => {
+    setHouseToDelete(house);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!houseToDelete) return;
+
+    try {
+      await housesApi.delete(houseToDelete.id);
+      showSuccess("Xóa thành công!", "Đã xóa nhà khỏi hệ thống.");
+      fetchHouses(pagination.number); // Refresh list với trang hiện tại
+    } catch (err) {
+      console.error('Lỗi khi xóa nhà:', err);
+      
+      let errorMessage = 'Không thể xóa nhà. Vui lòng thử lại.';
+      
+      // Ưu tiên sử dụng message từ error trước
+      if (err.message) {
+        errorMessage = err.message;
+      } else if (err.response) {
+        if (err.response.data && err.response.data.message) {
+          errorMessage = err.response.data.message;
+        } else if (err.response.status === 401) {
+          errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+        } else if (err.response.status === 403) {
+          errorMessage = 'Bạn không có quyền xóa nhà này.';
+        } else if (err.response.status === 404) {
+          errorMessage = 'Không tìm thấy nhà cần xóa.';
+        }
+      } else if (err.request) {
+        errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.';
+      }
+      
+      showError("Xóa thất bại!", errorMessage);
+    } finally {
+      setDeleteModalOpen(false);
+      setHouseToDelete(null);
     }
   };
 
@@ -478,7 +637,7 @@ const HouseManagement = () => {
                           <Eye size={14} />
                         </button>
                         <button
-                          onClick={() => handleDeleteHouse(house.id)}
+                          onClick={() => handleDeleteClick(house)}
                           title="Xóa"
                           style={{
                             padding: '0.5rem',
@@ -531,6 +690,35 @@ const HouseManagement = () => {
           </PaginationContainer>
         )}
       </Card>
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && (
+        <ModalOverlay>
+          <ModalContent>
+            <ModalHeader>
+              <AlertTriangle size={24} color="#e53e3e" />
+              <h3>Xác nhận xóa nhà</h3>
+            </ModalHeader>
+            <ModalBody>
+              <p>
+                Bạn có chắc chắn muốn xóa nhà <strong>"{houseToDelete?.title || 'N/A'}"</strong>?
+              </p>
+              <p style={{ color: '#e53e3e', fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                Hành động này không thể hoàn tác.
+              </p>
+            </ModalBody>
+            <ModalFooter>
+              <CancelButton onClick={() => setDeleteModalOpen(false)}>
+                Hủy
+              </CancelButton>
+              <DeleteButton onClick={handleConfirmDelete}>
+                <Trash2 size={16} />
+                Xóa nhà
+              </DeleteButton>
+            </ModalFooter>
+          </ModalContent>
+        </ModalOverlay>
+      )}
     </div>
   );
 };

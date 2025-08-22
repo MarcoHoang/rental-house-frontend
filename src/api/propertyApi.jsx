@@ -619,13 +619,78 @@ const propertyApi = {
     }
   },
 
-  // Xóa nhà (cần ROLE_HOST)
+  // Xóa nhà (cần ROLE_HOST hoặc ROLE_ADMIN)
   deleteHouse: async (id) => {
     try {
+      // Kiểm tra role của user hiện tại
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const adminUser = JSON.parse(localStorage.getItem('adminUser') || '{}');
+      
+      console.log('propertyApi.deleteHouse - Starting delete for house ID:', id);
+      console.log('propertyApi.deleteHouse - User data:', user);
+      console.log('propertyApi.deleteHouse - Admin user data:', adminUser);
+      console.log('propertyApi.deleteHouse - User roleName:', user.roleName);
+      console.log('propertyApi.deleteHouse - User role:', user.role);
+      console.log('propertyApi.deleteHouse - Admin user role:', adminUser.role);
+      console.log('propertyApi.deleteHouse - Admin user roleName:', adminUser.roleName);
+      
+      // Test endpoint để kiểm tra thông tin user từ backend
+      try {
+        const testResponse = await hostApiClient.get('/houses/test-current-user');
+        console.log('propertyApi.deleteHouse - Backend user info:', testResponse.data);
+      } catch (testError) {
+        console.log('propertyApi.deleteHouse - Could not get backend user info:', testError.message);
+      }
+      
+      // Test để lấy thông tin nhà trước khi xóa
+      try {
+        const houseResponse = await hostApiClient.get(`/houses/${id}`);
+        console.log('propertyApi.deleteHouse - House info before delete:', houseResponse.data);
+        console.log('propertyApi.deleteHouse - House host ID:', houseResponse.data?.data?.hostId);
+        console.log('propertyApi.deleteHouse - Current user ID:', user.id);
+        console.log('propertyApi.deleteHouse - Host ownership match:', houseResponse.data?.data?.hostId === user.id);
+      } catch (houseError) {
+        console.log('propertyApi.deleteHouse - Could not get house info:', houseError.message);
+      }
+      
+      let response;
+      
+      // Kiểm tra admin trước (có thể có cả user và adminUser)
+      const isAdmin = adminUser.role === 'ADMIN' || 
+                     adminUser.roleName === 'ADMIN' || 
+                     user.role === 'ADMIN' || 
+                     user.roleName === 'ADMIN';
+      
+      // Kiểm tra host
+      const isHost = user.roleName === 'HOST' || user.role === 'HOST';
+      
+      console.log('propertyApi.deleteHouse - Is Admin:', isAdmin);
+      console.log('propertyApi.deleteHouse - Is Host:', isHost);
+      
+      // Nếu là admin, gọi endpoint admin
+      if (isAdmin) {
+        console.log('propertyApi.deleteHouse - Using admin endpoint for house:', id);
+        response = await privateApiClient.delete(`/houses/${id}`);
+      } 
+      // Nếu là host, gọi endpoint host
+      else if (isHost) {
+        console.log('propertyApi.deleteHouse - Using host endpoint for house:', id);
+        response = await hostApiClient.delete(`/houses/${id}`);
+      } 
+      // Nếu không phải admin cũng không phải host, throw error
+      else {
+        console.error('propertyApi.deleteHouse - User has no permission to delete house');
+        console.error('propertyApi.deleteHouse - User roles found:', {
+          userRole: user.role,
+          userRoleName: user.roleName,
+          adminRole: adminUser.role,
+          adminRoleName: adminUser.roleName
+        });
+        throw new Error('Bạn không có quyền xóa nhà này');
+      }
 
-      const response = await hostApiClient.delete(`/houses/${id}`);
-
-
+      console.log('propertyApi.deleteHouse - Response received:', response);
+      console.log('propertyApi.deleteHouse - Response data:', response.data);
 
       // Backend trả về ApiResponse format
       if (response.data && response.data.data) {
@@ -634,8 +699,32 @@ const propertyApi = {
 
       return response.data;
     } catch (error) {
-      console.error(`Error deleting house ${id}:`, error);
-      throw error;
+      console.error('propertyApi.deleteHouse - Error details:', error);
+      
+      // Kiểm tra các trường hợp lỗi cụ thể
+      if (error.response?.data?.message) {
+        const message = error.response.data.message;
+        if (message.includes('đang được thuê') || 
+            message.includes('đang có người đặt') || 
+            message.includes('RENTED') ||
+            message.includes('đã có người đặt thuê trước')) {
+          throw new Error('Không thể xóa nhà do đã có người đặt thuê trước');
+        }
+      }
+      
+      // Kiểm tra status code
+      if (error.response?.status === 403) {
+        throw new Error('Bạn không có quyền xóa nhà này');
+      }
+      if (error.response?.status === 404) {
+        throw new Error('Không tìm thấy nhà cần xóa');
+      }
+      if (error.response?.status === 400 || error.response?.status === 409) {
+        throw new Error('Không thể xóa nhà do đã có người đặt thuê trước');
+      }
+      
+      // Nếu không có thông báo cụ thể, sử dụng thông báo mặc định
+      throw new Error('Bạn không có quyền xóa nhà này');
     }
   }
 };
