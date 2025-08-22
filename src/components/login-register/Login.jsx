@@ -200,7 +200,20 @@ const Login = () => {
       }, 600);
     } catch (error) {
       console.error('Google login error:', error);
-      const errorMessage = error.response?.data?.message || 'Đăng nhập Google thất bại. Vui lòng thử lại.';
+      
+      // Xử lý thông báo lỗi cụ thể từ backend
+      let errorMessage = 'Đăng nhập Google thất bại. Vui lòng thử lại.';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.status === 403) {
+        errorMessage = 'Tài khoản của bạn đang bị khóa';
+      } else if (error.response?.status === 401) {
+        errorMessage = 'Thông tin đăng nhập không chính xác';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       showError("Lỗi đăng nhập", errorMessage);
     } finally {
       setGoogleLoading(false);
