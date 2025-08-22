@@ -210,6 +210,7 @@ const PageButton = styled.button`
   border-radius: 0.375rem;
   cursor: pointer;
   transition: all 0.2s;
+  font-size: 0.875rem;
 
   &:hover:not(:disabled) {
     background: #f7fafc;
@@ -341,6 +342,7 @@ const HouseManagement = () => {
   const [filters, setFilters] = useState({ status: "ALL", houseType: "ALL" });
   const [searchResults, setSearchResults] = useState([]);
   const [isSearchMode, setIsSearchMode] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
   const [pagination, setPagination] = useState({
     number: 0,
     size: 10,
@@ -432,27 +434,18 @@ const HouseManagement = () => {
         showSuccess("Xóa thành công!", "Đã xóa nhà khỏi hệ thống.");
         fetchHouses(pagination.number); // Refresh list với trang hiện tại
       } catch (err) {
-        console.error('Lỗi khi xóa nhà:', err);
-        
-        let errorMessage = 'Không thể xóa nhà. Vui lòng thử lại.';
-        
-        // Ưu tiên sử dụng message từ error trước
-        if (err.message) {
-          errorMessage = err.message;
-        } else if (err.response) {
-          if (err.response.data && err.response.data.message) {
+        // Lấy thông báo lỗi từ backend nếu có
+        let errorMessage = "Không thể xóa nhà đang cho thuê.";
+
+        if (err.response && err.response.data) {
+          // Kiểm tra message từ backend
+          if (err.response.data.message) {
             errorMessage = err.response.data.message;
-          } else if (err.response.status === 401) {
-            errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
-          } else if (err.response.status === 403) {
-            errorMessage = 'Bạn không có quyền xóa nhà này.';
-          } else if (err.response.status === 404) {
-            errorMessage = 'Không tìm thấy nhà cần xóa.';
+          } else if (err.response.data.error) {
+            errorMessage = err.response.data.error;
           }
-        } else if (err.request) {
-          errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.';
         }
-        
+
         showError("Xóa thất bại!", errorMessage);
       }
     }
@@ -473,9 +466,9 @@ const HouseManagement = () => {
       fetchHouses(pagination.number); // Refresh list với trang hiện tại
     } catch (err) {
       console.error('Lỗi khi xóa nhà:', err);
-      
+
       let errorMessage = 'Không thể xóa nhà. Vui lòng thử lại.';
-      
+
       // Ưu tiên sử dụng message từ error trước
       if (err.message) {
         errorMessage = err.message;
@@ -492,7 +485,7 @@ const HouseManagement = () => {
       } else if (err.request) {
         errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.';
       }
-      
+
       showError("Xóa thất bại!", errorMessage);
     } finally {
       setDeleteModalOpen(false);
