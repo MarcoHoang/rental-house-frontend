@@ -287,7 +287,19 @@ const HouseDetailPage = () => {
         showSuccess("Xóa thành công!", "Đã xóa nhà khỏi hệ thống.");
         navigate("/admin/houses");
       } catch (err) {
-        showError("Xóa thất bại!", "Không thể xóa nhà. Vui lòng thử lại.");
+        // Lấy thông báo lỗi từ backend nếu có
+        let errorMessage = "Không thể xóa nhà. Vui lòng thử lại.";
+        
+        if (err.response && err.response.data) {
+          // Kiểm tra message từ backend
+          if (err.response.data.message) {
+            errorMessage = err.response.data.message;
+          } else if (err.response.data.error) {
+            errorMessage = err.response.data.error;
+          }
+        }
+        
+        showError("Xóa thất bại!", errorMessage);
       }
     }
   };
