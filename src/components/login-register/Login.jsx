@@ -156,7 +156,9 @@ const Login = () => {
       return;
     }
 
+    console.log('Login.handleSubmit - Starting login process');
     const result = await login(formData.email, formData.password);
+    console.log('Login.handleSubmit - Login result:', result);
 
     if (result.success) {
       showSuccess(
@@ -165,6 +167,11 @@ const Login = () => {
           result.data?.user?.fullName || "Người dùng"
         }!`
       );
+    } else {
+      // Hiển thị lỗi từ result.error hoặc từ error state
+      const errorMessage = result.error || error || 'Đăng nhập thất bại';
+      console.log('Login.handleSubmit - Error message:', errorMessage);
+      showError("Lỗi đăng nhập", errorMessage);
     }
   };
 

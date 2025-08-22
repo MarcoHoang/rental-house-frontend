@@ -83,39 +83,18 @@ export const adminAuth = {
           );
           lastError = error;
 
-          // Nếu là lỗi 500, thử endpoint tiếp theo
-          if (error.response?.status === 500) {
+          // Chỉ thử endpoint tiếp theo nếu là lỗi server (500) hoặc endpoint không tồn tại (404)
+          // Không thử endpoint tiếp theo cho lỗi authentication (401, 403)
+          if (error.response?.status === 500 || error.response?.status === 404) {
             continue;
           }
 
-          // Nếu là lỗi 404, thử endpoint tiếp theo
-          if (error.response?.status === 404) {
-            continue;
-          }
-
-          // Nếu là lỗi khác (401, 400, etc.), dừng lại
+          // Nếu là lỗi authentication hoặc lỗi khác, dừng lại và trả về lỗi
           break;
         }
       }
 
-      // Nếu tất cả endpoint đều thất bại với lỗi 500, sử dụng mock data
-      if (!response && lastError?.response?.status === 500) {
-        console.log("adminAuth.login - Using mock data due to server error");
-        return {
-          data: {
-            code: 200,
-            message: "Đăng nhập thành công",
-            token: "mock-admin-token",
-            user: {
-              id: 1,
-              email: credentials.email,
-              fullName: "Admin User",
-              role: "ADMIN",
-            },
-          },
-        };
-      }
-
+      // Không sử dụng mock data cho lỗi authentication
       if (!response) {
         throw lastError || new Error("Không thể kết nối đến server");
       }

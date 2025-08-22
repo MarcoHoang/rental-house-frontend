@@ -135,6 +135,8 @@ const AdminLogin = () => {
 
       const response = await adminAuth.login(formData);
       console.log("AdminLogin.handleSubmit - Response:", response);
+      console.log("AdminLogin.handleSubmit - Response status:", response?.status);
+      console.log("AdminLogin.handleSubmit - Response data:", response?.data);
 
       // Kiểm tra response data - cải thiện logic
       console.log("AdminLogin.handleSubmit - Full response data:", response.data);
@@ -198,8 +200,14 @@ const AdminLogin = () => {
       
       let errorMessage = "Đăng nhập thất bại. Vui lòng thử lại.";
       
-      // Xử lý lỗi 500 - Internal Server Error
-      if (err.response?.status === 500) {
+      // Xử lý các lỗi authentication cụ thể
+      if (err.response?.status === 401) {
+        errorMessage = "Email hoặc mật khẩu không đúng";
+      } else if (err.response?.status === 403) {
+        errorMessage = "Bạn không có quyền truy cập Admin";
+      } else if (err.response?.status === 404) {
+        errorMessage = "Tài khoản không tồn tại";
+      } else if (err.response?.status === 500) {
         errorMessage = "Lỗi máy chủ (500). Vui lòng liên hệ quản trị viên hoặc thử lại sau.";
         console.error("Server Error Details:", err.response.data);
       } else if (err.response?.data?.message) {

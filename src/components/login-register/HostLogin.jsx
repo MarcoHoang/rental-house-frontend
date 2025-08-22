@@ -168,13 +168,20 @@ const HostLogin = () => {
       return;
     }
 
+    console.log('HostLogin.handleSubmit - Starting host login process');
     const result = await loginAsHost(formData.email, formData.password);
+    console.log('HostLogin.handleSubmit - Login result:', result);
     
     if (result.success) {
       showSuccess(
         "Đăng nhập host thành công!",
         `Chào mừng bạn quay trở lại, ${result.data?.user?.fullName || 'Chủ nhà'}!`
       );
+    } else {
+      // Hiển thị lỗi từ result.error hoặc từ error state
+      const errorMessage = result.error || error || 'Đăng nhập host thất bại';
+      console.log('HostLogin.handleSubmit - Error message:', errorMessage);
+      showError("Lỗi đăng nhập", errorMessage);
     }
   };
 
