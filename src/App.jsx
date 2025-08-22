@@ -36,6 +36,11 @@ import AllHousesPage from "./pages/AllHousesPage";
 import MyRentalsPage from "./pages/MyRentalsPage";
 import MyFavoritesPage from "./pages/MyFavoritesPage";
 import ChatPage from "./pages/ChatPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import AboutPage from "./pages/AboutPage";
+import ContactPage from "./pages/ContactPage";
+import FAQPage from "./pages/FAQPage";
+import TermsPage from "./pages/TermsPage";
 
 // Protected Route Component (đã cải thiện)
 const ProtectedRoute = ({
@@ -117,6 +122,36 @@ function App() {
               <Route
                 path="/all-houses"
                 element={<AllHousesPage />}
+              />
+
+              {/* Trang chính sách bảo mật - công khai */}
+              <Route
+                path="/policy"
+                element={<PrivacyPolicyPage />}
+              />
+
+              {/* Trang về chúng tôi - công khai */}
+              <Route
+                path="/about"
+                element={<AboutPage />}
+              />
+
+              {/* Trang liên hệ - công khai */}
+              <Route
+                path="/contact"
+                element={<ContactPage />}
+              />
+
+              {/* Trang FAQ - công khai */}
+              <Route
+                path="/faq"
+                element={<FAQPage />}
+              />
+
+              {/* Trang điều khoản sử dụng - công khai */}
+              <Route
+                path="/terms"
+                element={<TermsPage />}
               />
 
               {/* Trang đơn thuê - cho phép cả user và host */}
