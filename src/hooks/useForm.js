@@ -123,17 +123,17 @@ export const validationRules = {
   username: (value) => {
     if (!value) return 'Tên người dùng là bắt buộc';
     if (value.length < 2) return 'Tên người dùng phải có ít nhất 2 ký tự';
-    if (value.length > 100) return 'Tên người dùng không được vượt quá 100 ký tự';
+    if (value.length > 50) return 'Tên người dùng không được vượt quá 50 ký tự';
     // Cho phép chữ cái tiếng Việt, dấu cách và dấu gạch ngang
     if (!/^[\p{L}\s-]+$/u.test(value)) return 'Tên người dùng chỉ được chứa chữ cái, khoảng trắng và dấu gạch ngang';
     return '';
   },
   
   address: (value) => {
-    // Address là optional, nhưng nếu có thì validate
-    if (value && value.length > 200) return 'Địa chỉ không được vượt quá 200 ký tự';
+    if (!value) return 'Địa chỉ là bắt buộc';
+    if (value.length > 200) return 'Địa chỉ không được vượt quá 200 ký tự';
     // Cho phép chữ cái, số, dấu cách, dấu phẩy, dấu chấm, dấu gạch ngang
-    if (value && !/^[\p{L}0-9\s,.-]+$/u.test(value)) return 'Địa chỉ chứa ký tự không hợp lệ';
+    if (!/^[\p{L}0-9\s,.-]+$/u.test(value)) return 'Địa chỉ chứa ký tự không hợp lệ';
     return '';
   },
   
@@ -147,6 +147,12 @@ export const validationRules = {
   
   required: (value, fieldName = 'Trường này') => {
     if (!value || value.trim() === '') return `${fieldName} là bắt buộc`;
+    return '';
+  },
+  
+  message: (value) => {
+    if (!value) return 'Tin nhắn là bắt buộc';
+    if (value.length > 300) return 'Tin nhắn không được vượt quá 300 ký tự';
     return '';
   }
 };

@@ -366,9 +366,22 @@ const InputArea = styled.div`
   padding: 1.5rem;
   border-top: 1px solid #e2e8f0;
   display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: white;
+`;
+
+const InputRow = styled.div`
+  display: flex;
   gap: 1rem;
   align-items: flex-end;
-  background: white;
+`;
+
+const CharCounter = styled.div`
+  font-size: 0.75rem;
+  color: ${props => props.isNearLimit ? '#f59e0b' : props.isOverLimit ? '#dc2626' : '#6b7280'};
+  text-align: right;
+  margin-top: 0.25rem;
 `;
 
 const MessageInput = styled.textarea`
@@ -561,6 +574,12 @@ const UserChatManager = () => {
 
   const sendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return;
+    
+    // Validation cho tin nhắn
+    if (newMessage.trim().length > 300) {
+      setError('Tin nhắn không được vượt quá 300 ký tự');
+      return;
+    }
 
     try {
       setSending(true);
@@ -810,27 +829,36 @@ const UserChatManager = () => {
             </MessagesArea>
 
             <InputArea>
-              <MessageInput
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Nhập tin nhắn..."
-                disabled={sending}
-              />
-              <SendButton onClick={sendMessage} disabled={!newMessage.trim() || sending}>
-                {sending ? (
-                  <div style={{ 
-                    width: '18px', 
-                    height: '18px', 
-                    border: '2px solid transparent',
-                    borderTop: '2px solid white',
-                    borderRadius: '50%',
-                    animation: 'spin 1s linear infinite'
-                  }} />
-                ) : (
-                  <Send size={18} />
-                )}
-              </SendButton>
+              <InputRow>
+                <MessageInput
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Nhập tin nhắn..."
+                  disabled={sending}
+                  maxLength={300}
+                />
+                <SendButton onClick={sendMessage} disabled={!newMessage.trim() || sending || newMessage.length > 300}>
+                  {sending ? (
+                    <div style={{ 
+                      width: '18px', 
+                      height: '18px', 
+                      border: '2px solid transparent',
+                      borderTop: '2px solid white',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }} />
+                  ) : (
+                    <Send size={18} />
+                  )}
+                </SendButton>
+              </InputRow>
+              <CharCounter 
+                isNearLimit={newMessage.length > 250 && newMessage.length <= 300}
+                isOverLimit={newMessage.length > 300}
+              >
+                {newMessage.length}/300 ký tự
+              </CharCounter>
             </InputArea>
           </>
         ) : (

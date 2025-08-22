@@ -115,6 +115,10 @@ const PostPropertyPage = () => {
           newErrors.address = 'Địa chỉ là bắt buộc';
         } else if (value.trim().length < 10) {
           newErrors.address = 'Địa chỉ phải có ít nhất 10 ký tự';
+        } else if (value.trim().length > 200) {
+          newErrors.address = 'Địa chỉ không được vượt quá 200 ký tự';
+        } else if (!/^[\p{L}0-9\s,.-]+$/u.test(value.trim())) {
+          newErrors.address = 'Địa chỉ chứa ký tự không hợp lệ';
         } else {
           delete newErrors.address;
         }
@@ -207,6 +211,10 @@ const PostPropertyPage = () => {
       newErrors.address = 'Địa chỉ là bắt buộc';
     } else if (formData.address.trim().length < 10) {
       newErrors.address = 'Địa chỉ phải có ít nhất 10 ký tự';
+    } else if (formData.address.trim().length > 200) {
+      newErrors.address = 'Địa chỉ không được vượt quá 200 ký tự';
+    } else if (!/^[\p{L}0-9\s,.-]+$/u.test(formData.address.trim())) {
+      newErrors.address = 'Địa chỉ chứa ký tự không hợp lệ';
     }
 
     // Validate price

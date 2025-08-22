@@ -481,11 +481,15 @@ const UserProfilePage = () => {
     const newErrors = {};
     let isValid = true;
 
+    // Validation cho fullName (tên)
     if (!profile.fullName.trim()) {
       newErrors.fullName = "Vui lòng nhập họ và tên";
       isValid = false;
-    } else if (!/^[\p{L}\s]+$/u.test(profile.fullName)) {
-      newErrors.fullName = "Họ và tên không được chứa ký tự đặc biệt";
+    } else if (profile.fullName.length > 50) {
+      newErrors.fullName = "Họ và tên không được vượt quá 50 ký tự";
+      isValid = false;
+    } else if (!/^[\p{L}\s-]+$/u.test(profile.fullName)) {
+      newErrors.fullName = "Họ và tên chỉ được chứa chữ cái, khoảng trắng và dấu gạch ngang";
       isValid = false;
     }
 
@@ -507,7 +511,14 @@ const UserProfilePage = () => {
       }
     }
 
-    if (profile.address && !/^[\p{L}0-9\s,./-]+$/u.test(profile.address)) {
+    // Validation cho address (địa chỉ)
+    if (!profile.address) {
+      newErrors.address = "Địa chỉ là bắt buộc";
+      isValid = false;
+    } else if (profile.address.length > 200) {
+      newErrors.address = "Địa chỉ không được vượt quá 200 ký tự";
+      isValid = false;
+    } else if (!/^[\p{L}0-9\s,.-]+$/u.test(profile.address)) {
       newErrors.address = "Địa chỉ chứa ký tự không hợp lệ";
       isValid = false;
     }
