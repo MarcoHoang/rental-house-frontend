@@ -160,6 +160,11 @@ export const useAuth = () => {
       console.log('useAuth.loginAsHost - Extracted token and host:', { token: !!token, hostData });
 
       if (token && hostData) {
+        // Lưu token và user data vào localStorage
+        console.log('useAuth.loginAsHost - Storing token and user data in localStorage');
+        safeSetToStorage('token', token);
+        safeSetToStorage('user', hostData);
+        
         // Cập nhật state
         console.log('useAuth.loginAsHost - Setting user state:', hostData);
         setUser(hostData);
