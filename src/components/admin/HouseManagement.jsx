@@ -342,7 +342,6 @@ const HouseManagement = () => {
   const [filters, setFilters] = useState({ status: "ALL", houseType: "ALL" });
   const [searchResults, setSearchResults] = useState([]);
   const [isSearchMode, setIsSearchMode] = useState(false);
-  const [searchResults, setSearchResults] = useState([]);
   const [pagination, setPagination] = useState({
     number: 0,
     size: 10,
